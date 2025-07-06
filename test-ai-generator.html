@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AIEventGenerator Test</title>
+</head>
+<body>
+    <h1>AIEventGenerator Test</h1>
+    <div id="result"></div>
+    
+    <script src="src/events/AIEventGenerator.js"></script>
+    <script>
+        try {
+            console.log('Testing AIEventGenerator...');
+            const generator = new AIEventGenerator();
+            console.log('✅ AIEventGenerator created successfully');
+            document.getElementById('result').innerHTML = '✅ AIEventGenerator loaded successfully';
+        } catch (error) {
+            console.error('❌ AIEventGenerator failed:', error);
+            document.getElementById('result').innerHTML = '❌ AIEventGenerator failed: ' + error.message;
+        }
+    </script>
+</body>
+</html>

@@ -7,9 +7,23 @@ class EventSystem {
         this.eventTemplates = this.loadEventTemplates();
         this.eventHistory = [];
         this.currentEvent = null;
-        this.aiGenerator = new AIEventGenerator();
+        
+        // 安全地初始化AIEventGenerator
+        try {
+            if (typeof AIEventGenerator !== 'undefined') {
+                this.aiGenerator = new AIEventGenerator();
+                console.log('✅ AIEventGenerator初始化成功');
+            } else {
+                console.warn('⚠️ AIEventGenerator未定义，将禁用AI事件生成');
+                this.aiGenerator = null;
+            }
+        } catch (error) {
+            console.error('❌ AIEventGenerator初始化失败:', error);
+            this.aiGenerator = null;
+        }
+        
         this.generatedEventLoader = window.GeneratedEventLoader;
-        this.useAIGeneration = true; // 是否使用AI生成事件
+        this.useAIGeneration = this.aiGenerator !== null; // 只有在AI生成器可用时才启用
         this.aiGenerationRate = 0.7; // AI生成事件的概率
         this.useGeneratedEvents = true; // 是否使用LLM生成的事件
         this.generatedEventRate = 0.5; // LLM生成事件的概率
@@ -127,7 +141,7 @@ class EventSystem {
         }
         
         // 如果没有获取到LLM事件，尝试AI生成
-        if (!event && this.useAIGeneration && Math.random() < this.aiGenerationRate) {
+        if (!event && this.useAIGeneration && this.aiGenerator && Math.random() < this.aiGenerationRate) {
             try {
                 event = this.aiGenerator.generateEvent(gameState);
                 if (event) {

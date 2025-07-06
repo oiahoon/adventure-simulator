@@ -406,14 +406,6 @@ class AIEventGenerator {
                 return `[${variable}]`; // 返回变量名作为占位符，便于调试
         }
     }
-                // 尝试从模板中查找对应数组
-                const arrayName = variable + 's';
-                if (template[arrayName]) {
-                    return this.randomSelect(template[arrayName]);
-                }
-                return `{${variable}}`;
-        }
-    }
 
     /**
      * 生成事件标题

@@ -31,25 +31,28 @@ document.addEventListener('DOMContentLoaded', async function() {
             attempts++;
         }
         
-        if (typeof GameEngine === 'undefined') {
-            console.error('❌ GameEngine 类未定义');
-            showErrorMessage('GameEngine 类未加载，请检查脚本文件');
+        // 检查核心类
+        const missingClasses = [];
+        if (typeof GameEngine === 'undefined') missingClasses.push('GameEngine');
+        if (typeof Character === 'undefined') missingClasses.push('Character');
+        if (typeof UIManager === 'undefined') missingClasses.push('UIManager');
+        
+        if (missingClasses.length > 0) {
+            console.error('❌ 缺少必要的类:', missingClasses.join(', '));
+            showErrorMessage(`缺少必要的类: ${missingClasses.join(', ')}`);
             return;
         }
         
-        if (typeof Character === 'undefined') {
-            console.error('❌ Character 类未定义');
-            showErrorMessage('Character 类未加载，请检查脚本文件');
-            return;
+        // 检查可选类
+        const optionalClasses = [];
+        if (typeof AIEventGenerator === 'undefined') optionalClasses.push('AIEventGenerator');
+        if (typeof EventSystem === 'undefined') optionalClasses.push('EventSystem');
+        
+        if (optionalClasses.length > 0) {
+            console.warn('⚠️ 可选类未加载:', optionalClasses.join(', '));
         }
         
-        if (typeof UIManager === 'undefined') {
-            console.error('❌ UIManager 类未定义');
-            showErrorMessage('UIManager 类未加载，请检查脚本文件');
-            return;
-        }
-        
-        console.log('✅ GameEngine 类已加载');
+        console.log('✅ 核心类检查完成');
         
         // 初始化游戏引擎
         gameEngine = new GameEngine();
