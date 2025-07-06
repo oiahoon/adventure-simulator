@@ -461,23 +461,31 @@ class EventSystem {
      * 显示事件
      */
     async displayEvent(event, gameState) {
-        // 更新当前事件显示
-        const eventContent = document.getElementById('event-content');
-        if (eventContent) {
-            eventContent.innerHTML = `
-                <h4>${event.title}</h4>
-                <p>${event.description}</p>
-                ${event.impact_description ? `<div class="impact-hint">💭 ${event.impact_description}</div>` : ''}
-            `;
-        }
-        
-        // 同时添加到统一日志系统
+        // 统一使用日志系统显示事件
         if (window.gameEngine && window.gameEngine.uiManager) {
+            // 添加事件标题和描述到日志
             await window.gameEngine.uiManager.addLogEntry(
                 'event', 
-                `${event.title}: ${event.description}`, 
+                `📅 ${event.title}`, 
+                null,
+                true // 标记为重要事件
+            );
+            
+            // 添加事件描述
+            await window.gameEngine.uiManager.addLogEntry(
+                'story', 
+                event.description, 
                 event.effects
             );
+            
+            // 如果有影响描述，也添加到日志
+            if (event.impact_description) {
+                await window.gameEngine.uiManager.addLogEntry(
+                    'impact', 
+                    `💭 ${event.impact_description}`, 
+                    null
+                );
+            }
         }
     }
 

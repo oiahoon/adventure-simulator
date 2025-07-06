@@ -473,8 +473,26 @@ body::before {
     align-items: center;
     justify-content: space-between;
     padding: 10px;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e9ecef;
     border-radius: 8px;
+    color: #333;
+    font-weight: 500;
+}
+
+.attribute-row label {
+    color: #333;
+    font-weight: 600;
+    flex: 1;
+}
+
+.attribute-row .attr-value {
+    color: #667eea;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin: 0 15px;
+    min-width: 30px;
+    text-align: center;
 }
 
 .attr-btn {

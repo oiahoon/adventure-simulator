@@ -53,7 +53,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // 初始化游戏引擎
         gameEngine = new GameEngine();
+        window.gameEngine = gameEngine; // 全局访问
         console.log('✅ 游戏引擎初始化完成');
+        
+        // 尝试自动加载游戏
+        await tryAutoLoadGame();
         
         // 显示欢迎信息
         showWelcomeMessage();
@@ -174,6 +178,58 @@ window.GameApp = {
 };
 
 console.log('📜 主脚本加载完成');
+
+/**
+ * 尝试自动加载游戏
+ */
+async function tryAutoLoadGame() {
+    try {
+        if (window.DatabaseManager) {
+            const savedGame = await window.DatabaseManager.loadGame();
+            if (savedGame && savedGame.character) {
+                console.log('🔄 发现保存的游戏，尝试加载...');
+                
+                // 重建角色对象
+                const character = new Character(
+                    savedGame.character.name,
+                    savedGame.character.profession,
+                    savedGame.character.attributes,
+                    savedGame.character.storyline
+                );
+                
+                // 恢复角色状态
+                Object.assign(character, savedGame.character);
+                
+                // 重建游戏状态
+                const gameState = new GameState(character);
+                gameState.gameTime = savedGame.gameTime || 0;
+                gameState.eventHistory = savedGame.eventHistory || [];
+                gameState.achievements = savedGame.achievements || [];
+                gameState.statistics = savedGame.statistics || {};
+                
+                // 设置游戏状态
+                gameEngine.gameState = gameState;
+                
+                // 显示游戏界面
+                document.getElementById('character-creation').classList.add('hidden');
+                document.getElementById('game-interface').classList.remove('hidden');
+                
+                // 启用控制按钮
+                gameEngine.enableGameControls();
+                
+                // 更新UI
+                gameEngine.uiManager.updateAll(gameState);
+                await gameEngine.uiManager.addLogEntry('system', '🔄 游戏已自动加载');
+                
+                console.log('✅ 游戏自动加载成功');
+                return true;
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ 自动加载游戏失败:', error.message);
+    }
+    return false;
+}
 
 /**
  * 检查并恢复游戏进度

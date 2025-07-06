@@ -584,9 +584,44 @@ class SQLiteEventGenerator {
             cleaned = cleaned.substring(jsonStart);
         }
         
-        // 查找JSON结束位置
-        const jsonEnd = cleaned.lastIndexOf('}');
-        if (jsonEnd > 0 && jsonEnd < cleaned.length - 1) {
+        // 查找JSON结束位置 - 更智能的方法
+        let braceCount = 0;
+        let inString = false;
+        let escapeNext = false;
+        let jsonEnd = -1;
+        
+        for (let i = 0; i < cleaned.length; i++) {
+            const char = cleaned[i];
+            
+            if (escapeNext) {
+                escapeNext = false;
+                continue;
+            }
+            
+            if (char === '\\') {
+                escapeNext = true;
+                continue;
+            }
+            
+            if (char === '"' && !escapeNext) {
+                inString = !inString;
+                continue;
+            }
+            
+            if (!inString) {
+                if (char === '{') {
+                    braceCount++;
+                } else if (char === '}') {
+                    braceCount--;
+                    if (braceCount === 0) {
+                        jsonEnd = i;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (jsonEnd > 0) {
             cleaned = cleaned.substring(0, jsonEnd + 1);
         }
         
@@ -598,29 +633,51 @@ class SQLiteEventGenerator {
      */
     attemptJsonFix(jsonString) {
         try {
-            // 尝试1: 移除末尾的逗号
-            let fixed = jsonString.replace(/,(\s*[}\]])/g, '$1');
+            let fixed = jsonString;
             
-            // 尝试2: 确保字符串正确闭合
+            // 1. 移除末尾的逗号
+            fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+            
+            // 2. 修复未闭合的字符串 - 检查中文字符截断
+            const quotes = (fixed.match(/"/g) || []).length;
+            if (quotes % 2 !== 0) {
+                // 找到最后一个引号的位置
+                const lastQuoteIndex = fixed.lastIndexOf('"');
+                if (lastQuoteIndex > 0) {
+                    const afterLastQuote = fixed.substring(lastQuoteIndex + 1);
+                    
+                    // 检查是否是中文字符被截断
+                    if (afterLastQuote.trim() && !afterLastQuote.includes('"')) {
+                        // 查找最后一个完整的中文字符或英文单词
+                        let cutPoint = lastQuoteIndex + 1;
+                        for (let i = fixed.length - 1; i > lastQuoteIndex; i--) {
+                            const char = fixed[i];
+                            // 如果是完整的中文字符或英文字母
+                            if (/[\u4e00-\u9fff]/.test(char) || /[a-zA-Z]/.test(char)) {
+                                cutPoint = i + 1;
+                                break;
+                            }
+                        }
+                        
+                        // 截断到最后一个完整字符，然后添加引号
+                        fixed = fixed.substring(0, cutPoint) + '"' + fixed.substring(cutPoint).replace(/[^}\]]*$/, '');
+                    }
+                }
+            }
+            
+            // 3. 确保括号匹配
             const openBraces = (fixed.match(/\{/g) || []).length;
             const closeBraces = (fixed.match(/\}/g) || []).length;
             
             if (openBraces > closeBraces) {
-                // 添加缺失的闭合括号
                 fixed += '}'.repeat(openBraces - closeBraces);
             }
             
-            // 尝试3: 修复未闭合的字符串
-            const quotes = (fixed.match(/"/g) || []).length;
-            if (quotes % 2 !== 0) {
-                // 如果引号数量是奇数，在末尾添加一个引号
-                const lastQuoteIndex = fixed.lastIndexOf('"');
-                if (lastQuoteIndex > 0) {
-                    // 检查最后一个引号后是否有未闭合的内容
-                    const afterLastQuote = fixed.substring(lastQuoteIndex + 1);
-                    if (afterLastQuote.trim() && !afterLastQuote.includes('"')) {
-                        fixed = fixed.substring(0, lastQuoteIndex + 1) + '"' + afterLastQuote;
-                    }
+            // 4. 移除可能的尾部垃圾字符
+            fixed = fixed.replace(/[^}\]]*$/, '');
+            if (!fixed.endsWith('}') && !fixed.endsWith(']')) {
+                if (fixed.includes('{')) {
+                    fixed += '}';
                 }
             }
             
@@ -630,6 +687,41 @@ class SQLiteEventGenerator {
             
         } catch (error) {
             console.log('JSON修复失败:', error.message);
+            
+            // 尝试更激进的修复 - 截断到最后一个完整的事件
+            try {
+                const eventMatches = jsonString.match(/"title":\s*"[^"]*"/g);
+                if (eventMatches && eventMatches.length > 0) {
+                    // 找到最后一个完整事件的位置
+                    const lastEventIndex = jsonString.lastIndexOf(eventMatches[eventMatches.length - 1]);
+                    if (lastEventIndex > 0) {
+                        // 从最后一个事件开始，向后查找完整的事件结构
+                        let searchStart = lastEventIndex;
+                        let braceCount = 0;
+                        let eventEnd = -1;
+                        
+                        for (let i = searchStart; i < jsonString.length; i++) {
+                            if (jsonString[i] === '{') braceCount++;
+                            if (jsonString[i] === '}') {
+                                braceCount--;
+                                if (braceCount === 0) {
+                                    eventEnd = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (eventEnd > 0) {
+                            const truncated = jsonString.substring(0, eventEnd + 1) + ']}';
+                            JSON.parse(truncated);
+                            return truncated;
+                        }
+                    }
+                }
+            } catch (truncateError) {
+                console.log('截断修复也失败了:', truncateError.message);
+            }
+            
             return null;
         }
     }
