@@ -1,0 +1,17 @@
+{
+  "name": "jianghu-frontend",
+  "version": "1.0.0",
+  "description": "江湖奇缘 - 智能文字MUD游戏前端",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "build": "echo 'Building frontend...'",
+    "test": "echo 'Running tests...'"
+  },
+  "keywords": ["mud", "game", "text-based", "llm", "wuxia"],
+  "author": "江湖奇缘开发团队",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
