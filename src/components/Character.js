@@ -3,10 +3,13 @@
  * 管理角色的属性、状态、人格和社会属性
  */
 class Character {
-    constructor(name, profession, attributes = {}, storyline = 'xianxia') {
+    constructor(name, profession, attributes = {}, storyline = null) {
         this.name = name;
         this.profession = profession;
-        this.storyline = storyline; // 主线剧情类型
+        
+        // 如果没有指定剧情，则根据角色名字自动分配
+        this.storyline = storyline || this.autoAssignStoryline(name);
+        
         this.level = 1;
         this.experience = 0;
         
@@ -71,6 +74,76 @@ class Character {
         this.adjustPersonalityByProfession();
         
         console.log(`👤 角色创建: ${name} (${this.getProfessionName()}) - ${this.getStorylineName()}`);
+    }
+
+    /**
+     * 根据角色名字自动分配剧情类型
+     */
+    autoAssignStoryline(name) {
+        // 中文名字特征检测
+        const chinesePattern = /[\u4e00-\u9fa5]/;
+        const isChineseName = chinesePattern.test(name);
+        
+        // 特定字符检测
+        const nameFeatures = {
+            // 仙侠修真关键字
+            xianxia: ['仙', '道', '玄', '真', '灵', '天', '云', '剑', '风', '月', '星', '雪', '冰', '火', '雷', '龙', '凤'],
+            // 玄幻关键字
+            xuanhuan: ['魔', '神', '圣', '帝', '王', '皇', '尊', '主', '君', '霸', '战', '斗', '血', '影', '暗', '光'],
+            // 武侠关键字
+            wuxia: ['侠', '武', '刀', '枪', '棍', '拳', '掌', '腿', '功', '法', '招', '式', '江', '湖', '门', '派'],
+            // 西幻关键字
+            fantasy: ['艾', '莉', '安', '娜', '亚', '瑟', '拉', '尔', '丝', '特', '克', '斯', '德', '伦', '卡', '罗']
+        };
+        
+        // 计算每种剧情的匹配分数
+        const scores = {};
+        for (const [storyline, keywords] of Object.entries(nameFeatures)) {
+            scores[storyline] = 0;
+            keywords.forEach(keyword => {
+                if (name.includes(keyword)) {
+                    scores[storyline] += 1;
+                }
+            });
+        }
+        
+        // 找出最高分的剧情类型
+        let maxScore = 0;
+        let selectedStoryline = 'xianxia'; // 默认仙侠
+        
+        for (const [storyline, score] of Object.entries(scores)) {
+            if (score > maxScore) {
+                maxScore = score;
+                selectedStoryline = storyline;
+            }
+        }
+        
+        // 如果没有明显特征，根据名字长度和是否中文进行分配
+        if (maxScore === 0) {
+            if (isChineseName) {
+                // 中文名字随机分配中式剧情
+                const chineseStorylines = ['xianxia', 'xuanhuan', 'wuxia'];
+                selectedStoryline = chineseStorylines[Math.floor(Math.random() * chineseStorylines.length)];
+            } else {
+                // 英文名字倾向于西幻或科幻
+                const westernStorylines = ['fantasy', 'scifi'];
+                selectedStoryline = westernStorylines[Math.floor(Math.random() * westernStorylines.length)];
+            }
+        }
+        
+        console.log(`🎭 根据角色名字"${name}"自动分配剧情: ${this.getStorylineName()} (匹配分数: ${maxScore})`);
+        return selectedStoryline;
+    }
+    getProfessionName() {
+        const names = {
+            warrior: '战士',
+            mage: '法师',
+            rogue: '盗贼',
+            priest: '牧师',
+            ranger: '游侠',
+            noble: '贵族'
+        };
+        return names[this.profession] || this.profession;
     }
 
     /**

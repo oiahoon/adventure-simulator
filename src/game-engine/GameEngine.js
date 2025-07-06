@@ -124,7 +124,6 @@ class GameEngine {
      */
     initCharacterCreation() {
         let selectedProfession = null;
-        let selectedStoryline = 'xianxia'; // 默认仙侠
         let attributes = {
             strength: 10,
             intelligence: 10,
@@ -134,19 +133,6 @@ class GameEngine {
             luck: 10
         };
         let remainingPoints = 10;
-
-        // 添加剧情选择
-        this.addStorylineSelection();
-
-        // 剧情选择事件
-        const storylineCards = document.querySelectorAll('.storyline-card');
-        storylineCards.forEach(card => {
-            card.addEventListener('click', () => {
-                storylineCards.forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                selectedStoryline = card.dataset.storyline;
-            });
-        });
 
         // 职业选择
         const professionCards = document.querySelectorAll('.profession-card');
@@ -161,6 +147,8 @@ class GameEngine {
                 // 重置属性并应用职业加成
                 this.resetAttributes();
                 this.applyProfessionBonus(selectedProfession);
+                
+                console.log('✅ 选择职业:', selectedProfession);
             });
         });
 
@@ -184,26 +172,37 @@ class GameEngine {
         });
 
         // 创建角色按钮
-        document.getElementById('create-character-btn').addEventListener('click', () => {
-            const name = document.getElementById('character-name').value.trim();
-            
-            if (!name) {
-                alert('请输入角色名称');
-                return;
-            }
-            
-            if (!selectedProfession) {
-                alert('请选择职业');
-                return;
-            }
-            
-            this.createCharacter(name, selectedProfession, attributes, selectedStoryline);
-        });
+        const createBtn = document.getElementById('create-character-btn');
+        if (createBtn) {
+            createBtn.addEventListener('click', () => {
+                const name = document.getElementById('character-name').value.trim();
+                
+                if (!name) {
+                    alert('请输入角色名称');
+                    return;
+                }
+                
+                if (!selectedProfession) {
+                    alert('请选择职业');
+                    return;
+                }
+                
+                console.log('🎮 开始创建角色:', { name, profession: selectedProfession, attributes });
+                
+                // 创建角色时不传入storyline，让Character类自动分配
+                this.createCharacter(name, selectedProfession, attributes);
+            });
+        }
 
         // 取消按钮
-        document.getElementById('cancel-creation-btn').addEventListener('click', () => {
-            document.getElementById('character-creation').classList.add('hidden');
-        });
+        const cancelBtn = document.getElementById('cancel-creation-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                document.getElementById('character-creation').classList.add('hidden');
+            });
+        }
+        
+        console.log('🎭 角色创建界面初始化完成（剧情将根据角色名字自动分配）');
     }
 
     /**
@@ -361,9 +360,9 @@ class GameEngine {
     /**
      * 创建角色并开始游戏
      */
-    createCharacter(name, profession, attributes, storyline = 'xianxia') {
-        // 创建角色
-        const character = new Character(name, profession, attributes, storyline);
+    createCharacter(name, profession, attributes) {
+        // 创建角色（剧情将自动分配）
+        const character = new Character(name, profession, attributes);
         
         // 初始化游戏状态
         this.gameState = new GameState(character);
@@ -378,6 +377,7 @@ class GameEngine {
         // 更新UI
         this.uiManager.updateCharacterDisplay(character);
         this.uiManager.addLogEntry('system', `${name}开始了${character.getStorylineName()}的冒险之旅！`);
+        this.uiManager.addLogEntry('system', `🎭 系统根据角色名字自动分配了"${character.getStorylineName()}"剧情`);
         
         // 开始自动保存
         if (window.ProgressManager) {
