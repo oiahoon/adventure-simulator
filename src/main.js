@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         while (attempts < maxAttempts) {
             if (typeof GameEngine !== 'undefined' && 
                 typeof Character !== 'undefined' && 
-                typeof UIManager !== 'undefined') {
+                typeof UIManager !== 'undefined' &&
+                typeof EventSystem !== 'undefined') {
                 break;
             }
             
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (typeof GameEngine === 'undefined') missingClasses.push('GameEngine');
         if (typeof Character === 'undefined') missingClasses.push('Character');
         if (typeof UIManager === 'undefined') missingClasses.push('UIManager');
+        if (typeof EventSystem === 'undefined') missingClasses.push('EventSystem');
         
         if (missingClasses.length > 0) {
             console.error('❌ 缺少必要的类:', missingClasses.join(', '));
@@ -46,7 +48,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         // 检查可选类
         const optionalClasses = [];
         if (typeof AIEventGenerator === 'undefined') optionalClasses.push('AIEventGenerator');
-        if (typeof EventSystem === 'undefined') optionalClasses.push('EventSystem');
         
         if (optionalClasses.length > 0) {
             console.warn('⚠️ 可选类未加载:', optionalClasses.join(', '));

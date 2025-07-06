@@ -449,19 +449,6 @@ class EventSystem {
                 }
             });
         }
-                        } else if (status === 'mp') {
-                            character.status[status] = Math.max(0, Math.min(character.getMaxMP(), character.status[status]));
-                        } else if (status === 'fatigue') {
-                            character.status[status] = Math.max(0, Math.min(100, character.status[status]));
-                        } else if (status === 'wealth') {
-                            character.status[status] = Math.max(0, character.status[status]);
-                        }
-                    }
-                    
-                    hasEffects = true;
-                }
-            });
-        }
         
         // 应用技能获得
         if (effects.skills && effects.skills.length > 0) {

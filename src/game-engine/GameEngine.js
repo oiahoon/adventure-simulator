@@ -11,8 +11,26 @@ class GameEngine {
         this.gameLoop = null;
         
         // 初始化子系统
-        this.eventSystem = new EventSystem();
-        this.uiManager = new UIManager();
+        try {
+            if (typeof EventSystem !== 'undefined') {
+                this.eventSystem = new EventSystem();
+                console.log('✅ EventSystem初始化成功');
+            } else {
+                console.error('❌ EventSystem类未定义');
+                throw new Error('EventSystem类未加载');
+            }
+        } catch (error) {
+            console.error('❌ EventSystem初始化失败:', error);
+            throw error;
+        }
+        
+        try {
+            this.uiManager = new UIManager();
+            console.log('✅ UIManager初始化成功');
+        } catch (error) {
+            console.error('❌ UIManager初始化失败:', error);
+            throw error;
+        }
         
         // 绑定事件
         this.bindEvents();
