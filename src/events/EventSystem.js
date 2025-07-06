@@ -166,8 +166,25 @@ class EventSystem {
             console.log(`📅 处理事件: ${event.title} (来源: ${eventSource})`);
             await this.processEvent(event, gameState);
         } else {
-            console.warn('⚠️ 无法获取任何事件，触发通用事件');
-            this.triggerGenericEvent(gameState);
+            console.warn('⚠️ 无法获取任何事件，生成基础探索事件');
+            // 生成基础探索事件而不是使用内置模板
+            const event = {
+                id: `basic_${Date.now()}`,
+                title: '日常探索',
+                description: `${gameState.character.name}在${gameState.currentLocation}进行日常的探索活动，虽然没有特别的发现，但也积累了一些经验。`,
+                type: 'exploration',
+                effects: {
+                    status: {
+                        experience: Math.floor(Math.random() * 20) + 10, // 10-30经验
+                        fatigue: Math.floor(Math.random() * 5) + 1       // 1-5疲劳
+                    }
+                },
+                rarity: 'common',
+                impact_description: '获得少量经验值'
+            };
+            
+            // 处理这个基础事件
+            await this.processEvent(event, gameState);
         }
     }
 
@@ -387,17 +404,27 @@ class EventSystem {
         if (effects.status) {
             Object.entries(effects.status).forEach(([status, value]) => {
                 if (Math.abs(value) > 0 && character.status[status] !== undefined) {
-                    character.status[status] += value;
                     
-                    // 特殊处理
-                    if (status === 'hp') {
-                        character.status[status] = Math.max(0, Math.min(character.getMaxHP(), character.status[status]));
-                    } else if (status === 'mp') {
-                        character.status[status] = Math.max(0, Math.min(character.getMaxMP(), character.status[status]));
-                    } else if (status === 'fatigue') {
-                        character.status[status] = Math.max(0, Math.min(100, character.status[status]));
-                    } else if (status === 'wealth') {
-                        character.status[status] = Math.max(0, character.status[status]);
+                    // 特殊处理经验值
+                    if (status === 'experience') {
+                        const oldLevel = character.level;
+                        character.gainExperience(value);
+                        if (character.level > oldLevel) {
+                            this.handleLevelUp(character, oldLevel, gameState);
+                        }
+                    } else {
+                        character.status[status] += value;
+                        
+                        // 其他状态的特殊处理
+                        if (status === 'hp') {
+                            character.status[status] = Math.max(0, Math.min(character.getMaxHP(), character.status[status]));
+                        } else if (status === 'mp') {
+                            character.status[status] = Math.max(0, Math.min(character.getMaxMP(), character.status[status]));
+                        } else if (status === 'fatigue') {
+                            character.status[status] = Math.max(0, Math.min(100, character.status[status]));
+                        } else if (status === 'wealth') {
+                            character.status[status] = Math.max(0, character.status[status]);
+                        }
                     }
                     
                     hasEffects = true;
@@ -680,5 +707,38 @@ class EventSystem {
         };
         
         return items[itemId] || { name: '未知物品', type: 'misc', description: '神秘的物品' };
+    }
+
+    /**
+     * 处理升级
+     */
+    async handleLevelUp(character, oldLevel, gameState) {
+        const newLevel = character.level;
+        console.log(`🎉 ${character.name}从${oldLevel}级升级到${newLevel}级！`);
+        
+        // 添加升级日志
+        if (window.gameEngine && window.gameEngine.uiManager) {
+            await window.gameEngine.uiManager.addLogEntry(
+                'levelup', 
+                `🎉 恭喜！${character.name}升级了！等级：${oldLevel} → ${newLevel}`, 
+                null
+            );
+        }
+        
+        // 检查是否解锁新地点
+        const availableLocations = character.getAvailableLocations();
+        const newLocations = availableLocations.filter(loc => 
+            loc.minLevel === newLevel
+        );
+        
+        if (newLocations.length > 0) {
+            if (window.gameEngine && window.gameEngine.uiManager) {
+                await window.gameEngine.uiManager.addLogEntry(
+                    'unlock', 
+                    `🗺️ 升级解锁了新地点：${newLocations.map(loc => loc.name).join('、')}`, 
+                    null
+                );
+            }
+        }
     }
 }

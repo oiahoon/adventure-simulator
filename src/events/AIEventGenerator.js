@@ -401,6 +401,14 @@ class AIEventGenerator {
                 return this.randomSelect(['遇到了意外', '发现了秘密', '听到了声音', '看到了光芒']);
             case 'unexpected_event':
                 return this.randomSelect(['意外发生', '奇迹出现', '危险降临', '机会来临']);
+            case 'specific_area':
+                return this.randomSelect(['村口', '市场', '小径', '广场', '后山', '河边']);
+            case 'exploration_event':
+                return this.randomSelect(['神秘的发现', '意外的遭遇', '隐藏的秘密', '古老的遗迹']);
+            case 'exploration_location':
+                return this.randomSelect(['森林深处', '山洞中', '废墟里', '河流旁', '古树下']);
+            case 'discovery_type':
+                return this.randomSelect(['闪光的物品', '古老的卷轴', '神秘的符文', '珍贵的草药', '奇特的石头']);
             default:
                 console.warn(`未知变量: ${variable}`);
                 return `[${variable}]`; // 返回变量名作为占位符，便于调试

@@ -9,6 +9,7 @@ class UIManager {
         this.isTyping = false;
         this.gameStartTime = Date.now();
         this.storyLog = []; // 完整的故事日志，用于导出
+        this.gameTimeCounter = 0; // 使用游戏内部计数器而不是实际时间
         
         console.log('🎨 UI管理器初始化完成');
     }
@@ -59,18 +60,30 @@ class UIManager {
         const hpFill = document.getElementById('hp-fill');
         const hpText = document.getElementById('hp-text');
         if (hpFill && hpText) {
-            const hpPercent = (character.status.hp / character.status.maxHp) * 100;
-            hpFill.style.width = `${hpPercent}%`;
-            hpText.textContent = `${character.status.hp}/${character.status.maxHp}`;
+            const maxHp = character.getMaxHP();
+            const hpPercent = (character.status.hp / maxHp) * 100;
+            hpFill.style.width = `${Math.max(0, hpPercent)}%`;
+            hpText.textContent = `${character.status.hp}/${maxHp}`;
         }
         
         // 更新魔法值
         const mpFill = document.getElementById('mp-fill');
         const mpText = document.getElementById('mp-text');
         if (mpFill && mpText) {
-            const mpPercent = (character.status.mp / character.status.maxMp) * 100;
-            mpFill.style.width = `${mpPercent}%`;
-            mpText.textContent = `${character.status.mp}/${character.status.maxMp}`;
+            const maxMp = character.getMaxMP();
+            const mpPercent = (character.status.mp / maxMp) * 100;
+            mpFill.style.width = `${Math.max(0, mpPercent)}%`;
+            mpText.textContent = `${character.status.mp}/${maxMp}`;
+        }
+        
+        // 更新经验值
+        const expFill = document.getElementById('exp-fill');
+        const expText = document.getElementById('exp-text');
+        if (expFill && expText) {
+            const requiredExp = character.getRequiredExperience();
+            const expPercent = (character.experience / requiredExp) * 100;
+            expFill.style.width = `${Math.max(0, expPercent)}%`;
+            expText.textContent = `${character.experience}/${requiredExp}`;
         }
     }
 
@@ -85,13 +98,9 @@ class UIManager {
 
         const now = timestamp || Date.now();
         
-        // 确保游戏开始时间不晚于当前时间
-        if (this.gameStartTime > now) {
-            this.gameStartTime = now;
-        }
-        
-        const gameTimeMs = Math.max(0, now - this.gameStartTime);
-        const gameTime = this.formatGameTime(gameTimeMs);
+        // 使用游戏内部计数器计算游戏时间
+        this.gameTimeCounter += 1;
+        const gameTime = this.formatGameTimeFromCounter(this.gameTimeCounter);
         const realTime = new Date(now).toLocaleTimeString();
 
         // 创建日志条目
@@ -176,6 +185,22 @@ class UIManager {
     /**
      * 格式化游戏时间
      */
+    formatGameTimeFromCounter(counter) {
+        // 每10个计数器单位 = 1小时游戏时间
+        const hours = Math.floor(counter / 10);
+        const minutes = (counter % 10) * 6; // 0-54分钟
+        
+        if (hours > 24) {
+            const days = Math.floor(hours / 24);
+            const remainingHours = hours % 24;
+            return `第${days}天${remainingHours}时`;
+        } else if (hours > 0) {
+            return `第${hours}时${minutes}分`;
+        } else {
+            return `第${minutes}分`;
+        }
+    }
+
     formatGameTime(milliseconds) {
         // 确保不是负数
         const ms = Math.max(0, milliseconds);

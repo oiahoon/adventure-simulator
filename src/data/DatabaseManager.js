@@ -378,6 +378,7 @@ class DatabaseManager {
                 eventHistory: gameState.eventHistory || [],
                 achievements: gameState.achievements || [],
                 statistics: gameState.statistics || {},
+                currentLocation: gameState.currentLocation || '新手村',
                 timestamp: Date.now()
             };
             
@@ -388,9 +389,12 @@ class DatabaseManager {
                     return await this.saveToIndexedDB(saveKey, saveData);
                 case 'localstorage':
                     return this.saveToLocalStorage(saveKey, saveData);
+                case 'sqlite-file':
+                    console.warn('SQLite文件存储不支持游戏保存，降级到localStorage');
+                    return this.saveToLocalStorage(saveKey, saveData);
                 default:
-                    console.warn('当前存储方式不支持保存游戏');
-                    return false;
+                    console.log('使用localStorage作为默认保存方式');
+                    return this.saveToLocalStorage(saveKey, saveData);
             }
         } catch (error) {
             console.error('保存游戏失败:', error);

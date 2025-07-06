@@ -73,7 +73,7 @@ class ProgressManager {
             
             // 在UI中显示保存提示
             if (window.gameEngine && window.gameEngine.uiManager) {
-                window.gameEngine.uiManager.showNotification('游戏已自动保存', 'info', 2000);
+                await window.gameEngine.uiManager.addLogEntry('system', '💾 游戏已自动保存');
             }
             
             console.log('💾 游戏已自动保存');
@@ -282,7 +282,7 @@ class ProgressManager {
                 );
             }
             
-            gameEngine.uiManager.showNotification('游戏已保存', 'success', 3000);
+            await gameEngine.uiManager.addLogEntry('system', '💾 游戏已保存');
             console.log('💾 手动保存完成:', saveId);
             
             return saveId;
@@ -290,7 +290,7 @@ class ProgressManager {
         } catch (error) {
             console.error('❌ 手动保存失败:', error);
             if (gameEngine && gameEngine.uiManager) {
-                gameEngine.uiManager.showNotification('保存失败', 'error', 3000);
+                await gameEngine.uiManager.addLogEntry('system', '❌ 保存失败');
             }
             throw error;
         }
