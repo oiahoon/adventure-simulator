@@ -167,21 +167,8 @@ class EventSystem {
             await this.processEvent(event, gameState);
         } else {
             console.warn('⚠️ 无法获取任何事件，生成基础探索事件');
-            // 生成基础探索事件而不是使用内置模板
-            const event = {
-                id: `basic_${Date.now()}`,
-                title: '日常探索',
-                description: `${gameState.character.name}在${gameState.currentLocation}进行日常的探索活动，虽然没有特别的发现，但也积累了一些经验。`,
-                type: 'exploration',
-                effects: {
-                    status: {
-                        experience: Math.floor(Math.random() * 20) + 10, // 10-30经验
-                        fatigue: Math.floor(Math.random() * 5) + 1       // 1-5疲劳
-                    }
-                },
-                rarity: 'common',
-                impact_description: '获得少量经验值'
-            };
+            // 生成更有意义的基础探索事件
+            const event = this.generateMeaningfulEvent(gameState);
             
             // 处理这个基础事件
             await this.processEvent(event, gameState);
@@ -462,13 +449,10 @@ class EventSystem {
         
         // 应用物品获得
         if (effects.items && effects.items.length > 0) {
+            console.log('🎒 应用物品获得:', effects.items);
             effects.items.forEach(item => {
-                character.inventory.push({
-                    name: item,
-                    type: 'misc',
-                    description: '通过事件获得的物品',
-                    obtainedAt: Date.now()
-                });
+                character.addItem(item);
+                console.log(`  获得物品: ${typeof item === 'string' ? item : item.name}`);
                 hasEffects = true;
             });
         }
@@ -757,6 +741,344 @@ class EventSystem {
                     null
                 );
             }
+    /**
+     * 生成有意义的事件
+     */
+    generateMeaningfulEvent(gameState) {
+        const character = gameState.character;
+        const location = gameState.currentLocation;
+        const level = character.level;
+        
+        // 根据角色等级和地点生成不同类型的事件
+        const eventTypes = [
+            'combat', 'treasure', 'skill_training', 'social', 'mystery', 
+            'merchant', 'quest', 'exploration', 'challenge'
+        ];
+        
+        const eventType = this.randomSelect(eventTypes);
+        const eventId = `${eventType}_${Date.now()}`;
+        
+        switch (eventType) {
+            case 'combat':
+                return this.generateCombatEvent(eventId, character, location);
+            case 'treasure':
+                return this.generateTreasureEvent(eventId, character, location);
+            case 'skill_training':
+                return this.generateSkillTrainingEvent(eventId, character, location);
+            case 'social':
+                return this.generateSocialEvent(eventId, character, location);
+            case 'mystery':
+                return this.generateMysteryEvent(eventId, character, location);
+            case 'merchant':
+                return this.generateMerchantEvent(eventId, character, location);
+            case 'quest':
+                return this.generateQuestEvent(eventId, character, location);
+            case 'challenge':
+                return this.generateChallengeEvent(eventId, character, location);
+            default:
+                return this.generateExplorationEvent(eventId, character, location);
         }
     }
-}
+
+    /**
+     * 生成战斗事件
+     */
+    generateCombatEvent(id, character, location) {
+        const enemies = ['野狼', '盗贼', '哥布林', '骷髅战士', '森林熊', '毒蛇'];
+        const enemy = this.randomSelect(enemies);
+        const victory = Math.random() > 0.3; // 70%胜率
+        
+        if (victory) {
+            const expGain = Math.floor(Math.random() * 40) + 20; // 20-60经验
+            const goldGain = Math.floor(Math.random() * 50) + 10; // 10-60金币
+            const hpLoss = Math.floor(Math.random() * 15) + 5;   // 5-20生命值损失
+            
+            return {
+                id,
+                title: `击败${enemy}`,
+                description: `在${location}，${character.name}遭遇了一只${enemy}。经过激烈的战斗，${character.name}成功击败了敌人，获得了战斗经验和战利品。`,
+                type: 'combat',
+                effects: {
+                    status: {
+                        experience: expGain,
+                        wealth: goldGain,
+                        hp: -hpLoss
+                    },
+                    attributes: {
+                        strength: Math.random() > 0.7 ? 1 : 0,
+                        constitution: Math.random() > 0.8 ? 1 : 0
+                    }
+                },
+                rarity: 'common',
+                impact_description: `获得${expGain}经验值，${goldGain}金币，损失${hpLoss}生命值`
+            };
+        } else {
+            return {
+                id,
+                title: `逃离${enemy}`,
+                description: `在${location}，${character.name}遭遇了一只强大的${enemy}。明智地选择了撤退，虽然没有收获，但保住了性命。`,
+                type: 'combat',
+                effects: {
+                    status: {
+                        experience: 5,
+                        hp: -Math.floor(Math.random() * 10) + 5
+                    },
+                    attributes: {
+                        dexterity: Math.random() > 0.8 ? 1 : 0
+                    }
+                },
+                rarity: 'common',
+                impact_description: '获得少量经验，损失一些生命值'
+            };
+        }
+    }
+
+    /**
+     * 生成宝藏事件
+     */
+    generateTreasureEvent(id, character, location) {
+        const treasures = [
+            { name: '古老的药水', type: 'consumable', effect: { hp: 50 } },
+            { name: '魔法护符', type: 'accessory', effect: { mp: 20 } },
+            { name: '锋利的匕首', type: 'weapon', effect: { strength: 2 } },
+            { name: '智慧之书', type: 'book', effect: { intelligence: 2 } },
+            { name: '敏捷靴子', type: 'equipment', effect: { dexterity: 2 } }
+        ];
+        
+        const treasure = this.randomSelect(treasures);
+        const goldFind = Math.floor(Math.random() * 100) + 50; // 50-150金币
+        
+        return {
+            id,
+            title: `发现宝藏`,
+            description: `在${location}的一个隐秘角落，${character.name}发现了一个古老的宝箱。里面有${treasure.name}和一些金币。`,
+            type: 'treasure',
+            effects: {
+                status: {
+                    experience: 30,
+                    wealth: goldFind,
+                    ...treasure.effect
+                },
+                items: [treasure.name],
+                attributes: treasure.effect
+            },
+            rarity: 'uncommon',
+            impact_description: `获得${treasure.name}、${goldFind}金币和30经验值`
+        };
+    }
+
+    /**
+     * 生成技能训练事件
+     */
+    generateSkillTrainingEvent(id, character, location) {
+        const skills = ['剑术', '魔法', '潜行', '治疗', '锻造', '炼金'];
+        const skill = this.randomSelect(skills);
+        const attributeMap = {
+            '剑术': 'strength',
+            '魔法': 'intelligence', 
+            '潜行': 'dexterity',
+            '治疗': 'constitution',
+            '锻造': 'strength',
+            '炼金': 'intelligence'
+        };
+        
+        const attribute = attributeMap[skill];
+        const attributeGain = Math.floor(Math.random() * 2) + 1; // 1-2属性点
+        
+        return {
+            id,
+            title: `${skill}训练`,
+            description: `在${location}，${character.name}遇到了一位${skill}大师，接受了专业的训练指导。通过刻苦练习，技能得到了显著提升。`,
+            type: 'skill_training',
+            effects: {
+                status: {
+                    experience: 25,
+                    fatigue: 10
+                },
+                attributes: {
+                    [attribute]: attributeGain
+                },
+                skills: [skill]
+            },
+            rarity: 'uncommon',
+            impact_description: `${attribute}+${attributeGain}，学会${skill}技能`
+        };
+    }
+
+    /**
+     * 生成社交事件
+     */
+    generateSocialEvent(id, character, location) {
+        const npcs = ['商人', '学者', '贵族', '农夫', '冒险者'];
+        const npc = this.randomSelect(npcs);
+        const reputationGain = Math.floor(Math.random() * 20) + 10; // 10-30声望
+        
+        return {
+            id,
+            title: `与${npc}交谈`,
+            description: `在${location}，${character.name}遇到了一位友善的${npc}。通过愉快的交谈，${character.name}获得了有用的信息和当地人的好感。`,
+            type: 'social',
+            effects: {
+                status: {
+                    experience: 15
+                },
+                social: {
+                    reputation: reputationGain,
+                    influence: Math.floor(reputationGain / 2)
+                },
+                attributes: {
+                    charisma: Math.random() > 0.7 ? 1 : 0
+                }
+            },
+            rarity: 'common',
+            impact_description: `声望+${reputationGain}，魅力可能提升`
+        };
+    }
+
+    /**
+     * 生成神秘事件
+     */
+    generateMysteryEvent(id, character, location) {
+        const mysteries = ['古老遗迹', '神秘符文', '魔法水晶', '预言石碑', '时空裂缝'];
+        const mystery = this.randomSelect(mysteries);
+        
+        return {
+            id,
+            title: `神秘的${mystery}`,
+            description: `在${location}，${character.name}发现了一个神秘的${mystery}。虽然无法完全理解其含义，但感受到了强大的魔法力量。`,
+            type: 'mystery',
+            effects: {
+                status: {
+                    experience: 40,
+                    mp: Math.floor(Math.random() * 30) + 10
+                },
+                attributes: {
+                    intelligence: Math.random() > 0.6 ? 1 : 0,
+                    luck: Math.random() > 0.8 ? 1 : 0
+                },
+                titles: Math.random() > 0.9 ? ['神秘探索者'] : []
+            },
+            rarity: 'rare',
+            impact_description: '获得大量经验值和魔法力量'
+        };
+    }
+
+    /**
+     * 生成商人事件
+     */
+    generateMerchantEvent(id, character, location) {
+        const items = ['生命药水', '魔法药水', '铁剑', '皮甲', '魔法卷轴'];
+        const item = this.randomSelect(items);
+        const price = Math.floor(Math.random() * 100) + 50;
+        
+        // 简化：直接给予物品和消耗金币
+        return {
+            id,
+            title: `遇到商人`,
+            description: `在${location}，${character.name}遇到了一位旅行商人。商人出售各种有用的物品，${character.name}购买了${item}。`,
+            type: 'merchant',
+            effects: {
+                status: {
+                    experience: 10,
+                    wealth: -Math.min(price, character.status.wealth || 100)
+                },
+                items: [item]
+            },
+            rarity: 'common',
+            impact_description: `获得${item}，花费一些金币`
+        };
+    }
+
+    /**
+     * 生成任务事件
+     */
+    generateQuestEvent(id, character, location) {
+        const quests = ['寻找丢失的物品', '护送商队', '清理怪物', '收集草药', '传递消息'];
+        const quest = this.randomSelect(quests);
+        const reward = Math.floor(Math.random() * 100) + 50;
+        
+        return {
+            id,
+            title: `接受任务：${quest}`,
+            description: `在${location}，${character.name}接受了一个任务：${quest}。经过努力完成了任务，获得了丰厚的奖励。`,
+            type: 'quest',
+            effects: {
+                status: {
+                    experience: Math.floor(Math.random() * 50) + 30, // 30-80经验
+                    wealth: reward
+                },
+                social: {
+                    reputation: 15
+                },
+                attributes: {
+                    [this.randomSelect(['strength', 'intelligence', 'dexterity', 'constitution', 'charisma'])]: 1
+                }
+            },
+            rarity: 'uncommon',
+            impact_description: `获得大量经验值、${reward}金币和声望`
+        };
+    }
+
+    /**
+     * 生成挑战事件
+     */
+    generateChallengeEvent(id, character, location) {
+        const challenges = ['智力谜题', '体力考验', '勇气试炼', '技巧挑战', '意志测试'];
+        const challenge = this.randomSelect(challenges);
+        const success = Math.random() > 0.4; // 60%成功率
+        
+        if (success) {
+            return {
+                id,
+                title: `挑战成功：${challenge}`,
+                description: `在${location}，${character.name}面临了一个${challenge}。凭借智慧和勇气，成功完成了挑战。`,
+                type: 'challenge',
+                effects: {
+                    status: {
+                        experience: Math.floor(Math.random() * 60) + 40 // 40-100经验
+                    },
+                    attributes: {
+                        [this.randomSelect(['strength', 'intelligence', 'dexterity', 'constitution', 'charisma', 'luck'])]: Math.floor(Math.random() * 2) + 1
+                    },
+                    titles: Math.random() > 0.8 ? ['挑战者'] : []
+                },
+                rarity: 'rare',
+                impact_description: '获得大量经验值和属性提升'
+            };
+        } else {
+            return {
+                id,
+                title: `挑战失败：${challenge}`,
+                description: `在${location}，${character.name}面临了一个困难的${challenge}，但这次没有成功。不过失败也是一种学习。`,
+                type: 'challenge',
+                effects: {
+                    status: {
+                        experience: 15,
+                        hp: -10
+                    }
+                },
+                rarity: 'common',
+                impact_description: '获得少量经验值，损失一些生命值'
+            };
+        }
+    }
+
+    /**
+     * 生成探索事件
+     */
+    generateExplorationEvent(id, character, location) {
+        return {
+            id,
+            title: '深度探索',
+            description: `${character.name}在${location}进行了深入的探索，发现了一些有趣的地方，积累了宝贵的经验。`,
+            type: 'exploration',
+            effects: {
+                status: {
+                    experience: Math.floor(Math.random() * 30) + 20, // 20-50经验
+                    fatigue: Math.floor(Math.random() * 8) + 2       // 2-10疲劳
+                }
+            },
+            rarity: 'common',
+            impact_description: '获得探索经验'
+        };
+    }

@@ -49,7 +49,55 @@ class UIManager {
         const reputationElement = document.getElementById('reputation-display');
         
         if (wealthElement) wealthElement.textContent = character.status.wealth || 0;
-        if (reputationElement) reputationElement.textContent = character.status.reputation || 0;
+        if (reputationElement) reputationElement.textContent = character.social?.reputation || 0;
+        
+        // 更新物品显示
+        this.updateInventoryDisplay(character);
+        
+        // 更新技能显示
+        this.updateSkillsDisplay(character);
+    }
+
+    /**
+     * 更新物品显示
+     */
+    updateInventoryDisplay(character) {
+        const inventoryElement = document.getElementById('inventory-list');
+        if (!inventoryElement) return;
+        
+        if (!character.inventory || character.inventory.length === 0) {
+            inventoryElement.innerHTML = '<div class="empty-inventory">背包空空如也</div>';
+            return;
+        }
+        
+        const itemsHtml = character.inventory.map(item => {
+            const quantity = item.quantity > 1 ? ` x${item.quantity}` : '';
+            return `<div class="inventory-item">
+                <span class="item-name">${item.name}${quantity}</span>
+                <span class="item-type">[${item.type || 'misc'}]</span>
+            </div>`;
+        }).join('');
+        
+        inventoryElement.innerHTML = itemsHtml;
+    }
+
+    /**
+     * 更新技能显示
+     */
+    updateSkillsDisplay(character) {
+        const skillsElement = document.getElementById('skills-list');
+        if (!skillsElement) return;
+        
+        if (!character.skills || character.skills.length === 0) {
+            skillsElement.innerHTML = '<div class="empty-skills">尚未学会任何技能</div>';
+            return;
+        }
+        
+        const skillsHtml = character.skills.map(skill => 
+            `<div class="skill-item">⚡ ${skill}</div>`
+        ).join('');
+        
+        skillsElement.innerHTML = skillsHtml;
     }
 
     /**

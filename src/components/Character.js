@@ -545,7 +545,61 @@ class Character {
      * 添加物品到背包
      */
     addItem(item) {
-        this.inventory.push(item);
+        if (!this.inventory) {
+            this.inventory = [];
+        }
+        
+        // 如果是字符串，转换为物品对象
+        if (typeof item === 'string') {
+            item = {
+                name: item,
+                type: 'misc',
+                description: '获得的物品',
+                quantity: 1,
+                obtainedAt: Date.now()
+            };
+        }
+        
+        // 检查是否已有相同物品
+        const existingItem = this.inventory.find(inv => inv.name === item.name);
+        if (existingItem) {
+            existingItem.quantity = (existingItem.quantity || 1) + (item.quantity || 1);
+        } else {
+            this.inventory.push(item);
+        }
+        
+        console.log(`🎒 ${this.name}获得物品: ${item.name}`);
+        
+        // 如果物品有即时效果，立即应用
+        if (item.effect) {
+            this.applyItemEffect(item.effect);
+        }
+    }
+
+    /**
+     * 应用物品效果
+     */
+    applyItemEffect(effect) {
+        if (effect.hp) {
+            this.status.hp = Math.min(this.getMaxHP(), this.status.hp + effect.hp);
+            console.log(`💚 生命值恢复: +${effect.hp}`);
+        }
+        if (effect.mp) {
+            this.status.mp = Math.min(this.getMaxMP(), this.status.mp + effect.mp);
+            console.log(`💙 魔法值恢复: +${effect.mp}`);
+        }
+        if (effect.strength) {
+            this.attributes.strength += effect.strength;
+            console.log(`💪 力量提升: +${effect.strength}`);
+        }
+        if (effect.intelligence) {
+            this.attributes.intelligence += effect.intelligence;
+            console.log(`🧠 智力提升: +${effect.intelligence}`);
+        }
+        if (effect.dexterity) {
+            this.attributes.dexterity += effect.dexterity;
+            console.log(`🏃 敏捷提升: +${effect.dexterity}`);
+        }
     }
 
     /**

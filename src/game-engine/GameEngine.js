@@ -493,8 +493,8 @@ class GameEngine {
             this.checkLocationChange();
         }
         
-        // 每5-10步触发一次事件
-        const eventInterval = Math.floor(Math.random() * 6) + 5; // 5-10步
+        // 增加事件触发频率，让游戏更有趣
+        const eventInterval = Math.floor(Math.random() * 3) + 2; // 2-4步触发一次（原来5-10步）
         if (this.gameState.gameTime % eventInterval === 0) {
             try {
                 await this.eventSystem.triggerRandomEvent(this.gameState);
