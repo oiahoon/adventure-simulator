@@ -13,9 +13,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('🎮 冒险模拟器启动中...');
     
     try {
+        // 等待一小段时间确保所有脚本加载完成
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 检查必要的类是否存在
+        if (typeof GameEngine === 'undefined') {
+            throw new Error('GameEngine 类未定义');
+        }
+        
+        if (typeof Character === 'undefined') {
+            throw new Error('Character 类未定义');
+        }
+        
         // 初始化数据库
-        await window.DatabaseManager.waitForInit();
-        console.log('💾 数据库初始化完成');
+        if (window.DatabaseManager) {
+            await window.DatabaseManager.waitForInit();
+            console.log('💾 数据库初始化完成');
+        }
         
         // 初始化游戏引擎
         gameEngine = new GameEngine();
@@ -30,16 +44,63 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // 预加载生成的事件
         if (window.GeneratedEventLoader) {
-            await window.GeneratedEventLoader.preloadEvents();
+            try {
+                await window.GeneratedEventLoader.preloadEvents();
+            } catch (error) {
+                console.warn('预加载事件失败:', error);
+            }
         }
         
         console.log('✅ 游戏初始化完成');
         
+        // 测试按钮功能
+        testButtonFunctionality();
+        
     } catch (error) {
         console.error('❌ 游戏初始化失败:', error);
-        showErrorMessage('游戏初始化失败，请刷新页面重试。');
+        showErrorMessage('游戏初始化失败：' + error.message + '。请刷新页面重试。');
     }
 });
+
+/**
+ * 测试按钮功能
+ */
+function testButtonFunctionality() {
+    const newGameBtn = document.getElementById('new-game-btn');
+    if (newGameBtn) {
+        console.log('✅ 新游戏按钮存在');
+        
+        // 测试点击事件
+        const testClick = () => {
+            console.log('🧪 测试点击新游戏按钮');
+            const modal = document.getElementById('character-creation');
+            if (modal) {
+                console.log('✅ 角色创建模态框存在');
+                modal.classList.remove('hidden');
+                console.log('✅ 模态框显示成功');
+                
+                // 3秒后自动隐藏（仅用于测试）
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    console.log('🧪 测试完成，模态框已隐藏');
+                }, 3000);
+            } else {
+                console.error('❌ 角色创建模态框不存在');
+            }
+        };
+        
+        // 添加测试按钮
+        const testBtn = document.createElement('button');
+        testBtn.textContent = '🧪 测试模态框';
+        testBtn.className = 'btn btn-secondary';
+        testBtn.style.marginLeft = '10px';
+        testBtn.addEventListener('click', testClick);
+        newGameBtn.parentNode.appendChild(testBtn);
+        
+    } else {
+        console.error('❌ 新游戏按钮不存在');
+    }
+}
 
 /**
  * 检查并恢复游戏进度

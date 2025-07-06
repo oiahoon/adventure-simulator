@@ -25,52 +25,98 @@ class GameEngine {
      * 绑定UI事件
      */
     bindEvents() {
+        console.log('🔗 开始绑定事件监听器...');
+        
         // 新游戏按钮
-        document.getElementById('new-game-btn').addEventListener('click', () => {
-            this.showCharacterCreation();
-        });
+        const newGameBtn = document.getElementById('new-game-btn');
+        if (newGameBtn) {
+            newGameBtn.addEventListener('click', () => {
+                console.log('🎮 新游戏按钮被点击');
+                this.showCharacterCreation();
+            });
+            console.log('✅ 新游戏按钮事件绑定成功');
+        } else {
+            console.error('❌ 找不到新游戏按钮');
+        }
 
         // 游戏控制按钮
-        document.getElementById('pause-btn').addEventListener('click', () => {
-            this.togglePause();
-        });
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                console.log('⏸️ 暂停按钮被点击');
+                this.togglePause();
+            });
+        }
 
-        document.getElementById('step-btn').addEventListener('click', () => {
-            this.stepForward();
-        });
+        const stepBtn = document.getElementById('step-btn');
+        if (stepBtn) {
+            stepBtn.addEventListener('click', () => {
+                console.log('⏭️ 单步按钮被点击');
+                this.stepForward();
+            });
+        }
 
-        document.getElementById('auto-btn').addEventListener('click', () => {
-            this.setAutoMode();
-        });
+        const autoBtn = document.getElementById('auto-btn');
+        if (autoBtn) {
+            autoBtn.addEventListener('click', () => {
+                console.log('🤖 自动按钮被点击');
+                this.setAutoMode();
+            });
+        }
 
-        document.getElementById('fast-btn').addEventListener('click', () => {
-            this.setFastMode();
-        });
+        const fastBtn = document.getElementById('fast-btn');
+        if (fastBtn) {
+            fastBtn.addEventListener('click', () => {
+                console.log('⚡ 快速按钮被点击');
+                this.setFastMode();
+            });
+        }
 
         // 速度滑块
-        document.getElementById('speed-slider').addEventListener('input', (e) => {
-            this.setGameSpeed(parseInt(e.target.value));
-        });
+        const speedSlider = document.getElementById('speed-slider');
+        if (speedSlider) {
+            speedSlider.addEventListener('input', (e) => {
+                this.setGameSpeed(parseInt(e.target.value));
+            });
+        }
 
         // 保存/加载
-        document.getElementById('save-game-btn').addEventListener('click', () => {
-            this.saveGame();
-        });
+        const saveGameBtn = document.getElementById('save-game-btn');
+        if (saveGameBtn) {
+            saveGameBtn.addEventListener('click', () => {
+                console.log('💾 保存游戏按钮被点击');
+                if (window.ProgressManager && this.gameState) {
+                    window.ProgressManager.manualSave(this);
+                }
+            });
+        }
 
-        document.getElementById('load-game-btn').addEventListener('click', () => {
-            this.loadGame();
-        });
+        const loadGameBtn = document.getElementById('load-game-btn');
+        if (loadGameBtn) {
+            loadGameBtn.addEventListener('click', () => {
+                console.log('📁 加载游戏按钮被点击');
+                this.loadGame();
+            });
+        }
+        
+        console.log('🔗 事件监听器绑定完成');
     }
 
     /**
      * 显示角色创建界面
      */
     showCharacterCreation() {
+        console.log('🎭 显示角色创建界面');
         const modal = document.getElementById('character-creation');
-        modal.classList.remove('hidden');
-        
-        // 初始化角色创建逻辑
-        this.initCharacterCreation();
+        if (modal) {
+            modal.classList.remove('hidden');
+            console.log('✅ 角色创建模态框已显示');
+            
+            // 初始化角色创建逻辑
+            this.initCharacterCreation();
+        } else {
+            console.error('❌ 找不到角色创建模态框');
+        }
     }
 
     /**
@@ -295,9 +341,9 @@ class GameEngine {
     /**
      * 创建角色并开始游戏
      */
-    createCharacter(name, profession, attributes) {
+    createCharacter(name, profession, attributes, storyline = 'xianxia') {
         // 创建角色
-        const character = new Character(name, profession, attributes);
+        const character = new Character(name, profession, attributes, storyline);
         
         // 初始化游戏状态
         this.gameState = new GameState(character);
@@ -311,7 +357,12 @@ class GameEngine {
         
         // 更新UI
         this.uiManager.updateCharacterDisplay(character);
-        this.uiManager.addLogEntry('system', `${name}开始了冒险之旅！`);
+        this.uiManager.addLogEntry('system', `${name}开始了${character.getStorylineName()}的冒险之旅！`);
+        
+        // 开始自动保存
+        if (window.ProgressManager) {
+            window.ProgressManager.startAutoSave(this);
+        }
         
         // 开始游戏
         this.startGame();
@@ -366,7 +417,7 @@ class GameEngine {
     /**
      * 游戏步进
      */
-    gameStep() {
+    async gameStep() {
         if (!this.gameState || !this.isRunning) return;
         
         // 检查游戏结束条件
@@ -379,10 +430,19 @@ class GameEngine {
         this.updateCharacterStatus();
         
         // 触发新事件
-        this.eventSystem.triggerRandomEvent(this.gameState);
+        try {
+            await this.eventSystem.triggerRandomEvent(this.gameState);
+        } catch (error) {
+            console.error('触发事件失败:', error);
+            // 降级到传统事件
+            this.eventSystem.triggerGenericEvent(this.gameState);
+        }
         
         // 更新UI
         this.uiManager.updateAll(this.gameState);
+        
+        // 增加游戏时间
+        this.gameState.gameTime++;
     }
 
     /**
