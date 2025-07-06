@@ -136,14 +136,14 @@ class Character {
     }
     getProfessionName() {
         const names = {
-            warrior: '战士',
-            mage: '法师',
-            rogue: '盗贼',
-            priest: '牧师',
-            ranger: '游侠',
-            noble: '贵族'
+            warrior: '武者',
+            mage: '术士', 
+            rogue: '游侠',
+            priest: '僧侣',
+            ranger: '猎户',
+            noble: '文士'
         };
-        return names[this.profession] || this.profession;
+        return names[this.profession] || '江湖人士';
     }
 
     /**
@@ -272,14 +272,14 @@ class Character {
      */
     getInitialSkills() {
         const skillSets = {
-            warrior: ['剑术', '盾牌防御', '战斗怒吼'],
-            mage: ['火球术', '治疗术', '魔法护盾'],
-            rogue: ['潜行', '开锁', '偷窃'],
-            priest: ['治疗术', '祝福', '驱邪'],
-            ranger: ['射击', '追踪', '野外生存'],
-            noble: ['说服', '贿赂', '社交']
+            warrior: ['基础刀法', '内功心法', '铁布衫'],
+            mage: ['符咒之术', '奇门遁甲', '炼丹术'],
+            rogue: ['轻功身法', '暗器手法', '易容术'],
+            priest: ['佛门武学', '医术', '禅定'],
+            ranger: ['弓箭术', '追踪术', '野外生存'],
+            noble: ['诗词歌赋', '琴棋书画', '社交礼仪']
         };
-        return skillSets[this.profession] || [];
+        return skillSets[this.profession] || ['基础武学'];
     }
 
     /**

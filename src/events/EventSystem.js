@@ -198,7 +198,6 @@ class EventSystem {
             console.warn('⚠️ 无法获取任何事件');
         }
     }
-    }
 
     /**
      * 获取LLM生成的事件
