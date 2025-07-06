@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏测试</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff41;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+        }
+        .success { color: #00ff41; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+        button {
+            background: #003300;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #004400;
+        }
+        #log {
+            height: 300px;
+            overflow-y: auto;
+            background: #001100;
+            padding: 10px;
+            border: 1px solid #00ff41;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 冒险模拟器 - 功能测试</h1>
+    
+    <div class="test-section">
+        <h2>📋 脚本加载测试</h2>
+        <div id="script-status">检查中...</div>
+        <button onclick="testScriptLoading()">重新检查脚本</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>👤 角色创建测试</h2>
+        <button onclick="testCharacterCreation()">测试角色创建</button>
+        <div id="character-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎲 事件系统测试</h2>
+        <button onclick="testEventSystem()">测试事件系统</button>
+        <div id="event-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>💾 数据库测试</h2>
+        <button onclick="testDatabase()">测试数据库</button>
+        <div id="database-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎮 游戏引擎测试</h2>
+        <button onclick="testGameEngine()">测试游戏引擎</button>
+        <div id="engine-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📖 UI管理器测试</h2>
+        <button onclick="testUIManager()">测试UI管理器</button>
+        <div id="ui-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔄 完整流程测试</h2>
+        <button onclick="testFullWorkflow()">运行完整测试</button>
+        <div id="workflow-status"></div>
+    </div>
+    
+    <div id="log"></div>
+
+    <!-- 加载游戏脚本 -->
+    <script src="src/data/DatabaseManager.js"></script>
+    <script src="src/game-engine/ProgressManager.js"></script>
+    <script src="src/components/AchievementSystem.js"></script>
+    <script src="src/events/GeneratedEventLoader.js"></script>
+    <script src="src/events/AIEventGenerator.js"></script>
+    <script src="src/components/Character.js"></script>
+    <script src="src/events/EventSystem.js"></script>
+    <script src="src/ui/UIManager.js"></script>
+    <script src="src/game-engine/GameEngine.js"></script>
+
+    <script>
+        let testLog = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testLog.push(logEntry);
+            
+            const logDiv = document.getElementById('log');
+            const p = document.createElement('p');
+            p.textContent = logEntry;
+            p.className = type;
+            logDiv.appendChild(p);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(logEntry);
+        }
+        
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<span class="${type}">${message}</span>`;
+        }
+        
+        // 脚本加载测试
+        function testScriptLoading() {
+            log('🔍 开始检查脚本加载状态...');
+            
+            const requiredClasses = [
+                'Character',
+                'GameEngine', 
+                'UIManager',
+                'EventSystem',
+                'DatabaseManager',
+                'GeneratedEventLoader',
+                'AIEventGenerator',
+                'AchievementSystem'
+            ];
+            
+            let loadedCount = 0;
+            let results = [];
+            
+            requiredClasses.forEach(className => {
+                if (typeof window[className] !== 'undefined') {
+                    results.push(`✅ ${className} - 已加载`);
+                    loadedCount++;
+                } else {
+                    results.push(`❌ ${className} - 未加载`);
+                }
+            });
+            
+            const status = `${loadedCount}/${requiredClasses.length} 个类已加载`;
+            const type = loadedCount === requiredClasses.length ? 'success' : 'error';
+            
+            updateStatus('script-status', status + '<br>' + results.join('<br>'), type);
+            log(`脚本加载检查完成: ${status}`, type);
+        }
+        
+        // 角色创建测试
+        function testCharacterCreation() {
+            log('👤 开始测试角色创建...');
+            
+            try {
+                if (typeof Character === 'undefined') {
+                    throw new Error('Character类未定义');
+                }
+                
+                // 测试不同类型的角色名字
+                const testCases = [
+                    { name: '李逍遥', profession: 'warrior' },
+                    { name: '张无忌', profession: 'mage' },
+                    { name: 'Arthas', profession: 'rogue' },
+                    { name: '小明', profession: 'priest' }
+                ];
+                
+                let results = [];
+                
+                testCases.forEach(testCase => {
+                    try {
+                        const character = new Character(testCase.name, testCase.profession);
+                        results.push(`✅ ${testCase.name} (${character.getProfessionName()}) - ${character.getStorylineName()}`);
+                        log(`角色创建成功: ${testCase.name} - ${character.storyline}`);
+                    } catch (error) {
+                        results.push(`❌ ${testCase.name} - ${error.message}`);
+                        log(`角色创建失败: ${testCase.name} - ${error.message}`, 'error');
+                    }
+                });
+                
+                updateStatus('character-status', results.join('<br>'), 'success');
+                log('角色创建测试完成', 'success');
+                
+            } catch (error) {
+                updateStatus('character-status', `❌ ${error.message}`, 'error');
+                log(`角色创建测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 事件系统测试
+        function testEventSystem() {
+            log('🎲 开始测试事件系统...');
+            
+            try {
+                if (typeof EventSystem === 'undefined') {
+                    throw new Error('EventSystem类未定义');
+                }
+                
+                const eventSystem = new EventSystem();
+                const character = new Character('测试角色', 'warrior');
+                
+                // 测试获取随机事件
+                const event = eventSystem.getRandomEvent(character.storyline);
+                
+                if (event) {
+                    updateStatus('event-status', `✅ 成功获取事件: ${event.title}`, 'success');
+                    log(`事件系统测试成功: ${event.title}`, 'success');
+                } else {
+                    updateStatus('event-status', '⚠️ 未获取到事件，但系统正常', 'warning');
+                    log('事件系统正常，但未获取到事件', 'warning');
+                }
+                
+            } catch (error) {
+                updateStatus('event-status', `❌ ${error.message}`, 'error');
+                log(`事件系统测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 数据库测试
+        async function testDatabase() {
+            log('💾 开始测试数据库...');
+            
+            try {
+                if (typeof DatabaseManager === 'undefined') {
+                    throw new Error('DatabaseManager未定义');
+                }
+                
+                // 等待数据库初始化
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const stats = await window.DatabaseManager.getStatistics();
+                
+                updateStatus('database-status', 
+                    `✅ 数据库类型: ${stats.storageType}<br>` +
+                    `📊 事件数量: ${stats.eventCount}<br>` +
+                    `💾 存储大小: ${stats.storageSize || 'N/A'}`, 'success');
+                
+                log(`数据库测试成功: ${stats.storageType}, ${stats.eventCount} 个事件`, 'success');
+                
+            } catch (error) {
+                updateStatus('database-status', `❌ ${error.message}`, 'error');
+                log(`数据库测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 游戏引擎测试
+        function testGameEngine() {
+            log('🎮 开始测试游戏引擎...');
+            
+            try {
+                if (typeof GameEngine === 'undefined') {
+                    throw new Error('GameEngine类未定义');
+                }
+                
+                const engine = new GameEngine();
+                
+                updateStatus('engine-status', '✅ 游戏引擎创建成功', 'success');
+                log('游戏引擎测试成功', 'success');
+                
+            } catch (error) {
+                updateStatus('engine-status', `❌ ${error.message}`, 'error');
+                log(`游戏引擎测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // UI管理器测试
+        function testUIManager() {
+            log('📖 开始测试UI管理器...');
+            
+            try {
+                if (typeof UIManager === 'undefined') {
+                    throw new Error('UIManager类未定义');
+                }
+                
+                const uiManager = new UIManager();
+                
+                // 测试导出功能
+                const character = new Character('测试角色', 'warrior');
+                const story = uiManager.exportStoryAsNovel(character);
+                
+                if (story && story.length > 0) {
+                    updateStatus('ui-status', '✅ UI管理器和导出功能正常', 'success');
+                    log('UI管理器测试成功', 'success');
+                } else {
+                    updateStatus('ui-status', '⚠️ UI管理器创建成功，但导出功能异常', 'warning');
+                    log('UI管理器部分功能异常', 'warning');
+                }
+                
+            } catch (error) {
+                updateStatus('ui-status', `❌ ${error.message}`, 'error');
+                log(`UI管理器测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 完整流程测试
+        async function testFullWorkflow() {
+            log('🔄 开始完整流程测试...');
+            
+            try {
+                // 1. 创建角色
+                const character = new Character('测试冒险者', 'warrior');
+                log(`✅ 步骤1: 角色创建成功 - ${character.name}`);
+                
+                // 2. 初始化游戏引擎
+                const engine = new GameEngine();
+                log('✅ 步骤2: 游戏引擎初始化成功');
+                
+                // 3. 测试UI管理器
+                const uiManager = new UIManager();
+                await uiManager.addLogEntry('test', '这是一个测试日志条目');
+                log('✅ 步骤3: UI管理器测试成功');
+                
+                // 4. 测试事件系统
+                const eventSystem = new EventSystem();
+                const event = eventSystem.getRandomEvent(character.storyline);
+                log(`✅ 步骤4: 事件系统测试成功 - ${event ? event.title : '无事件'}`);
+                
+                // 5. 测试数据库
+                const stats = await window.DatabaseManager.getStatistics();
+                log(`✅ 步骤5: 数据库测试成功 - ${stats.storageType}`);
+                
+                updateStatus('workflow-status', '✅ 完整流程测试通过！游戏可以正常运行', 'success');
+                log('🎉 完整流程测试成功！', 'success');
+                
+            } catch (error) {
+                updateStatus('workflow-status', `❌ 流程测试失败: ${error.message}`, 'error');
+                log(`完整流程测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载后自动运行基础检查
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🎮 游戏测试页面加载完成');
+                testScriptLoading();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

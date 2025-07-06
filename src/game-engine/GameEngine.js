@@ -13,7 +13,6 @@ class GameEngine {
         // 初始化子系统
         this.eventSystem = new EventSystem();
         this.uiManager = new UIManager();
-        this.saveManager = new SaveManager();
         
         // 绑定事件
         this.bindEvents();
@@ -651,7 +650,8 @@ class GameEngine {
         }
         
         try {
-            this.saveManager.saveGame(this.gameState);
+            const saveManager = new SaveManager();
+            saveManager.saveGame(this.gameState);
             this.uiManager.addLogEntry('system', '游戏已保存');
         } catch (error) {
             console.error('保存游戏失败:', error);
@@ -664,7 +664,8 @@ class GameEngine {
      */
     loadGame() {
         try {
-            const savedState = this.saveManager.loadGame();
+            const saveManager = new SaveManager();
+            const savedState = saveManager.loadGame();
             if (savedState) {
                 this.gameState = savedState;
                 
