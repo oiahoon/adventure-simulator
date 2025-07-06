@@ -117,15 +117,16 @@ class SQLiteEventGenerator {
                     messages: [
                         {
                             role: 'system',
-                            content: '你是一个专业的游戏剧情设计师，擅长创造引人入胜的故事情节。请严格按照JSON格式返回结果。'
+                            content: '你是一个专业的游戏剧情设计师，擅长创造引人入胜的故事情节。请严格按照JSON格式返回结果，确保JSON格式完整正确。'
                         },
                         {
                             role: 'user',
                             content: prompt
                         }
                     ],
-                    temperature: 0.9,
-                    max_tokens: 2000
+                    temperature: 0.8,
+                    max_tokens: 4000, // 增加token限制，避免截断
+                    top_p: 0.9
                 },
                 {
                     headers: {
@@ -181,19 +182,22 @@ class SQLiteEventGenerator {
     buildEventPrompt(storyline, eventCount) {
         const themes = STORYLINES[storyline].themes.join('、');
         
-        return `请为${STORYLINES[storyline].name}类型的游戏生成${eventCount}个事件。
+        // 减少单次生成的事件数量，避免响应过长
+        const actualCount = Math.min(eventCount, 10); // 最多一次生成10个事件
+        
+        return `请为${STORYLINES[storyline].name}类型的游戏生成${actualCount}个事件。
 
 要求：
 1. 事件类型：${STORYLINES[storyline].name}
 2. 主题元素：${themes}
 3. 事件特点：
-   - 丰富的故事情节和对话（200-400字）
+   - 丰富的故事情节和对话（150-300字）
    - 符合${STORYLINES[storyline].name}的世界观
    - 每个事件可以是纯故事性的，也可以对角色造成影响
    - 影响包括：属性变化、财富变化、社会威望、人格特征、技能获得等
    - 影响必须与事件内容有合理的逻辑关系
 
-请按以下JSON格式返回${eventCount}个事件：
+请按以下JSON格式返回${actualCount}个事件，确保JSON格式完整正确：
 {
   "events": [
     {
@@ -217,7 +221,7 @@ class SQLiteEventGenerator {
   ]
 }
 
-现在请生成${eventCount}个${STORYLINES[storyline].name}类型的事件：`;
+重要：请确保返回完整的JSON格式，所有括号和引号都要正确闭合。`;
     }
 
     /**
@@ -284,47 +288,93 @@ class SQLiteEventGenerator {
             console.log(`🔄 开始生成 ${storyline.name} 事件...`);
             
             try {
-                const prompt = this.buildEventPrompt(storylineId, eventsPerStoryline);
-                console.log(`📝 提示词长度: ${prompt.length} 字符`);
+                let totalGenerated = 0;
+                const batchSize = 10; // 每批生成10个事件
+                const batches = Math.ceil(eventsPerStoryline / batchSize);
                 
-                const response = await this.callDeepSeek(prompt);
-                console.log(`📥 收到响应，长度: ${response.length} 字符`);
+                console.log(`📊 计划分 ${batches} 批生成，每批 ${batchSize} 个事件`);
                 
-                // 解析响应
-                const jsonMatch = response.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    console.error(`❌ ${storyline.name} 响应中未找到JSON格式数据`);
-                    console.error('响应内容:', response.substring(0, 500) + '...');
-                    throw new Error('响应格式错误：未找到JSON数据');
+                for (let batch = 0; batch < batches; batch++) {
+                    const remainingEvents = eventsPerStoryline - totalGenerated;
+                    const currentBatchSize = Math.min(batchSize, remainingEvents);
+                    
+                    if (currentBatchSize <= 0) break;
+                    
+                    console.log(`🔄 生成第 ${batch + 1}/${batches} 批 ${storyline.name} 事件 (${currentBatchSize}个)...`);
+                    
+                    const prompt = this.buildEventPrompt(storylineId, currentBatchSize);
+                    console.log(`📝 提示词长度: ${prompt.length} 字符`);
+                    
+                    const response = await this.callDeepSeek(prompt);
+                    console.log(`📥 收到响应，长度: ${response.length} 字符`);
+                    
+                    // 记录响应的前后部分用于调试
+                    console.log('📝 响应开头:', response.substring(0, 200));
+                    console.log('📝 响应结尾:', response.substring(Math.max(0, response.length - 200)));
+                    
+                    // 尝试清理和修复JSON
+                    let cleanedResponse = this.cleanJsonResponse(response);
+                    console.log(`🧹 清理后长度: ${cleanedResponse.length} 字符`);
+                    
+                    // 解析响应
+                    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) {
+                        console.error(`❌ ${storyline.name} 第${batch + 1}批响应中未找到JSON格式数据`);
+                        console.error('完整响应内容:', response);
+                        throw new Error('响应格式错误：未找到JSON数据');
+                    }
+
+                    console.log(`🔍 找到JSON数据，长度: ${jsonMatch[0].length} 字符`);
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(jsonMatch[0]);
+                    } catch (parseError) {
+                        console.error(`❌ ${storyline.name} 第${batch + 1}批JSON解析失败:`, parseError.message);
+                        console.error('尝试解析的JSON:', jsonMatch[0]);
+                        
+                        // 尝试修复常见的JSON问题
+                        const fixedJson = this.attemptJsonFix(jsonMatch[0]);
+                        if (fixedJson) {
+                            console.log('🔧 尝试使用修复后的JSON...');
+                            try {
+                                data = JSON.parse(fixedJson);
+                                console.log('✅ JSON修复成功！');
+                            } catch (fixError) {
+                                console.error('❌ JSON修复也失败了:', fixError.message);
+                                throw new Error(`JSON解析失败: ${parseError.message}`);
+                            }
+                        } else {
+                            throw new Error(`JSON解析失败: ${parseError.message}`);
+                        }
+                    }
+
+                    if (!data.events || !Array.isArray(data.events)) {
+                        console.error(`❌ ${storyline.name} 第${batch + 1}批数据结构错误:`, JSON.stringify(data, null, 2));
+                        throw new Error('数据结构错误：缺少events数组');
+                    }
+
+                    console.log(`✅ ${storyline.name} 第${batch + 1}批解析成功，获得 ${data.events.length} 个事件`);
+                    
+                    // 批量插入事件
+                    await this.insertEvents(insertStmt, data.events, storylineId);
+                    newEvents.push(...data.events);
+                    totalGenerated += data.events.length;
+                    
+                    console.log(`💾 ${storyline.name} 第${batch + 1}批已保存 ${data.events.length} 个事件到数据库`);
+
+                    // 批次间延迟
+                    if (batch < batches - 1) {
+                        console.log('⏳ 批次间等待1秒...');
+                        await this.sleep(1000);
+                    }
                 }
-
-                console.log(`🔍 找到JSON数据，长度: ${jsonMatch[0].length} 字符`);
                 
-                let data;
-                try {
-                    data = JSON.parse(jsonMatch[0]);
-                } catch (parseError) {
-                    console.error(`❌ ${storyline.name} JSON解析失败:`, parseError.message);
-                    console.error('JSON内容:', jsonMatch[0].substring(0, 500) + '...');
-                    throw new Error(`JSON解析失败: ${parseError.message}`);
-                }
+                console.log(`🎉 ${storyline.name} 总共生成了 ${totalGenerated} 个事件`);
 
-                if (!data.events || !Array.isArray(data.events)) {
-                    console.error(`❌ ${storyline.name} 数据结构错误:`, JSON.stringify(data, null, 2));
-                    throw new Error('数据结构错误：缺少events数组');
-                }
-
-                console.log(`✅ ${storyline.name} 解析成功，获得 ${data.events.length} 个事件`);
-                
-                // 批量插入事件
-                await this.insertEvents(insertStmt, data.events, storylineId);
-                newEvents.push(...data.events);
-                
-                console.log(`💾 ${storyline.name} 已保存 ${data.events.length} 个事件到数据库`);
-
-                // 添加延迟避免API限制
+                // 剧情间延迟
                 if (Object.keys(STORYLINES).indexOf(storylineId) < Object.keys(STORYLINES).length - 1) {
-                    console.log('⏳ 等待2秒避免API限制...');
+                    console.log('⏳ 剧情间等待2秒避免API限制...');
                     await this.sleep(2000);
                 }
 
@@ -519,6 +569,69 @@ class SQLiteEventGenerator {
         );
         
         console.log(`📊 统计信息已更新`);
+    }
+
+    /**
+     * 清理API响应，移除非JSON内容
+     */
+    cleanJsonResponse(response) {
+        // 移除可能的前缀文本
+        let cleaned = response.trim();
+        
+        // 查找JSON开始位置
+        const jsonStart = cleaned.indexOf('{');
+        if (jsonStart > 0) {
+            cleaned = cleaned.substring(jsonStart);
+        }
+        
+        // 查找JSON结束位置
+        const jsonEnd = cleaned.lastIndexOf('}');
+        if (jsonEnd > 0 && jsonEnd < cleaned.length - 1) {
+            cleaned = cleaned.substring(0, jsonEnd + 1);
+        }
+        
+        return cleaned;
+    }
+
+    /**
+     * 尝试修复常见的JSON问题
+     */
+    attemptJsonFix(jsonString) {
+        try {
+            // 尝试1: 移除末尾的逗号
+            let fixed = jsonString.replace(/,(\s*[}\]])/g, '$1');
+            
+            // 尝试2: 确保字符串正确闭合
+            const openBraces = (fixed.match(/\{/g) || []).length;
+            const closeBraces = (fixed.match(/\}/g) || []).length;
+            
+            if (openBraces > closeBraces) {
+                // 添加缺失的闭合括号
+                fixed += '}'.repeat(openBraces - closeBraces);
+            }
+            
+            // 尝试3: 修复未闭合的字符串
+            const quotes = (fixed.match(/"/g) || []).length;
+            if (quotes % 2 !== 0) {
+                // 如果引号数量是奇数，在末尾添加一个引号
+                const lastQuoteIndex = fixed.lastIndexOf('"');
+                if (lastQuoteIndex > 0) {
+                    // 检查最后一个引号后是否有未闭合的内容
+                    const afterLastQuote = fixed.substring(lastQuoteIndex + 1);
+                    if (afterLastQuote.trim() && !afterLastQuote.includes('"')) {
+                        fixed = fixed.substring(0, lastQuoteIndex + 1) + '"' + afterLastQuote;
+                    }
+                }
+            }
+            
+            // 验证修复后的JSON
+            JSON.parse(fixed);
+            return fixed;
+            
+        } catch (error) {
+            console.log('JSON修复失败:', error.message);
+            return null;
+        }
     }
 
     /**
