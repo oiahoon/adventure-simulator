@@ -703,47 +703,125 @@ body::before {
 }
 
 .log-entry {
-    margin-bottom: 0.75rem;
-    padding: 0.75rem 1rem;
+    margin-bottom: 20px;
+    padding: 15px;
     border-radius: var(--radius-md);
-    line-height: 1.5;
-    font-size: 0.9rem;
-    border-left: 3px solid transparent;
-    transition: all 0.2s ease;
+    background: rgba(0, 255, 65, 0.05);
+    border-left: 3px solid var(--primary-color);
+    animation: logEntryFadeIn 0.5s ease-out;
+    font-family: 'Courier New', monospace;
 }
 
 .log-entry:hover {
     transform: translateX(2px);
+    background: rgba(0, 255, 65, 0.08);
 }
 
 .log-entry.system {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
-    border-left-color: #3b82f6;
+    border-left-color: var(--accent-color);
+    background: rgba(255, 193, 7, 0.05);
 }
 
 .log-entry.event {
-    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-    color: #7c3aed;
     border-left-color: var(--primary-color);
+    background: rgba(0, 255, 65, 0.08);
 }
 
 .log-entry.action {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    color: #065f46;
+    background: rgba(0, 255, 65, 0.1);
     border-left-color: var(--accent-color);
 }
 
 .log-entry.warning {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
+    background: rgba(255, 193, 7, 0.1);
     border-left-color: var(--secondary-color);
 }
 
 .log-entry.error {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    color: #991b1b;
+    background: rgba(220, 38, 127, 0.1);
     border-left-color: var(--danger-color);
+}
+
+.log-entry.achievement {
+    border-left-color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* 新的日志元素样式 */
+.log-timestamp {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+.game-time {
+    color: var(--primary-color);
+    font-weight: bold;
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.real-time {
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.log-content {
+    line-height: 1.6;
+}
+
+.log-story {
+    color: var(--text-primary);
+    font-size: 1em;
+    margin-bottom: 10px;
+    min-height: 1.2em;
+}
+
+.log-effects {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 255, 65, 0.1);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.log-effects::before {
+    content: "📈 影响结果";
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--primary-color);
+}
+
+@keyframes logEntryFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 打字效果光标 */
+.log-story::after {
+    content: '|';
+    animation: blink 1s infinite;
+    color: var(--primary-color);
+}
+
+.log-story.typing-complete::after {
+    display: none;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
 }
 
 /* 当前事件 */

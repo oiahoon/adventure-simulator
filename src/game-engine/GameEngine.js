@@ -99,6 +99,19 @@ class GameEngine {
             });
         }
         
+        // 导出故事按钮
+        const exportStoryBtn = document.getElementById('export-story-btn');
+        if (exportStoryBtn) {
+            exportStoryBtn.addEventListener('click', () => {
+                console.log('📖 导出故事按钮被点击');
+                if (this.gameState && this.gameState.character) {
+                    this.uiManager.downloadStory(this.gameState.character);
+                } else {
+                    alert('请先开始游戏才能导出故事！');
+                }
+            });
+        }
+        
         console.log('🔗 事件监听器绑定完成');
     }
 
@@ -376,8 +389,8 @@ class GameEngine {
         
         // 更新UI
         this.uiManager.updateCharacterDisplay(character);
-        this.uiManager.addLogEntry('system', `${name}开始了${character.getStorylineName()}的冒险之旅！`);
-        this.uiManager.addLogEntry('system', `🎭 系统根据角色名字自动分配了"${character.getStorylineName()}"剧情`);
+        await this.uiManager.addLogEntry('system', `${name}开始了${character.getStorylineName()}的冒险之旅！`);
+        await this.uiManager.addLogEntry('system', `🎭 系统根据角色名字自动分配了"${character.getStorylineName()}"剧情`);
         
         // 开始自动保存
         if (window.ProgressManager) {
@@ -394,11 +407,17 @@ class GameEngine {
      * 启用游戏控制
      */
     enableGameControls() {
-        const controlButtons = ['pause-btn', 'step-btn', 'auto-btn', 'fast-btn', 'save-game-btn'];
+        const controlButtons = ['pause-btn', 'step-btn', 'auto-btn', 'fast-btn', 'save-game-btn', 'export-story-btn'];
         controlButtons.forEach(id => {
-            document.getElementById(id).disabled = false;
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = false;
+            }
         });
-        document.getElementById('speed-slider').disabled = false;
+        const speedSlider = document.getElementById('speed-slider');
+        if (speedSlider) {
+            speedSlider.disabled = false;
+        }
     }
 
     /**

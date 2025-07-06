@@ -292,14 +292,14 @@ class EventSystem {
     /**
      * 处理事件
      */
-    processEvent(event, gameState) {
+    async processEvent(event, gameState) {
         this.currentEvent = event;
         
         // 记录事件历史
         gameState.addEventToHistory(event);
         
         // 显示事件内容
-        this.displayEvent(event, gameState);
+        await this.displayEvent(event, gameState);
         
         // 应用事件影响
         if (event.effects) {
@@ -450,24 +450,15 @@ class EventSystem {
     /**
      * 显示事件
      */
-    displayEvent(event, gameState) {
-        const eventContent = document.getElementById('event-content');
+    async displayEvent(event, gameState) {
+        // 移除旧的事件显示区域，现在统一使用日志
         
-        if (eventContent) {
-            eventContent.innerHTML = `
-                <h4>${event.title}</h4>
-                <p>${event.description}</p>
-                ${event.impact_description ? `<div class="impact-hint">💭 ${event.impact_description}</div>` : ''}
-            `;
-        }
-        
-        // 使用新的分离日志系统
+        // 使用新的统一日志系统
         if (window.gameEngine && window.gameEngine.uiManager) {
-            window.gameEngine.uiManager.addEventLog(
-                event.title, 
+            await window.gameEngine.uiManager.addLogEntry(
+                'event', 
                 event.description, 
-                event.effects, 
-                event.impact_description
+                event.effects
             );
         }
     }
