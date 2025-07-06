@@ -305,27 +305,6 @@ class EventSystem {
             return null;
         }
     }
-            dungeon: ['fantasy', 'horror', 'survival']
-        };
-        
-        const preferredTypes = locationPreferences[location] || [];
-        
-        // 尝试获取符合条件的事件
-        for (const type of preferredTypes) {
-            const event = await this.generatedEventLoader.getRandomGeneratedEvent({
-                ...condition,
-                type
-            });
-            
-            if (event) {
-                return this.adaptGeneratedEvent(event, gameState);
-            }
-        }
-        
-        // 如果没有找到特定类型的事件，获取任意事件
-        const anyEvent = await this.generatedEventLoader.getRandomGeneratedEvent(condition);
-        return anyEvent ? this.adaptGeneratedEvent(anyEvent, gameState) : null;
-    }
 
     /**
      * 适配生成的事件到当前游戏状态
@@ -848,6 +827,9 @@ class EventSystem {
                     null
                 );
             }
+        }
+    }
+
     /**
      * 生成有意义的事件
      */
@@ -1189,3 +1171,4 @@ class EventSystem {
             impact_description: '获得探索经验'
         };
     }
+}
