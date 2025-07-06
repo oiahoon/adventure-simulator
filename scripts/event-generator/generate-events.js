@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * 事件生成器 - 直接生成JSON文件版本
- * 使用DeepSeek API生成游戏事件并保存到JSON文件
+ * 事件生成器 - SQLite数据库版本
+ * 使用DeepSeek API生成游戏事件并保存到SQLite数据库
  */
 
 const fs = require('fs-extra');
 const path = require('path');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const Database = require('better-sqlite3');
 require('dotenv').config();
 
 // 主线剧情类型
@@ -40,15 +41,65 @@ const STORYLINES = {
   }
 };
 
-class EventGenerator {
+class SQLiteEventGenerator {
     constructor() {
         this.dataDir = path.join(__dirname, '../../src/data');
-        this.eventsFile = path.join(this.dataDir, 'generated-events.json');
+        this.dbFile = path.join(this.dataDir, 'events.db');
         this.statsFile = path.join(this.dataDir, 'event-stats.json');
         this.maxEvents = 100000;
         this.eventCount = parseInt(process.env.EVENT_COUNT) || 400;
+        this.db = null;
         
-        console.log('🎲 事件生成器初始化完成');
+        console.log('🎲 SQLite事件生成器初始化完成');
+    }
+
+    /**
+     * 初始化数据库
+     */
+    async initDatabase() {
+        await fs.ensureDir(this.dataDir);
+        
+        // 创建或打开数据库
+        this.db = new Database(this.dbFile);
+        
+        // 创建表结构
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS events (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                storyline TEXT NOT NULL,
+                chapter INTEGER DEFAULT 1,
+                tags TEXT,
+                characters TEXT,
+                location TEXT,
+                effects TEXT,
+                impact_description TEXT,
+                rarity TEXT DEFAULT 'common',
+                generated BOOLEAN DEFAULT 1,
+                generator TEXT DEFAULT 'deepseek',
+                timestamp INTEGER NOT NULL,
+                version TEXT DEFAULT '1.0',
+                used_count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_storyline ON events(storyline);
+            CREATE INDEX IF NOT EXISTS idx_rarity ON events(rarity);
+            CREATE INDEX IF NOT EXISTS idx_timestamp ON events(timestamp);
+            CREATE INDEX IF NOT EXISTS idx_used_count ON events(used_count);
+            
+            CREATE TABLE IF NOT EXISTS generation_stats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                total_generated INTEGER NOT NULL,
+                generation_time DATETIME NOT NULL,
+                storyline_counts TEXT,
+                rarity_counts TEXT,
+                success_rate REAL
+            );
+        `);
+        
+        console.log('📊 数据库初始化完成');
     }
 
     /**
@@ -76,7 +127,8 @@ class EventGenerator {
                 headers: {
                     'Authorization': `Bearer ${process.env.DEEPSEEK_TOKEN}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: 30000
             }
         );
 
@@ -100,7 +152,6 @@ class EventGenerator {
    - 每个事件可以是纯故事性的，也可以对角色造成影响
    - 影响包括：属性变化、财富变化、社会威望、人格特征、技能获得等
    - 影响必须与事件内容有合理的逻辑关系
-   - 具有连续性和世界观一致性
 
 请按以下JSON格式返回${eventCount}个事件：
 {
@@ -109,57 +160,22 @@ class EventGenerator {
       "title": "事件标题",
       "description": "详细的故事描述，包含对话和情节发展",
       "storyline": "${storyline}",
-      "chapter": 章节编号,
+      "chapter": 1,
       "tags": ["标签1", "标签2"],
       "characters": ["角色1", "角色2"],
       "location": "地点描述",
       "effects": {
-        "attributes": {
-          "strength": 0,
-          "intelligence": 0,
-          "dexterity": 0,
-          "constitution": 0,
-          "charisma": 0,
-          "luck": 0
-        },
-        "personality": {
-          "courage": 0,
-          "wisdom": 0,
-          "compassion": 0,
-          "ambition": 0,
-          "curiosity": 0,
-          "patience": 0,
-          "pride": 0,
-          "loyalty": 0
-        },
-        "social": {
-          "reputation": 0,
-          "influence": 0,
-          "karma": 0
-        },
-        "status": {
-          "hp": 0,
-          "mp": 0,
-          "wealth": 0,
-          "experience": 0,
-          "fatigue": 0
-        },
-        "skills": [],
-        "items": [],
-        "titles": [],
-        "achievements": []
+        "attributes": {"strength": 0, "intelligence": 0, "dexterity": 0, "constitution": 0, "charisma": 0, "luck": 0},
+        "personality": {"courage": 0, "wisdom": 0, "compassion": 0, "ambition": 0, "curiosity": 0, "patience": 0, "pride": 0, "loyalty": 0},
+        "social": {"reputation": 0, "influence": 0, "karma": 0},
+        "status": {"hp": 0, "mp": 0, "wealth": 0, "experience": 0, "fatigue": 0},
+        "skills": [], "items": [], "titles": [], "achievements": []
       },
-      "rarity": "common|uncommon|rare|legendary",
+      "rarity": "common",
       "impact_description": "对角色造成的具体影响描述"
     }
   ]
 }
-
-注意：
-- effects中的数值可以是正数（增加）或负数（减少）
-- 纯故事性事件的effects可以全部为0
-- 影响较大的事件应该设置为更高的稀有度
-- impact_description要清楚说明为什么会产生这些影响
 
 现在请生成${eventCount}个${STORYLINES[storyline].name}类型的事件：`;
     }
@@ -175,45 +191,35 @@ class EventGenerator {
                 throw new Error('DEEPSEEK_TOKEN 环境变量未设置');
             }
 
-            // 加载现有事件
-            const existingEvents = await this.loadExistingEvents();
-            console.log(`📚 已加载 ${existingEvents.length} 个现有事件`);
+            // 初始化数据库
+            await this.initDatabase();
+
+            // 获取当前事件数量
+            const currentCount = this.db.prepare('SELECT COUNT(*) as count FROM events').get().count;
+            console.log(`📚 当前数据库中有 ${currentCount} 个事件`);
 
             // 生成新事件
             const newEvents = await this.generateNewEvents();
             console.log(`✨ 生成了 ${newEvents.length} 个新事件`);
 
-            // 合并和清理事件
-            const allEvents = [...existingEvents, ...newEvents];
-            const cleanedEvents = this.cleanupEvents(allEvents);
-
-            // 保存事件
-            await this.saveEvents(cleanedEvents);
+            // 清理旧事件（如果超过限制）
+            await this.cleanupOldEvents();
 
             // 更新统计信息
             await this.updateStats(newEvents);
+
+            // 关闭数据库连接
+            this.db.close();
 
             console.log('✅ 事件生成完成！');
 
         } catch (error) {
             console.error('❌ 事件生成失败:', error);
+            if (this.db) {
+                this.db.close();
+            }
             process.exit(1);
         }
-    }
-
-    /**
-     * 加载现有事件
-     */
-    async loadExistingEvents() {
-        try {
-            if (await fs.pathExists(this.eventsFile)) {
-                const data = await fs.readJson(this.eventsFile);
-                return Array.isArray(data.events) ? data.events : [];
-            }
-        } catch (error) {
-            console.warn('⚠️ 加载现有事件失败:', error.message);
-        }
-        return [];
     }
 
     /**
@@ -222,6 +228,15 @@ class EventGenerator {
     async generateNewEvents() {
         const newEvents = [];
         const eventsPerStoryline = Math.floor(this.eventCount / Object.keys(STORYLINES).length);
+        
+        // 准备插入语句
+        const insertStmt = this.db.prepare(`
+            INSERT INTO events (
+                id, title, description, storyline, chapter, tags, characters, 
+                location, effects, impact_description, rarity, generated, 
+                generator, timestamp, version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
 
         for (const [storylineId, storyline] of Object.entries(STORYLINES)) {
             try {
@@ -239,18 +254,33 @@ class EventGenerator {
 
                 const data = JSON.parse(jsonMatch[0]);
                 if (data.events && Array.isArray(data.events)) {
-                    // 添加元数据
-                    const processedEvents = data.events.map(event => ({
-                        id: uuidv4(),
-                        ...event,
-                        generated: true,
-                        generator: 'deepseek',
-                        timestamp: Date.now(),
-                        version: '1.0'
-                    }));
+                    // 批量插入事件
+                    const transaction = this.db.transaction((events) => {
+                        for (const event of events) {
+                            const eventId = uuidv4();
+                            insertStmt.run(
+                                eventId,
+                                event.title,
+                                event.description,
+                                storylineId,
+                                event.chapter || 1,
+                                JSON.stringify(event.tags || []),
+                                JSON.stringify(event.characters || []),
+                                event.location || '',
+                                JSON.stringify(event.effects || {}),
+                                event.impact_description || '',
+                                event.rarity || 'common',
+                                1, // generated
+                                'deepseek', // generator
+                                Date.now(), // timestamp
+                                '1.0' // version
+                            );
+                        }
+                    });
                     
-                    newEvents.push(...processedEvents);
-                    console.log(`${storyline.name} 生成了 ${processedEvents.length} 个事件`);
+                    transaction(data.events);
+                    newEvents.push(...data.events);
+                    console.log(`${storyline.name} 生成了 ${data.events.length} 个事件`);
                 }
 
                 // 添加延迟避免API限制
@@ -266,110 +296,59 @@ class EventGenerator {
     }
 
     /**
-     * 清理事件数据
+     * 清理旧事件
      */
-    cleanupEvents(events) {
-        // 按时间戳排序，保留最新的事件
-        const sortedEvents = events.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    async cleanupOldEvents() {
+        const currentCount = this.db.prepare('SELECT COUNT(*) as count FROM events').get().count;
         
-        // 如果超过最大数量，删除最老的事件
-        if (sortedEvents.length > this.maxEvents) {
-            const removedCount = sortedEvents.length - this.maxEvents;
-            console.log(`🗑️ 删除 ${removedCount} 个最老的事件`);
-            return sortedEvents.slice(0, this.maxEvents);
+        if (currentCount > this.maxEvents) {
+            const deleteCount = currentCount - this.maxEvents;
+            
+            // 删除最老的事件（按timestamp排序）
+            this.db.prepare(`
+                DELETE FROM events 
+                WHERE id IN (
+                    SELECT id FROM events 
+                    ORDER BY timestamp ASC 
+                    LIMIT ?
+                )
+            `).run(deleteCount);
+            
+            console.log(`🗑️ 删除了 ${deleteCount} 个最老的事件`);
         }
-        
-        return sortedEvents;
-    }
-
-    /**
-     * 保存事件到文件
-     */
-    async saveEvents(events) {
-        await fs.ensureDir(this.dataDir);
-        
-        const data = {
-            events: events,
-            metadata: {
-                totalEvents: events.length,
-                lastUpdated: new Date().toISOString(),
-                version: '1.0',
-                maxEvents: this.maxEvents,
-                generatedBy: 'DeepSeek API',
-                storylines: Object.keys(STORYLINES)
-            }
-        };
-        
-        await fs.writeJson(this.eventsFile, data, { spaces: 2 });
-        console.log(`💾 已保存 ${events.length} 个事件到 ${this.eventsFile}`);
     }
 
     /**
      * 更新统计信息
      */
     async updateStats(newEvents) {
-        let stats = {
-            totalGenerated: 0,
-            lastGeneration: null,
-            generationHistory: [],
-            storylineStats: {},
-            rarityStats: {}
-        };
+        // 统计各剧情类型数量
+        const storylineCounts = {};
+        const rarityCounts = {};
         
-        // 加载现有统计
-        try {
-            if (await fs.pathExists(this.statsFile)) {
-                stats = await fs.readJson(this.statsFile);
-            }
-        } catch (error) {
-            console.warn('加载统计信息失败:', error.message);
-        }
-        
-        // 更新统计
-        stats.totalGenerated += newEvents.length;
-        stats.lastGeneration = new Date().toISOString();
-        
-        // 记录本次生成
-        const generationRecord = {
-            timestamp: Date.now(),
-            count: newEvents.length,
-            storylines: this.countByField(newEvents, 'storyline'),
-            rarities: this.countByField(newEvents, 'rarity')
-        };
-        
-        stats.generationHistory.push(generationRecord);
-        
-        // 保留最近50次生成记录
-        if (stats.generationHistory.length > 50) {
-            stats.generationHistory = stats.generationHistory.slice(-50);
-        }
-        
-        // 更新剧情统计
         newEvents.forEach(event => {
             const storyline = event.storyline || 'unknown';
-            stats.storylineStats[storyline] = (stats.storylineStats[storyline] || 0) + 1;
-        });
-        
-        // 更新稀有度统计
-        newEvents.forEach(event => {
             const rarity = event.rarity || 'common';
-            stats.rarityStats[rarity] = (stats.rarityStats[rarity] || 0) + 1;
+            
+            storylineCounts[storyline] = (storylineCounts[storyline] || 0) + 1;
+            rarityCounts[rarity] = (rarityCounts[rarity] || 0) + 1;
         });
         
-        await fs.writeJson(this.statsFile, stats, { spaces: 2 });
-        console.log(`📊 已更新统计信息`);
-    }
-
-    /**
-     * 按字段统计数量
-     */
-    countByField(events, field) {
-        const counts = {};
-        events.forEach(event => {
-            const value = event[field] || 'unknown';
-            counts[value] = (counts[value] || 0) + 1;
-        });
-        return counts;
+        // 插入统计记录
+        this.db.prepare(`
+            INSERT INTO generation_stats (
+                total_generated, generation_time, storyline_counts, 
+                rarity_counts, success_rate
+            ) VALUES (?, ?, ?, ?, ?)
+        `).run(
+            newEvents.length,
+            new Date().toISOString(),
+            JSON.stringify(storylineCounts),
+            JSON.stringify(rarityCounts),
+            newEvents.length / this.eventCount
+        );
+        
+        console.log(`📊 统计信息已更新`);
     }
 
     /**
@@ -378,11 +357,38 @@ class EventGenerator {
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    /**
+     * 获取数据库统计信息
+     */
+    getStats() {
+        if (!this.db) return null;
+        
+        const totalEvents = this.db.prepare('SELECT COUNT(*) as count FROM events').get().count;
+        const storylineStats = this.db.prepare(`
+            SELECT storyline, COUNT(*) as count 
+            FROM events 
+            GROUP BY storyline
+        `).all();
+        
+        const rarityStats = this.db.prepare(`
+            SELECT rarity, COUNT(*) as count 
+            FROM events 
+            GROUP BY rarity
+        `).all();
+        
+        return {
+            totalEvents,
+            storylineStats,
+            rarityStats,
+            dbFile: this.dbFile
+        };
+    }
 }
 
 // 主执行逻辑
 async function main() {
-    const generator = new EventGenerator();
+    const generator = new SQLiteEventGenerator();
     await generator.generate();
 }
 
@@ -394,4 +400,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = EventGenerator;
+module.exports = SQLiteEventGenerator;
