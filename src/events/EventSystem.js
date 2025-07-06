@@ -368,12 +368,17 @@ class EventSystem {
         const character = gameState.character;
         let hasEffects = false;
         
+        console.log('🔧 开始应用事件效果:', effects);
+        
         // 应用属性变化
         if (effects.attributes) {
+            console.log('📊 应用属性变化:', effects.attributes);
             Object.entries(effects.attributes).forEach(([attr, value]) => {
                 if (Math.abs(value) > 0 && character.attributes[attr] !== undefined) {
+                    const oldValue = character.attributes[attr];
                     character.attributes[attr] += value;
                     character.attributes[attr] = Math.max(1, character.attributes[attr]);
+                    console.log(`  ${attr}: ${oldValue} → ${character.attributes[attr]} (${value > 0 ? '+' : ''}${value})`);
                     hasEffects = true;
                 }
             });
@@ -381,10 +386,13 @@ class EventSystem {
         
         // 应用人格变化
         if (effects.personality) {
+            console.log('🧠 应用人格变化:', effects.personality);
             Object.entries(effects.personality).forEach(([trait, value]) => {
                 if (Math.abs(value) > 0 && character.personality[trait] !== undefined) {
+                    const oldValue = character.personality[trait];
                     character.personality[trait] += value;
                     character.personality[trait] = Math.max(0, Math.min(100, character.personality[trait]));
+                    console.log(`  ${trait}: ${oldValue} → ${character.personality[trait]} (${value > 0 ? '+' : ''}${value})`);
                     hasEffects = true;
                 }
             });
@@ -392,9 +400,12 @@ class EventSystem {
         
         // 应用社会影响
         if (effects.social) {
+            console.log('🤝 应用社会影响:', effects.social);
             Object.entries(effects.social).forEach(([social, value]) => {
                 if (Math.abs(value) > 0 && character.social[social] !== undefined) {
+                    const oldValue = character.social[social];
                     character.social[social] += value;
+                    console.log(`  ${social}: ${oldValue} → ${character.social[social]} (${value > 0 ? '+' : ''}${value})`);
                     hasEffects = true;
                 }
             });
@@ -402,22 +413,42 @@ class EventSystem {
         
         // 应用状态变化
         if (effects.status) {
+            console.log('💫 应用状态变化:', effects.status);
             Object.entries(effects.status).forEach(([status, value]) => {
                 if (Math.abs(value) > 0 && character.status[status] !== undefined) {
                     
                     // 特殊处理经验值
                     if (status === 'experience') {
                         const oldLevel = character.level;
+                        const oldExp = character.experience;
                         character.gainExperience(value);
+                        console.log(`  经验值: ${oldExp} → ${character.experience} (${value > 0 ? '+' : ''}${value})`);
                         if (character.level > oldLevel) {
+                            console.log(`  🎉 升级！${oldLevel} → ${character.level}`);
                             this.handleLevelUp(character, oldLevel, gameState);
                         }
                     } else {
+                        const oldValue = character.status[status];
                         character.status[status] += value;
                         
                         // 其他状态的特殊处理
                         if (status === 'hp') {
                             character.status[status] = Math.max(0, Math.min(character.getMaxHP(), character.status[status]));
+                        } else if (status === 'mp') {
+                            character.status[status] = Math.max(0, Math.min(character.getMaxMP(), character.status[status]));
+                        } else if (status === 'fatigue') {
+                            character.status[status] = Math.max(0, Math.min(100, character.status[status]));
+                        } else if (status === 'wealth') {
+                            character.status[status] = Math.max(0, character.status[status]);
+                        }
+                        
+                        console.log(`  ${status}: ${oldValue} → ${character.status[status]} (${value > 0 ? '+' : ''}${value})`);
+                    }
+                    
+                    hasEffects = true;
+                }
+            });
+        }
                         } else if (status === 'mp') {
                             character.status[status] = Math.max(0, Math.min(character.getMaxMP(), character.status[status]));
                         } else if (status === 'fatigue') {

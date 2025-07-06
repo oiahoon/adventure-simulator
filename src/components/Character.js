@@ -747,13 +747,20 @@ class Character {
      * 检查是否应该改变地点
      */
     shouldChangeLocation(currentLocation, gameTime) {
-        const levelFactor = this.level / 10;
-        const timeFactor = gameTime / 100;
-        const randomFactor = Math.random();
+        const levelFactor = this.level / 5;  // 增加等级影响
+        const timeFactor = gameTime / 50;     // 增加时间影响
+        const randomFactor = Math.random() * 0.3; // 增加随机因素
         
-        const changeChance = Math.min(0.3, levelFactor * 0.1 + timeFactor * 0.05 + randomFactor * 0.1);
+        const changeChance = Math.min(0.6, levelFactor * 0.2 + timeFactor * 0.1 + randomFactor);
         
-        return Math.random() < changeChance;
+        console.log(`🗺️ 地点变化检查: 等级${this.level}, 时间${gameTime}, 概率${(changeChance * 100).toFixed(1)}%`);
+        
+        const shouldChange = Math.random() < changeChance;
+        if (shouldChange) {
+            console.log(`✅ 决定改变地点！当前: ${currentLocation}`);
+        }
+        
+        return shouldChange;
     }
 
     /**

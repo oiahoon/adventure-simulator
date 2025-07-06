@@ -487,8 +487,17 @@ class GameEngine {
             }
         }
         
-        // 更新UI
+        // 更新UI - 确保角色信息正确显示
         this.uiManager.updateAll(this.gameState);
+        
+        // 强制更新角色显示
+        this.uiManager.updateCharacterDisplay(this.gameState.character);
+        this.uiManager.updateStatusBars(this.gameState.character);
+        
+        // 定期保存游戏状态
+        if (this.gameState.gameTime % 10 === 0 && window.ProgressManager) {
+            window.ProgressManager.autoSave(this);
+        }
     }
 
     /**
@@ -729,7 +738,7 @@ class GameEngine {
 class GameState {
     constructor(character) {
         this.character = character;
-        this.currentLocation = 'newbie_village';
+        this.currentLocation = '新手村';
         this.gameTime = 0;
         this.eventHistory = [];
         this.achievements = [];

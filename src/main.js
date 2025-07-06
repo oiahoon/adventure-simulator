@@ -204,8 +204,8 @@ async function tryAutoLoadGame() {
                 // 恢复角色状态
                 Object.assign(character, savedGame.character);
                 
-                // 重建游戏状态 - 使用GameEngine中的GameState类
-                const gameState = new gameEngine.constructor.GameState(character);
+                // 重建游戏状态
+                const gameState = new GameState(character);
                 gameState.gameTime = savedGame.gameTime || 0;
                 gameState.eventHistory = savedGame.eventHistory || [];
                 gameState.achievements = savedGame.achievements || [];
