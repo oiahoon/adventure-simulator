@@ -299,7 +299,7 @@ window.addEventListener('error', function(e) {
  */
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     // 添加调试快捷键
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', async function(e) {
         // Ctrl + D: 显示调试信息
         if (e.ctrlKey && e.key === 'd') {
             e.preventDefault();
@@ -307,7 +307,12 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
                 console.log('🔍 当前游戏状态:', gameEngine.gameState);
                 console.log('👤 角色信息:', gameEngine.gameState.character.getFullInfo());
                 console.log('💾 存储使用情况:', window.ProgressManager.getStorageUsage());
-                console.log('📊 数据库统计:', await window.DatabaseManager.getStatistics());
+                try {
+                    const dbStats = await window.DatabaseManager.getStatistics();
+                    console.log('📊 数据库统计:', dbStats);
+                } catch (error) {
+                    console.log('📊 数据库统计获取失败:', error);
+                }
             }
         }
         
