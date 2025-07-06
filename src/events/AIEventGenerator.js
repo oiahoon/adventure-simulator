@@ -409,8 +409,29 @@ class AIEventGenerator {
                 return this.randomSelect(['森林深处', '山洞中', '废墟里', '河流旁', '古树下']);
             case 'discovery_type':
                 return this.randomSelect(['闪光的物品', '古老的卷轴', '神秘的符文', '珍贵的草药', '奇特的石头']);
+            case 'exploration_method':
+                return this.randomSelect(['仔细搜索', '快速浏览', '深入调查', '谨慎探索', '大胆前进']);
+            case 'finding':
+                return this.randomSelect(['有趣的发现', '意外的收获', '神秘的线索', '珍贵的物品', '重要的信息']);
+            case 'exploration_result':
+                return this.randomSelect(['成功找到', '意外发现', '幸运遇到', '偶然碰见', '终于找到']);
+            case 'interaction_type':
+                return this.randomSelect(['友好交谈', '谨慎对话', '热情交流', '礼貌询问', '深入讨论']);
+            case 'mood_description':
+                return this.randomSelect(['心情愉快', '略感疲惫', '精神饱满', '若有所思', '充满期待']);
+            case 'weather_effect':
+                return this.randomSelect(['微风习习', '阳光明媚', '云雾缭绕', '细雨蒙蒙', '清风徐来']);
+            case 'terrain_feature':
+                return this.randomSelect(['崎岖小径', '平坦道路', '茂密森林', '开阔平原', '蜿蜒山路']);
+            case 'mysterious_element':
+                return this.randomSelect(['神秘光芒', '奇异声音', '古老符号', '魔法气息', '超自然现象']);
+            case 'emotional_state':
+                return this.randomSelect(['兴奋不已', '略感紧张', '充满好奇', '保持警惕', '内心平静']);
             default:
-                console.warn(`未知变量: ${variable}`);
+                // 减少未知变量的控制台噪音，只在开发模式下显示
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.warn(`未知变量: ${variable}`);
+                }
                 return `[${variable}]`; // 返回变量名作为占位符，便于调试
         }
     }

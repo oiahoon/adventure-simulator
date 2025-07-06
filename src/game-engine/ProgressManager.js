@@ -71,12 +71,16 @@ class ProgressManager {
             
             this.lastSaveTime = now;
             
-            // 在UI中显示保存提示
-            if (window.gameEngine && window.gameEngine.uiManager) {
-                await window.gameEngine.uiManager.addLogEntry('system', '💾 游戏已自动保存');
+            // 减少UI提示频率，只在重要节点显示
+            const shouldShowUI = gameEngine.gameState.gameTime % 100 === 0; // 每100步显示一次
+            if (shouldShowUI && window.gameEngine && window.gameEngine.uiManager) {
+                await window.gameEngine.uiManager.addLogEntry('system', '💾 游戏进度已保存');
             }
             
-            console.log('💾 游戏已自动保存');
+            // 控制台日志也减少频率
+            if (shouldShowUI) {
+                console.log('💾 游戏已自动保存');
+            }
             
         } catch (error) {
             console.error('❌ 自动保存失败:', error);

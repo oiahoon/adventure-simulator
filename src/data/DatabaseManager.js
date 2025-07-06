@@ -11,6 +11,10 @@ class DatabaseManager {
         this.storageType = 'unknown';
         this.sqliteDbPath = 'src/data/events.db';
         
+        // 警告标志，避免重复显示相同警告
+        this._sqliteWarningShown = false;
+        this._defaultWarningShown = false;
+        
         console.log('💾 数据库管理器初始化中...');
         this.init();
     }
@@ -390,10 +394,17 @@ class DatabaseManager {
                 case 'localstorage':
                     return this.saveToLocalStorage(saveKey, saveData);
                 case 'sqlite-file':
-                    console.warn('SQLite文件存储不支持游戏保存，降级到localStorage');
+                    // 静默降级到localStorage，不显示警告（避免控制台噪音）
+                    if (!this._sqliteWarningShown) {
+                        console.log('💾 使用localStorage作为游戏保存方式');
+                        this._sqliteWarningShown = true;
+                    }
                     return this.saveToLocalStorage(saveKey, saveData);
                 default:
-                    console.log('使用localStorage作为默认保存方式');
+                    if (!this._defaultWarningShown) {
+                        console.log('💾 使用localStorage作为默认保存方式');
+                        this._defaultWarningShown = true;
+                    }
                     return this.saveToLocalStorage(saveKey, saveData);
             }
         } catch (error) {
