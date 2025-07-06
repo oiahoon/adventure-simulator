@@ -329,15 +329,200 @@ class AIEventGenerator {
         // 生成标题
         const title = this.generateEventTitle(eventType, context);
         
+        // 生成有意义的奖励
+        const effects = this.generateMeaningfulRewards(eventType, character, context);
+        
         return {
             id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title,
             description,
             type: eventType,
+            effects: effects,
+            rarity: this.determineRarity(effects, character.level),
+            impact_description: this.generateImpactDescription(effects),
             context: context,
             generated: true,
             timestamp: Date.now()
         };
+    }
+
+    /**
+     * 生成有意义的奖励
+     */
+    generateMeaningfulRewards(eventType, character, context) {
+        const baseExp = Math.floor(Math.random() * 30) + 15; // 15-45基础经验
+        const levelMultiplier = Math.max(1, character.level * 0.3);
+        
+        const effects = {
+            status: {
+                experience: Math.floor(baseExp * levelMultiplier)
+            }
+        };
+        
+        // 根据事件类型调整奖励
+        switch (eventType) {
+            case 'encounter':
+                effects.status.experience += Math.floor(Math.random() * 20) + 10;
+                if (Math.random() < 0.6) {
+                    effects.status.wealth = Math.floor(Math.random() * 40) + 10;
+                }
+                if (Math.random() < 0.3) {
+                    effects.attributes = { strength: 1 };
+                }
+                break;
+                
+            case 'discovery':
+                effects.status.experience += Math.floor(Math.random() * 15) + 5;
+                if (Math.random() < 0.4) {
+                    effects.items = [this.randomSelect(['古老的卷轴', '神秘的石头', '闪光的宝石', '魔法草药'])];
+                }
+                if (Math.random() < 0.2) {
+                    effects.attributes = { intelligence: 1 };
+                }
+                break;
+                
+            case 'social':
+                effects.status.experience += Math.floor(Math.random() * 10) + 5;
+                if (Math.random() < 0.5) {
+                    effects.social = { reputation: Math.floor(Math.random() * 20) + 10 };
+                }
+                if (Math.random() < 0.3) {
+                    effects.attributes = { charisma: 1 };
+                }
+                break;
+                
+            case 'training':
+                effects.status.experience += Math.floor(Math.random() * 25) + 15;
+                if (Math.random() < 0.7) {
+                    const skills = ['基础剑术', '初级魔法', '潜行技巧', '草药学'];
+                    effects.skills = [this.randomSelect(skills)];
+                }
+                if (Math.random() < 0.5) {
+                    const attrs = ['strength', 'intelligence', 'dexterity', 'constitution'];
+                    effects.attributes = { [this.randomSelect(attrs)]: Math.floor(Math.random() * 2) + 1 };
+                }
+                break;
+                
+            case 'mystery':
+                effects.status.experience += Math.floor(Math.random() * 35) + 20;
+                if (Math.random() < 0.3) {
+                    effects.status.mp = Math.floor(Math.random() * 20) + 10;
+                }
+                if (Math.random() < 0.4) {
+                    effects.attributes = { luck: 1 };
+                }
+                break;
+                
+            default:
+                // 默认奖励
+                if (Math.random() < 0.3) {
+                    effects.status.wealth = Math.floor(Math.random() * 20) + 5;
+                }
+        }
+        
+        // 随机额外奖励
+        if (Math.random() < 0.2) { // 20%概率获得额外奖励
+            const bonusTypes = ['experience', 'wealth', 'item', 'attribute'];
+            const bonusType = this.randomSelect(bonusTypes);
+            
+            switch (bonusType) {
+                case 'experience':
+                    effects.status.experience += Math.floor(Math.random() * 20) + 10;
+                    break;
+                case 'wealth':
+                    effects.status.wealth = (effects.status.wealth || 0) + Math.floor(Math.random() * 30) + 15;
+                    break;
+                case 'item':
+                    effects.items = effects.items || [];
+                    effects.items.push(this.randomSelect(['幸运符', '经验卷轴', '治疗药水', '魔法药水']));
+                    break;
+                case 'attribute':
+                    effects.attributes = effects.attributes || {};
+                    const attrs = ['strength', 'intelligence', 'dexterity', 'constitution', 'charisma', 'luck'];
+                    const attr = this.randomSelect(attrs);
+                    effects.attributes[attr] = (effects.attributes[attr] || 0) + 1;
+                    break;
+            }
+        }
+        
+        return effects;
+    }
+
+    /**
+     * 确定稀有度
+     */
+    determineRarity(effects, characterLevel) {
+        let score = 0;
+        
+        if (effects.status) {
+            score += (effects.status.experience || 0) / 10;
+            score += (effects.status.wealth || 0) / 20;
+        }
+        
+        if (effects.attributes) {
+            score += Object.values(effects.attributes).reduce((sum, val) => sum + val, 0) * 10;
+        }
+        
+        if (effects.items && effects.items.length > 0) {
+            score += effects.items.length * 5;
+        }
+        
+        if (effects.skills && effects.skills.length > 0) {
+            score += effects.skills.length * 8;
+        }
+        
+        if (score >= 50) return 'legendary';
+        if (score >= 30) return 'epic';
+        if (score >= 20) return 'rare';
+        if (score >= 10) return 'uncommon';
+        return 'common';
+    }
+
+    /**
+     * 生成影响描述
+     */
+    generateImpactDescription(effects) {
+        const impacts = [];
+        
+        if (effects.status) {
+            if (effects.status.experience) {
+                impacts.push(`获得${effects.status.experience}经验值`);
+            }
+            if (effects.status.wealth) {
+                impacts.push(`获得${effects.status.wealth}金币`);
+            }
+            if (effects.status.hp > 0) {
+                impacts.push(`恢复${effects.status.hp}生命值`);
+            }
+        }
+        
+        if (effects.attributes) {
+            Object.entries(effects.attributes).forEach(([attr, value]) => {
+                if (value > 0) {
+                    const attrNames = {
+                        strength: '力量', intelligence: '智力', dexterity: '敏捷',
+                        constitution: '体质', charisma: '魅力', luck: '幸运'
+                    };
+                    impacts.push(`${attrNames[attr] || attr}+${value}`);
+                }
+            });
+        }
+        
+        if (effects.items && effects.items.length > 0) {
+            impacts.push(`获得物品: ${effects.items.join(', ')}`);
+        }
+        
+        if (effects.skills && effects.skills.length > 0) {
+            impacts.push(`学会技能: ${effects.skills.join(', ')}`);
+        }
+        
+        if (effects.social) {
+            if (effects.social.reputation) {
+                impacts.push(`声望+${effects.social.reputation}`);
+            }
+        }
+        
+        return impacts.length > 0 ? impacts.join('，') : '获得宝贵经验';
     }
 
     /**

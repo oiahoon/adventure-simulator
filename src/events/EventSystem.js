@@ -22,6 +22,20 @@ class EventSystem {
             this.aiGenerator = null;
         }
         
+        // 安全地初始化LLM生成器
+        try {
+            if (typeof LLMEventGenerator !== 'undefined') {
+                this.llmGenerator = new LLMEventGenerator();
+                console.log('✅ LLM事件生成器初始化成功');
+            } else {
+                console.warn('⚠️ LLM事件生成器未定义');
+                this.llmGenerator = null;
+            }
+        } catch (error) {
+            console.error('❌ LLM事件生成器初始化失败:', error);
+            this.llmGenerator = null;
+        }
+        
         this.generatedEventLoader = window.GeneratedEventLoader;
         this.useAIGeneration = this.aiGenerator !== null; // 只有在AI生成器可用时才启用
         this.aiGenerationRate = 0.7; // AI生成事件的概率
@@ -127,37 +141,52 @@ class EventSystem {
         let event = null;
         let eventSource = '';
         
-        // 优先级：LLM生成事件 > AI生成事件 > 传统事件
-        if (this.useGeneratedEvents && Math.random() < this.generatedEventRate) {
+        // 优先级：实时LLM生成 > 数据库LLM事件 > AI生成事件 > 传统事件
+        
+        // 1. 尝试实时LLM生成（最高优先级，但概率较低）
+        if (this.llmGenerator && this.llmGenerator.shouldUseLLM(gameState)) {
             try {
-                event = await this.getGeneratedEvent(gameState);
+                event = await this.llmGenerator.generateEvent(gameState);
                 if (event) {
-                    eventSource = 'LLM生成事件';
-                    console.log('🎭 使用LLM生成事件');
+                    eventSource = '实时LLM生成事件';
+                    console.log('🤖 使用实时LLM生成事件');
                 }
             } catch (error) {
-                console.warn('LLM生成事件获取失败:', error);
+                console.warn('实时LLM生成事件失败:', error);
             }
         }
         
-        // 如果没有获取到LLM事件，尝试AI生成
+        // 2. 尝试数据库中的LLM生成事件
+        if (!event && this.useGeneratedEvents && Math.random() < this.generatedEventRate) {
+            try {
+                event = await this.getGeneratedEvent(gameState);
+                if (event) {
+                    eventSource = '数据库LLM生成事件';
+                    console.log('🎭 使用数据库LLM生成事件');
+                }
+            } catch (error) {
+                console.warn('数据库LLM生成事件获取失败:', error);
+            }
+        }
+        
+        // 3. 如果没有获取到LLM事件，尝试AI模板生成
         if (!event && this.useAIGeneration && this.aiGenerator && Math.random() < this.aiGenerationRate) {
             try {
                 event = this.aiGenerator.generateEvent(gameState);
                 if (event) {
-                    eventSource = 'AI实时生成事件';
-                    console.log('🤖 使用AI生成事件');
+                    eventSource = 'AI模板生成事件';
+                    console.log('🤖 使用AI模板生成事件');
                 }
             } catch (error) {
                 console.warn('AI事件生成失败，使用传统事件:', error);
             }
         }
         
-        // 最后使用传统事件
+        // 4. 最后使用我设计的有意义事件
         if (!event) {
-            event = this.generateTraditionalEvent(gameState);
-            eventSource = '内置传统事件模板';
-            console.log('📋 使用传统事件模板');
+            event = this.generateMeaningfulEvent(gameState);
+            eventSource = '增强传统事件';
+            console.log('📋 使用增强传统事件');
         }
         
         if (event) {
@@ -166,38 +195,117 @@ class EventSystem {
             console.log(`📅 处理事件: ${event.title} (来源: ${eventSource})`);
             await this.processEvent(event, gameState);
         } else {
-            console.warn('⚠️ 无法获取任何事件，生成基础探索事件');
-            // 生成更有意义的基础探索事件
-            const event = this.generateMeaningfulEvent(gameState);
-            
-            // 处理这个基础事件
-            await this.processEvent(event, gameState);
+            console.warn('⚠️ 无法获取任何事件');
         }
+    }
     }
 
     /**
      * 获取LLM生成的事件
      */
     async getGeneratedEvent(gameState) {
-        if (!this.generatedEventLoader) {
+        // 首先尝试从数据库加载预生成的事件
+        if (this.generatedEventLoader) {
+            try {
+                const character = gameState.character;
+                const location = gameState.currentLocation;
+                
+                // 构建事件条件
+                const condition = {
+                    characterLevel: character.level
+                };
+                
+                // 根据地点调整事件类型偏好
+                const locationPreferences = {
+                    '新手村': ['slice-of-life', 'social', 'cultural'],
+                    '小镇': ['business', 'social', 'political'],
+                    '森林': ['exploration', 'fantasy', 'survival'],
+                    '山脉': ['survival', 'exploration', 'mythological'],
+                    '遗迹': ['mythological', 'academic', 'horror'],
+                };
+                
+                const preferredTypes = locationPreferences[location] || ['exploration', 'adventure'];
+                const event = await this.generatedEventLoader.getRandomEvent(condition, preferredTypes);
+                
+                if (event) {
+                    console.log('📚 使用数据库中的LLM生成事件');
+                    return event;
+                }
+            } catch (error) {
+                console.warn('数据库事件加载失败:', error);
+            }
+        }
+        
+        // 如果数据库没有事件，尝试实时LLM生成
+        return await this.generateRealTimeLLMEvent(gameState);
+    }
+
+    /**
+     * 实时LLM事件生成
+     */
+    async generateRealTimeLLMEvent(gameState) {
+        // 检查是否有可用的LLM API（这里可以集成DeepSeek或其他LLM）
+        if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+            // 开发环境下可以尝试调用本地API
+            try {
+                const event = await this.callLocalLLMAPI(gameState);
+                if (event) {
+                    console.log('🤖 使用实时LLM生成事件');
+                    return event;
+                }
+            } catch (error) {
+                console.warn('实时LLM生成失败:', error);
+            }
+        }
+        
+        // 如果LLM不可用，返回null让系统使用其他方式
+        return null;
+    }
+
+    /**
+     * 调用本地LLM API（示例实现）
+     */
+    async callLocalLLMAPI(gameState) {
+        try {
+            const character = gameState.character;
+            const location = gameState.currentLocation;
+            
+            const prompt = `请为RPG游戏生成一个事件。
+
+角色信息：
+- 姓名：${character.name}
+- 等级：${character.level}
+- 职业：${character.getProfessionName()}
+- 当前地点：${location}
+- 主要属性：力量${character.attributes.strength}，智力${character.attributes.intelligence}
+
+请生成一个适合当前角色和地点的事件，包含：
+1. 有趣的故事情节
+2. 合理的奖励（经验值、金币、物品等）
+3. 符合角色等级的挑战
+
+返回JSON格式：
+{
+  "title": "事件标题",
+  "description": "详细描述",
+  "effects": {
+    "status": {"experience": 30, "wealth": 20},
+    "attributes": {"strength": 1},
+    "items": ["获得的物品"]
+  },
+  "rarity": "common",
+  "impact_description": "影响描述"
+}`;
+
+            // 这里可以调用实际的LLM API
+            // 目前返回null，让系统使用其他生成方式
+            return null;
+            
+        } catch (error) {
+            console.error('LLM API调用失败:', error);
             return null;
         }
-
-        const character = gameState.character;
-        const location = gameState.currentLocation;
-        
-        // 构建事件条件
-        const condition = {
-            characterLevel: character.level
-        };
-        
-        // 根据地点调整事件类型偏好
-        const locationPreferences = {
-            newbie_village: ['slice-of-life', 'social', 'cultural'],
-            town: ['business', 'social', 'political'],
-            forest: ['exploration', 'fantasy', 'survival'],
-            mountain: ['survival', 'exploration', 'mythological'],
-            ruins: ['mythological', 'academic', 'horror'],
+    }
             dungeon: ['fantasy', 'horror', 'survival']
         };
         
