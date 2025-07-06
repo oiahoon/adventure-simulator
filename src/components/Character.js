@@ -675,4 +675,103 @@ class Character {
             inventoryCount: this.inventory.length
         };
     }
+
+    /**
+     * 根据属性和等级获取可访问的地点
+     */
+    getAvailableLocations() {
+        const locations = [
+            { name: '新手村', minLevel: 1, description: '安全的起始地点' },
+            { name: '森林边缘', minLevel: 2, description: '充满机遇的森林' },
+            { name: '古老废墟', minLevel: 5, description: '神秘的古代遗迹' },
+            { name: '山脉小径', minLevel: 8, description: '险峻的山路' },
+            { name: '魔法学院', minLevel: 10, description: '知识的殿堂', requireIntelligence: 15 },
+            { name: '竞技场', minLevel: 12, description: '战士的试炼场', requireStrength: 15 },
+            { name: '盗贼公会', minLevel: 15, description: '阴影中的组织', requireDexterity: 18 },
+            { name: '神殿', minLevel: 18, description: '神圣的祈祷之地', requireCharisma: 16 },
+            { name: '龙穴', minLevel: 25, description: '传说中的龙族栖息地' },
+            { name: '异次元裂缝', minLevel: 30, description: '通往未知世界的门户' }
+        ];
+        
+        return locations.filter(location => {
+            if (this.level < location.minLevel) return false;
+            if (location.requireStrength && this.attributes.strength < location.requireStrength) return false;
+            if (location.requireIntelligence && this.attributes.intelligence < location.requireIntelligence) return false;
+            if (location.requireDexterity && this.attributes.dexterity < location.requireDexterity) return false;
+            if (location.requireCharisma && this.attributes.charisma < location.requireCharisma) return false;
+            return true;
+        });
+    }
+
+    /**
+     * 根据属性影响事件结果
+     */
+    getAttributeInfluence(eventType) {
+        const influences = {};
+        
+        // 根据不同事件类型，不同属性有不同影响
+        switch (eventType) {
+            case 'combat':
+                influences.strength = this.attributes.strength / 20;
+                influences.dexterity = this.attributes.dexterity / 25;
+                influences.constitution = this.attributes.constitution / 30;
+                break;
+            case 'social':
+                influences.charisma = this.attributes.charisma / 20;
+                influences.intelligence = this.attributes.intelligence / 25;
+                break;
+            case 'exploration':
+                influences.dexterity = this.attributes.dexterity / 20;
+                influences.luck = this.attributes.luck / 15;
+                influences.intelligence = this.attributes.intelligence / 30;
+                break;
+            case 'magic':
+                influences.intelligence = this.attributes.intelligence / 15;
+                influences.charisma = this.attributes.charisma / 25;
+                break;
+            case 'survival':
+                influences.constitution = this.attributes.constitution / 20;
+                influences.strength = this.attributes.strength / 25;
+                influences.intelligence = this.attributes.intelligence / 30;
+                break;
+            default:
+                Object.keys(this.attributes).forEach(attr => {
+                    influences[attr] = this.attributes[attr] / 30;
+                });
+        }
+        
+        return influences;
+    }
+
+    /**
+     * 检查是否应该改变地点
+     */
+    shouldChangeLocation(currentLocation, gameTime) {
+        const levelFactor = this.level / 10;
+        const timeFactor = gameTime / 100;
+        const randomFactor = Math.random();
+        
+        const changeChance = Math.min(0.3, levelFactor * 0.1 + timeFactor * 0.05 + randomFactor * 0.1);
+        
+        return Math.random() < changeChance;
+    }
+
+    /**
+     * 获取下一个推荐地点
+     */
+    getNextRecommendedLocation(currentLocation) {
+        const available = this.getAvailableLocations();
+        const current = available.find(loc => loc.name === currentLocation);
+        
+        if (!current) return available[0]?.name || '新手村';
+        
+        const currentIndex = available.indexOf(current);
+        
+        if (Math.random() < 0.7 && currentIndex < available.length - 1) {
+            return available[currentIndex + 1].name;
+        } else {
+            const otherLocations = available.filter(loc => loc.name !== currentLocation);
+            return otherLocations[Math.floor(Math.random() * otherLocations.length)]?.name || currentLocation;
+        }
+    }
 }

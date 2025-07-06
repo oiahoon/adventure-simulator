@@ -22,8 +22,8 @@ class AIEventGenerator {
             encounter: {
                 templates: [
                     "在{location}，{character}遇到了{entity}。{entity_description}",
-                    "{character}在{location}的路上，突然{encounter_action}。",
-                    "当{character}正在{activity}时，{unexpected_event}发生了。",
+                    "{character}在{location}的路上，突然遇到了{entity}。",
+                    "当{character}正在{activity}时，{entity}出现了。",
                     "{weather_condition}的{time_of_day}，{character}在{location}发现了{discovery}。"
                 ],
                 entities: [
@@ -39,6 +39,12 @@ class AIEventGenerator {
                 ],
                 discoveries: [
                     "一个隐藏的洞穴", "闪闪发光的物品", "奇怪的符号", "一条隐秘的小径", "古老的遗迹", "稀有的植物"
+                ],
+                weather_conditions: [
+                    "阳光明媚", "阴云密布", "细雨蒙蒙", "大雾弥漫", "微风习习", "烈日炎炎"
+                ],
+                time_of_days: [
+                    "清晨", "上午", "中午", "下午", "黄昏", "夜晚"
                 ]
             },
 
@@ -366,12 +372,40 @@ class AIEventGenerator {
             case 'obstacle':
                 return this.randomSelect(template.obstacles || ['障碍']);
             case 'weather_condition':
-                return this.randomSelect(this.narrativeElements.weather_conditions);
+                return this.randomSelect(template.weather_conditions || this.narrativeElements.weather_conditions);
             case 'time_of_day':
-                return this.randomSelect(this.narrativeElements.time_of_day);
+                return this.randomSelect(template.time_of_days || this.narrativeElements.time_of_day);
             case 'difficulty_level':
                 return this.randomSelect(this.narrativeElements.difficulty_levels);
+            case 'puzzle_type':
+                return this.randomSelect(template.puzzle_types || ['谜题']);
+            case 'reward_hint':
+                return this.randomSelect(template.reward_hints || ['奖励']);
+            case 'npc_type':
+                return this.randomSelect(template.npc_types || ['路人']);
+            case 'npc_action':
+                return this.randomSelect(template.npc_actions || ['在做什么']);
+            case 'social_location':
+                return this.randomSelect(['市场', '酒馆', '广场', '街道']);
+            case 'social_situation':
+                return this.randomSelect(['争论', '庆祝', '交易', '聚会']);
+            case 'request_type':
+                return this.randomSelect(['帮助', '信息', '物品', '服务']);
+            case 'social_event':
+                return this.randomSelect(['争吵', '事故', '庆典', '交易']);
+            case 'challenge_description':
+                return this.randomSelect(['需要智慧解决', '需要勇气面对', '需要技巧处理', '需要耐心等待']);
+            case 'challenge_category':
+                return this.randomSelect(['谜题', '战斗', '谈判', '探索']);
+            case 'encounter_action':
+                return this.randomSelect(['遇到了意外', '发现了秘密', '听到了声音', '看到了光芒']);
+            case 'unexpected_event':
+                return this.randomSelect(['意外发生', '奇迹出现', '危险降临', '机会来临']);
             default:
+                console.warn(`未知变量: ${variable}`);
+                return `[${variable}]`; // 返回变量名作为占位符，便于调试
+        }
+    }
                 // 尝试从模板中查找对应数组
                 const arrayName = variable + 's';
                 if (template[arrayName]) {

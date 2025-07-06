@@ -470,6 +470,11 @@ class GameEngine {
         // 控制事件触发频率 - 不是每步都触发事件
         this.gameState.gameTime++;
         
+        // 检查是否应该改变地点
+        if (this.gameState.gameTime % 20 === 0) { // 每20步检查一次
+            this.checkLocationChange();
+        }
+        
         // 每5-10步触发一次事件
         const eventInterval = Math.floor(Math.random() * 6) + 5; // 5-10步
         if (this.gameState.gameTime % eventInterval === 0) {
@@ -484,6 +489,31 @@ class GameEngine {
         
         // 更新UI
         this.uiManager.updateAll(this.gameState);
+    }
+
+    /**
+     * 检查并处理地点变化
+     */
+    checkLocationChange() {
+        const character = this.gameState.character;
+        const currentLocation = this.gameState.currentLocation;
+        
+        if (character.shouldChangeLocation(currentLocation, this.gameState.gameTime)) {
+            const newLocation = character.getNextRecommendedLocation(currentLocation);
+            
+            if (newLocation !== currentLocation) {
+                this.gameState.currentLocation = newLocation;
+                
+                // 添加地点变化日志
+                this.uiManager.addLogEntry(
+                    'location', 
+                    `🗺️ ${character.name}离开了${currentLocation}，来到了${newLocation}`, 
+                    null
+                );
+                
+                console.log(`📍 地点变化: ${currentLocation} → ${newLocation}`);
+            }
+        }
     }
 
     /**

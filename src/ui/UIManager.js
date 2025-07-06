@@ -84,7 +84,14 @@ class UIManager {
         }
 
         const now = timestamp || Date.now();
-        const gameTime = this.formatGameTime(now - this.gameStartTime);
+        
+        // 确保游戏开始时间不晚于当前时间
+        if (this.gameStartTime > now) {
+            this.gameStartTime = now;
+        }
+        
+        const gameTimeMs = Math.max(0, now - this.gameStartTime);
+        const gameTime = this.formatGameTime(gameTimeMs);
         const realTime = new Date(now).toLocaleTimeString();
 
         // 创建日志条目
@@ -170,15 +177,18 @@ class UIManager {
      * 格式化游戏时间
      */
     formatGameTime(milliseconds) {
-        const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        // 确保不是负数
+        const ms = Math.max(0, milliseconds);
+        
+        const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
         
         if (days > 0) {
             return `${days}天${hours}时`;
         } else if (hours > 0) {
-            return `${hours}时`;
+            return `${hours}时${minutes}分`;
         } else {
-            const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
             return `${minutes}分`;
         }
     }

@@ -185,6 +185,7 @@ console.log('📜 主脚本加载完成');
 async function tryAutoLoadGame() {
     try {
         if (window.DatabaseManager) {
+            await window.DatabaseManager.waitForInit();
             const savedGame = await window.DatabaseManager.loadGame();
             if (savedGame && savedGame.character) {
                 console.log('🔄 发现保存的游戏，尝试加载...');
@@ -200,12 +201,13 @@ async function tryAutoLoadGame() {
                 // 恢复角色状态
                 Object.assign(character, savedGame.character);
                 
-                // 重建游戏状态
-                const gameState = new GameState(character);
+                // 重建游戏状态 - 使用GameEngine中的GameState类
+                const gameState = new gameEngine.constructor.GameState(character);
                 gameState.gameTime = savedGame.gameTime || 0;
                 gameState.eventHistory = savedGame.eventHistory || [];
                 gameState.achievements = savedGame.achievements || [];
                 gameState.statistics = savedGame.statistics || {};
+                gameState.currentLocation = savedGame.currentLocation || '新手村';
                 
                 // 设置游戏状态
                 gameEngine.gameState = gameState;
@@ -217,9 +219,17 @@ async function tryAutoLoadGame() {
                 // 启用控制按钮
                 gameEngine.enableGameControls();
                 
+                // 重置UI管理器的游戏开始时间
+                gameEngine.uiManager.gameStartTime = Date.now() - (gameState.gameTime * 1000);
+                
                 // 更新UI
                 gameEngine.uiManager.updateAll(gameState);
-                await gameEngine.uiManager.addLogEntry('system', '🔄 游戏已自动加载');
+                await gameEngine.uiManager.addLogEntry('system', '🔄 游戏已自动加载，欢迎回来！');
+                
+                // 恢复事件历史到日志
+                if (gameState.eventHistory && gameState.eventHistory.length > 0) {
+                    await gameEngine.uiManager.addLogEntry('system', `📚 恢复了 ${gameState.eventHistory.length} 个历史事件`);
+                }
                 
                 console.log('✅ 游戏自动加载成功');
                 return true;
