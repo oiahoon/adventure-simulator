@@ -6,9 +6,10 @@ class GeneratedEventLoader {
     constructor() {
         this.generatedEvents = [];
         this.eventStats = null;
+        this.isLoaded = false;
         this.loadPromise = null;
         this.lastLoadTime = 0;
-        this.cacheTimeout = 5 * 60 * 1000; // 5分钟缓存
+        this.cacheTimeout = 30 * 60 * 1000; // 30分钟缓存，避免频繁加载
         
         console.log('📚 生成事件加载器初始化完成');
     }
@@ -17,11 +18,12 @@ class GeneratedEventLoader {
      * 异步加载生成的事件
      */
     async loadGeneratedEvents() {
-        const now = Date.now();
-        
-        // 如果缓存仍然有效，直接返回
-        if (this.generatedEvents.length > 0 && (now - this.lastLoadTime) < this.cacheTimeout) {
-            return this.generatedEvents;
+        // 如果已经加载过且缓存有效，直接返回
+        if (this.isLoaded && this.generatedEvents.length > 0) {
+            const now = Date.now();
+            if ((now - this.lastLoadTime) < this.cacheTimeout) {
+                return this.generatedEvents;
+            }
         }
 
         // 如果正在加载，等待加载完成
@@ -34,7 +36,6 @@ class GeneratedEventLoader {
         
         try {
             await this.loadPromise;
-            this.lastLoadTime = now;
             return this.generatedEvents;
         } finally {
             this.loadPromise = null;
@@ -48,7 +49,14 @@ class GeneratedEventLoader {
         try {
             console.log('🔄 加载生成的事件...');
             
-            // 尝试加载生成的事件文件
+            // 首先尝试从数据库加载
+            if (await this.loadFromDatabase()) {
+                this.isLoaded = true;
+                this.lastLoadTime = Date.now();
+                return;
+            }
+            
+            // 然后尝试加载JSON文件
             const response = await fetch('./src/data/generated-events.json');
             
             if (response.ok) {
@@ -65,13 +73,45 @@ class GeneratedEventLoader {
                     this.generatedEvents = [];
                 }
             } else {
-                console.log('📝 未找到生成事件文件，使用空列表');
+                console.log('📝 未找到生成事件文件');
                 this.generatedEvents = [];
             }
             
         } catch (error) {
             console.error('❌ 加载生成事件失败:', error);
             this.generatedEvents = [];
+        } finally {
+            this.isLoaded = true;
+            this.lastLoadTime = Date.now();
+        }
+    }
+
+    /**
+     * 尝试从数据库加载事件
+     */
+    async loadFromDatabase() {
+        try {
+            // 检查是否有数据库管理器
+            if (!window.DatabaseManager) {
+                return false;
+            }
+            
+            // 等待数据库初始化
+            await window.DatabaseManager.waitForInit();
+            
+            // 尝试获取事件
+            const events = await window.DatabaseManager.getRandomEvents(null, 1000);
+            
+            if (events && events.length > 0) {
+                this.generatedEvents = events;
+                console.log(`✅ 从数据库加载了 ${events.length} 个事件`);
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.log('📊 数据库加载失败，尝试其他方式:', error.message);
+            return false;
         }
     }
 
@@ -94,9 +134,22 @@ class GeneratedEventLoader {
      * 根据条件获取事件
      */
     async getEventsByCondition(condition = {}) {
-        await this.loadGeneratedEvents();
+        // 只在第一次或缓存过期时加载
+        if (!this.isLoaded) {
+            await this.loadGeneratedEvents();
+        }
+        
+        // 如果没有生成的事件，直接返回空数组
+        if (this.generatedEvents.length === 0) {
+            return [];
+        }
         
         let filteredEvents = [...this.generatedEvents];
+        
+        // 按剧情类型过滤
+        if (condition.storyline) {
+            filteredEvents = filteredEvents.filter(event => event.storyline === condition.storyline);
+        }
         
         // 按类型过滤
         if (condition.type) {

@@ -108,6 +108,7 @@ class SQLiteEventGenerator {
     async callDeepSeek(prompt) {
         try {
             console.log('🔗 正在调用DeepSeek API...');
+            console.log('🔑 API Token长度:', process.env.DEEPSEEK_TOKEN ? process.env.DEEPSEEK_TOKEN.length : 0);
             
             const response = await axios.post(
                 'https://api.deepseek.com/v1/chat/completions',
@@ -131,36 +132,46 @@ class SQLiteEventGenerator {
                         'Authorization': `Bearer ${process.env.DEEPSEEK_TOKEN}`,
                         'Content-Type': 'application/json'
                     },
-                    timeout: 60000, // 增加超时时间到60秒
+                    timeout: 60000,
                     validateStatus: function (status) {
-                        return status < 500; // 接受所有小于500的状态码
+                        return status < 500;
                     }
                 }
             );
 
+            console.log('📊 API响应状态:', response.status);
+            console.log('📊 API响应头:', JSON.stringify(response.headers, null, 2));
+
             if (response.status !== 200) {
+                console.error('❌ API返回非200状态码:', response.status);
+                console.error('❌ 响应数据:', JSON.stringify(response.data, null, 2));
                 throw new Error(`API返回状态码: ${response.status}, 消息: ${response.statusText}`);
             }
 
             if (!response.data || !response.data.choices || !response.data.choices[0]) {
+                console.error('❌ API返回数据格式错误:', JSON.stringify(response.data, null, 2));
                 throw new Error('API返回数据格式错误');
             }
 
-            console.log('✅ API调用成功');
+            console.log('✅ API调用成功，内容长度:', response.data.choices[0].message.content.length);
             return response.data.choices[0].message.content;
             
         } catch (error) {
-            console.error('❌ DeepSeek API调用失败:', error.message);
+            console.error('❌ DeepSeek API调用详细错误:');
+            console.error('错误类型:', error.constructor.name);
+            console.error('错误消息:', error.message);
+            console.error('错误代码:', error.code);
             
-            if (error.code === 'ECONNABORTED') {
-                throw new Error('API调用超时，请检查网络连接');
-            } else if (error.response) {
-                throw new Error(`API错误: ${error.response.status} - ${error.response.statusText}`);
+            if (error.response) {
+                console.error('响应状态:', error.response.status);
+                console.error('响应头:', JSON.stringify(error.response.headers, null, 2));
+                console.error('响应数据:', JSON.stringify(error.response.data, null, 2));
             } else if (error.request) {
-                throw new Error('网络请求失败，无法连接到API服务器');
-            } else {
-                throw error;
+                console.error('请求配置:', JSON.stringify(error.config, null, 2));
+                console.error('无响应，请求详情:', error.request);
             }
+            
+            throw error; // 重新抛出错误，不生成备用事件
         }
     }
 
@@ -258,6 +269,8 @@ class SQLiteEventGenerator {
         const newEvents = [];
         const eventsPerStoryline = Math.floor(this.eventCount / Object.keys(STORYLINES).length);
         
+        console.log(`📊 计划为每个剧情生成 ${eventsPerStoryline} 个事件`);
+        
         // 准备插入语句
         const insertStmt = this.db.prepare(`
             INSERT INTO events (
@@ -267,61 +280,64 @@ class SQLiteEventGenerator {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
-        let totalApiFailures = 0;
-
         for (const [storylineId, storyline] of Object.entries(STORYLINES)) {
+            console.log(`🔄 开始生成 ${storyline.name} 事件...`);
+            
             try {
-                console.log(`🔄 生成 ${storyline.name} 事件...`);
-                
                 const prompt = this.buildEventPrompt(storylineId, eventsPerStoryline);
+                console.log(`📝 提示词长度: ${prompt.length} 字符`);
+                
                 const response = await this.callDeepSeek(prompt);
+                console.log(`📥 收到响应，长度: ${response.length} 字符`);
                 
                 // 解析响应
                 const jsonMatch = response.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) {
-                    console.error(`${storyline.name} 响应格式错误，使用备用事件`);
-                    const fallbackEvents = this.generateFallbackEvents(storylineId, eventsPerStoryline);
-                    await this.insertEvents(insertStmt, fallbackEvents);
-                    newEvents.push(...fallbackEvents);
-                    continue;
+                    console.error(`❌ ${storyline.name} 响应中未找到JSON格式数据`);
+                    console.error('响应内容:', response.substring(0, 500) + '...');
+                    throw new Error('响应格式错误：未找到JSON数据');
                 }
 
-                const data = JSON.parse(jsonMatch[0]);
-                if (data.events && Array.isArray(data.events)) {
-                    // 批量插入事件
-                    await this.insertEvents(insertStmt, data.events, storylineId);
-                    newEvents.push(...data.events);
-                    console.log(`${storyline.name} 生成了 ${data.events.length} 个事件`);
-                } else {
-                    console.error(`${storyline.name} 数据格式错误，使用备用事件`);
-                    const fallbackEvents = this.generateFallbackEvents(storylineId, eventsPerStoryline);
-                    await this.insertEvents(insertStmt, fallbackEvents);
-                    newEvents.push(...fallbackEvents);
+                console.log(`🔍 找到JSON数据，长度: ${jsonMatch[0].length} 字符`);
+                
+                let data;
+                try {
+                    data = JSON.parse(jsonMatch[0]);
+                } catch (parseError) {
+                    console.error(`❌ ${storyline.name} JSON解析失败:`, parseError.message);
+                    console.error('JSON内容:', jsonMatch[0].substring(0, 500) + '...');
+                    throw new Error(`JSON解析失败: ${parseError.message}`);
                 }
+
+                if (!data.events || !Array.isArray(data.events)) {
+                    console.error(`❌ ${storyline.name} 数据结构错误:`, JSON.stringify(data, null, 2));
+                    throw new Error('数据结构错误：缺少events数组');
+                }
+
+                console.log(`✅ ${storyline.name} 解析成功，获得 ${data.events.length} 个事件`);
+                
+                // 批量插入事件
+                await this.insertEvents(insertStmt, data.events, storylineId);
+                newEvents.push(...data.events);
+                
+                console.log(`💾 ${storyline.name} 已保存 ${data.events.length} 个事件到数据库`);
 
                 // 添加延迟避免API限制
-                await this.sleep(2000);
+                if (Object.keys(STORYLINES).indexOf(storylineId) < Object.keys(STORYLINES).length - 1) {
+                    console.log('⏳ 等待2秒避免API限制...');
+                    await this.sleep(2000);
+                }
 
             } catch (error) {
-                console.error(`生成 ${storyline.name} 事件失败:`, error.message);
-                totalApiFailures++;
+                console.error(`💥 生成 ${storyline.name} 事件失败:`, error.message);
+                console.error('详细错误:', error);
                 
-                // 使用备用事件
-                console.log(`使用备用事件替代 ${storyline.name}`);
-                const fallbackEvents = this.generateFallbackEvents(storylineId, eventsPerStoryline);
-                await this.insertEvents(insertStmt, fallbackEvents);
-                newEvents.push(...fallbackEvents);
-                
-                continue;
+                // 不生成备用事件，直接失败
+                throw new Error(`${storyline.name} 事件生成失败: ${error.message}`);
             }
         }
 
-        if (totalApiFailures === Object.keys(STORYLINES).length) {
-            console.warn('⚠️ 所有API调用都失败了，已使用备用事件');
-        } else if (totalApiFailures > 0) {
-            console.warn(`⚠️ ${totalApiFailures} 个剧情类型使用了备用事件`);
-        }
-
+        console.log(`🎉 总共成功生成 ${newEvents.length} 个事件`);
         return newEvents;
     }
 
