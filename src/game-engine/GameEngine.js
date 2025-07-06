@@ -467,20 +467,23 @@ class GameEngine {
         // 更新角色状态
         this.updateCharacterStatus();
         
-        // 触发新事件
-        try {
-            await this.eventSystem.triggerRandomEvent(this.gameState);
-        } catch (error) {
-            console.error('触发事件失败:', error);
-            // 降级到传统事件
-            this.eventSystem.triggerGenericEvent(this.gameState);
+        // 控制事件触发频率 - 不是每步都触发事件
+        this.gameState.gameTime++;
+        
+        // 每5-10步触发一次事件
+        const eventInterval = Math.floor(Math.random() * 6) + 5; // 5-10步
+        if (this.gameState.gameTime % eventInterval === 0) {
+            try {
+                await this.eventSystem.triggerRandomEvent(this.gameState);
+            } catch (error) {
+                console.error('触发事件失败:', error);
+                // 降级到传统事件
+                this.eventSystem.triggerGenericEvent(this.gameState);
+            }
         }
         
         // 更新UI
         this.uiManager.updateAll(this.gameState);
-        
-        // 增加游戏时间
-        this.gameState.gameTime++;
     }
 
     /**

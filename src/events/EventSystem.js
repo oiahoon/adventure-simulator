@@ -111,12 +111,14 @@ class EventSystem {
      */
     async triggerRandomEvent(gameState) {
         let event = null;
+        let eventSource = '';
         
         // 优先级：LLM生成事件 > AI生成事件 > 传统事件
         if (this.useGeneratedEvents && Math.random() < this.generatedEventRate) {
             try {
                 event = await this.getGeneratedEvent(gameState);
                 if (event) {
+                    eventSource = 'LLM生成事件';
                     console.log('🎭 使用LLM生成事件');
                 }
             } catch (error) {
@@ -128,7 +130,10 @@ class EventSystem {
         if (!event && this.useAIGeneration && Math.random() < this.aiGenerationRate) {
             try {
                 event = this.aiGenerator.generateEvent(gameState);
-                console.log('🤖 使用AI生成事件');
+                if (event) {
+                    eventSource = 'AI实时生成事件';
+                    console.log('🤖 使用AI生成事件');
+                }
             } catch (error) {
                 console.warn('AI事件生成失败，使用传统事件:', error);
             }
@@ -137,12 +142,17 @@ class EventSystem {
         // 最后使用传统事件
         if (!event) {
             event = this.generateTraditionalEvent(gameState);
+            eventSource = '内置传统事件模板';
             console.log('📋 使用传统事件模板');
         }
         
         if (event) {
-            this.processEvent(event, gameState);
+            // 添加事件来源信息
+            event.source = eventSource;
+            console.log(`📅 处理事件: ${event.title} (来源: ${eventSource})`);
+            await this.processEvent(event, gameState);
         } else {
+            console.warn('⚠️ 无法获取任何事件，触发通用事件');
             this.triggerGenericEvent(gameState);
         }
     }
@@ -451,13 +461,21 @@ class EventSystem {
      * 显示事件
      */
     async displayEvent(event, gameState) {
-        // 移除旧的事件显示区域，现在统一使用日志
+        // 更新当前事件显示
+        const eventContent = document.getElementById('event-content');
+        if (eventContent) {
+            eventContent.innerHTML = `
+                <h4>${event.title}</h4>
+                <p>${event.description}</p>
+                ${event.impact_description ? `<div class="impact-hint">💭 ${event.impact_description}</div>` : ''}
+            `;
+        }
         
-        // 使用新的统一日志系统
+        // 同时添加到统一日志系统
         if (window.gameEngine && window.gameEngine.uiManager) {
             await window.gameEngine.uiManager.addLogEntry(
                 'event', 
-                event.description, 
+                `${event.title}: ${event.description}`, 
                 event.effects
             );
         }

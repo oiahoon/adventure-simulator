@@ -368,6 +368,118 @@ class DatabaseManager {
     }
 
     /**
+     * 保存游戏状态
+     */
+    async saveGame(gameState) {
+        try {
+            const saveData = {
+                character: gameState.character,
+                gameTime: gameState.gameTime || 0,
+                eventHistory: gameState.eventHistory || [],
+                achievements: gameState.achievements || [],
+                statistics: gameState.statistics || {},
+                timestamp: Date.now()
+            };
+            
+            const saveKey = 'adventure_game_save';
+            
+            switch (this.storageType) {
+                case 'indexeddb':
+                    return await this.saveToIndexedDB(saveKey, saveData);
+                case 'localstorage':
+                    return this.saveToLocalStorage(saveKey, saveData);
+                default:
+                    console.warn('当前存储方式不支持保存游戏');
+                    return false;
+            }
+        } catch (error) {
+            console.error('保存游戏失败:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 加载游戏状态
+     */
+    async loadGame() {
+        try {
+            const saveKey = 'adventure_game_save';
+            
+            switch (this.storageType) {
+                case 'indexeddb':
+                    return await this.loadFromIndexedDB(saveKey);
+                case 'localstorage':
+                    return this.loadFromLocalStorage(saveKey);
+                default:
+                    console.warn('当前存储方式不支持加载游戏');
+                    return null;
+            }
+        } catch (error) {
+            console.error('加载游戏失败:', error);
+            return null;
+        }
+    }
+
+    /**
+     * 保存到IndexedDB
+     */
+    async saveToIndexedDB(key, data) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['gameStates'], 'readwrite');
+            const store = transaction.objectStore('gameStates');
+            
+            transaction.oncomplete = () => resolve(true);
+            transaction.onerror = () => reject(transaction.error);
+            
+            store.put({ id: key, data: data, timestamp: Date.now() });
+        });
+    }
+
+    /**
+     * 从IndexedDB加载
+     */
+    async loadFromIndexedDB(key) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['gameStates'], 'readonly');
+            const store = transaction.objectStore('gameStates');
+            const request = store.get(key);
+            
+            request.onsuccess = () => {
+                const result = request.result;
+                resolve(result ? result.data : null);
+            };
+            
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * 保存到localStorage
+     */
+    saveToLocalStorage(key, data) {
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('localStorage保存失败:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 从localStorage加载
+     */
+    loadFromLocalStorage(key) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error('localStorage加载失败:', error);
+            return null;
+        }
+    }
+
+    /**
      * 清理数据库
      */
     async cleanup() {
