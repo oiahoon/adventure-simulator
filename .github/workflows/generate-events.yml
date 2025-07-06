@@ -28,11 +28,11 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: 'api/package.json'
+        cache-dependency-path: 'scripts/event-generator/package.json'
     
     - name: Install dependencies
       run: |
-        cd api
+        cd scripts/event-generator
         npm install
     
     - name: Generate events with DeepSeek
@@ -40,22 +40,15 @@ jobs:
         DEEPSEEK_TOKEN: ${{ secrets.DEEPSEEK_TOKEN }}
         EVENT_COUNT: ${{ github.event.inputs.event_count || '400' }}
       run: |
-        cd api
-        node -e "
-        const handler = require('./generate-events.js').default;
-        const req = { method: 'POST', body: { eventCount: process.env.EVENT_COUNT } };
-        const res = {
-          status: (code) => ({ json: (data) => console.log(JSON.stringify(data, null, 2)) }),
-          json: (data) => console.log(JSON.stringify(data, null, 2))
-        };
-        handler(req, res).catch(console.error);
-        "
+        cd scripts/event-generator
+        node generate-events.js
     
     - name: Commit and push new events
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action Bot"
-        git add -A
+        git add src/data/generated-events.json
+        git add src/data/event-stats.json
         if git diff --staged --quiet; then
           echo "No new events generated"
         else
@@ -68,15 +61,6 @@ jobs:
           git push
         fi
     
-    - name: Deploy to Vercel (if configured)
-      if: ${{ secrets.VERCEL_TOKEN }}
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        working-directory: ./
-    
     - name: Create summary
       run: |
         echo "## 🎲 事件生成完成" >> $GITHUB_STEP_SUMMARY
@@ -88,5 +72,5 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📊 统计信息" >> $GITHUB_STEP_SUMMARY
         echo "- 每个剧情类型约生成 80 个事件" >> $GITHUB_STEP_SUMMARY
-        echo "- 所有事件均为纯故事性，不影响角色数值" >> $GITHUB_STEP_SUMMARY
-        echo "- 事件已自动保存到数据库" >> $GITHUB_STEP_SUMMARY
+        echo "- 事件支持纯故事和影响两种类型" >> $GITHUB_STEP_SUMMARY
+        echo "- 事件已保存到 JSON 数据库文件" >> $GITHUB_STEP_SUMMARY
