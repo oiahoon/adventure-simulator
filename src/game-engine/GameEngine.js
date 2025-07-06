@@ -211,7 +211,22 @@ class GameEngine {
      */
     addStorylineSelection() {
         const characterForm = document.querySelector('.character-form');
+        if (!characterForm) {
+            console.error('❌ 找不到 character-form 元素');
+            return;
+        }
+        
         const professionGroup = characterForm.querySelector('.form-group:nth-child(2)');
+        if (!professionGroup) {
+            console.error('❌ 找不到职业选择组');
+            return;
+        }
+        
+        // 检查是否已经添加过剧情选择
+        if (characterForm.querySelector('.storyline-grid')) {
+            console.log('剧情选择已存在，跳过添加');
+            return;
+        }
         
         const storylineGroup = document.createElement('div');
         storylineGroup.className = 'form-group';
@@ -271,7 +286,12 @@ class GameEngine {
             </div>
         `;
         
-        characterForm.insertBefore(storylineGroup, professionGroup);
+        try {
+            characterForm.insertBefore(storylineGroup, professionGroup);
+            console.log('✅ 剧情选择界面添加成功');
+        } catch (error) {
+            console.error('❌ 添加剧情选择界面失败:', error);
+        }
     }
 
     /**

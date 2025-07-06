@@ -1,6 +1,6 @@
 /**
  * 游戏主入口文件
- * 初始化游戏引擎和相关系统
+ * 简化版本，专注于基本功能
  */
 
 // 全局游戏引擎实例
@@ -14,93 +14,140 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     try {
         // 等待一小段时间确保所有脚本加载完成
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // 检查必要的类是否存在
         if (typeof GameEngine === 'undefined') {
-            throw new Error('GameEngine 类未定义');
+            console.error('❌ GameEngine 类未定义');
+            showErrorMessage('GameEngine 类未加载，请检查脚本文件');
+            return;
         }
         
-        if (typeof Character === 'undefined') {
-            throw new Error('Character 类未定义');
-        }
-        
-        // 初始化数据库
-        if (window.DatabaseManager) {
-            await window.DatabaseManager.waitForInit();
-            console.log('💾 数据库初始化完成');
-        }
+        console.log('✅ GameEngine 类已加载');
         
         // 初始化游戏引擎
         gameEngine = new GameEngine();
-        
-        // 检查是否有自动保存的游戏
-        await checkAndRestoreProgress();
+        console.log('✅ 游戏引擎初始化完成');
         
         // 显示欢迎信息
-        if (!gameEngine.gameState) {
-            showWelcomeMessage();
-        }
-        
-        // 预加载生成的事件
-        if (window.GeneratedEventLoader) {
-            try {
-                await window.GeneratedEventLoader.preloadEvents();
-            } catch (error) {
-                console.warn('预加载事件失败:', error);
-            }
-        }
+        showWelcomeMessage();
         
         console.log('✅ 游戏初始化完成');
         
-        // 测试按钮功能
-        testButtonFunctionality();
-        
     } catch (error) {
         console.error('❌ 游戏初始化失败:', error);
-        showErrorMessage('游戏初始化失败：' + error.message + '。请刷新页面重试。');
+        showErrorMessage('游戏初始化失败：' + error.message);
     }
 });
 
 /**
- * 测试按钮功能
+ * 显示欢迎信息
  */
-function testButtonFunctionality() {
-    const newGameBtn = document.getElementById('new-game-btn');
-    if (newGameBtn) {
-        console.log('✅ 新游戏按钮存在');
+function showWelcomeMessage() {
+    const logContent = document.getElementById('log-content');
+    if (logContent) {
+        // 清空现有内容
+        logContent.innerHTML = '';
         
-        // 测试点击事件
-        const testClick = () => {
-            console.log('🧪 测试点击新游戏按钮');
-            const modal = document.getElementById('character-creation');
-            if (modal) {
-                console.log('✅ 角色创建模态框存在');
-                modal.classList.remove('hidden');
-                console.log('✅ 模态框显示成功');
+        // 添加欢迎消息
+        const welcomeMessages = [
+            '🎮 欢迎来到冒险模拟器！',
+            '这是一个AI驱动的文字冒险游戏。',
+            '✨ 特色功能：',
+            '• 5种主线剧情：仙侠修真、玄幻奇缘、科幻未来、武侠江湖、西幻冒险',
+            '• 6种职业选择，每种都有独特体验',
+            '• AI生成的无限事件内容',
+            '• 智能的角色成长系统',
+            '• 自动保存游戏进度',
+            '🚀 点击"新游戏"开始你的冒险之旅！'
+        ];
+        
+        welcomeMessages.forEach((message, index) => {
+            setTimeout(() => {
+                const entry = document.createElement('p');
+                entry.className = 'log-entry system';
+                entry.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span> <span class="log-message">${message}</span>`;
+                entry.style.opacity = '0';
+                entry.style.transform = 'translateY(10px)';
                 
-                // 3秒后自动隐藏（仅用于测试）
+                logContent.appendChild(entry);
+                
+                // 淡入动画
                 setTimeout(() => {
-                    modal.classList.add('hidden');
-                    console.log('🧪 测试完成，模态框已隐藏');
-                }, 3000);
-            } else {
-                console.error('❌ 角色创建模态框不存在');
-            }
-        };
-        
-        // 添加测试按钮
-        const testBtn = document.createElement('button');
-        testBtn.textContent = '🧪 测试模态框';
-        testBtn.className = 'btn btn-secondary';
-        testBtn.style.marginLeft = '10px';
-        testBtn.addEventListener('click', testClick);
-        newGameBtn.parentNode.appendChild(testBtn);
-        
-    } else {
-        console.error('❌ 新游戏按钮不存在');
+                    entry.style.transition = 'all 0.5s ease';
+                    entry.style.opacity = '1';
+                    entry.style.transform = 'translateY(0)';
+                }, 50);
+                
+                // 自动滚动
+                setTimeout(() => {
+                    logContent.scrollTop = logContent.scrollHeight;
+                }, 100);
+                
+            }, index * 800);
+        });
     }
 }
+
+/**
+ * 显示错误信息
+ */
+function showErrorMessage(message) {
+    const logContent = document.getElementById('log-content');
+    if (logContent) {
+        logContent.innerHTML = `<p class="log-entry error">❌ ${message}</p>`;
+    } else {
+        alert(message);
+    }
+}
+
+/**
+ * 页面卸载前保存游戏状态
+ */
+window.addEventListener('beforeunload', function(e) {
+    if (gameEngine && gameEngine.gameState && gameEngine.isRunning) {
+        // 尝试自动保存游戏
+        try {
+            if (window.ProgressManager) {
+                window.ProgressManager.autoSave(gameEngine);
+            }
+            console.log('💾 游戏已自动保存');
+        } catch (error) {
+            console.error('自动保存失败:', error);
+        }
+    }
+});
+
+/**
+ * 全局错误处理
+ */
+window.addEventListener('error', function(e) {
+    console.error('🚨 全局错误:', e.error);
+    console.error('📁 文件:', e.filename);
+    console.error('📍 位置:', e.lineno + ':' + e.colno);
+    
+    // 显示用户友好的错误信息
+    const errorMsg = `JavaScript错误: ${e.message}\n文件: ${e.filename}\n行号: ${e.lineno}`;
+    showErrorMessage('游戏运行时发生错误，请查看控制台获取详细信息。');
+});
+
+/**
+ * 导出全局函数供其他模块使用
+ */
+window.GameApp = {
+    getGameEngine: () => gameEngine,
+    restart: () => {
+        if (gameEngine) {
+            gameEngine.endGame();
+            if (window.ProgressManager) {
+                window.ProgressManager.clearAutoSave();
+            }
+            location.reload();
+        }
+    }
+};
+
+console.log('📜 主脚本加载完成');
 
 /**
  * 检查并恢复游戏进度
