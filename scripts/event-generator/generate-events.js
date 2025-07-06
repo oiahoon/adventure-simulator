@@ -197,7 +197,13 @@ class SQLiteEventGenerator {
    - 影响包括：属性变化、财富变化、社会威望、人格特征、技能获得等
    - 影响必须与事件内容有合理的逻辑关系
 
-请按以下JSON格式返回${actualCount}个事件，确保JSON格式完整正确：
+**重要格式要求**：
+- 必须使用英文标点符号：[] () , : ; " 
+- 不要使用中文标点符号：【】（），：；""
+- JSON格式必须严格正确，所有括号和引号都要配对
+- 数组和对象的最后一个元素后不要加逗号
+
+请按以下JSON格式返回${actualCount}个事件：
 {
   "events": [
     {
@@ -213,7 +219,10 @@ class SQLiteEventGenerator {
         "personality": {"courage": 0, "wisdom": 0, "compassion": 0, "ambition": 0, "curiosity": 0, "patience": 0, "pride": 0, "loyalty": 0},
         "social": {"reputation": 0, "influence": 0, "karma": 0},
         "status": {"hp": 0, "mp": 0, "wealth": 0, "experience": 0, "fatigue": 0},
-        "skills": [], "items": [], "titles": [], "achievements": []
+        "skills": [],
+        "items": [],
+        "titles": [],
+        "achievements": []
       },
       "rarity": "common",
       "impact_description": "对角色造成的具体影响描述"
@@ -221,7 +230,7 @@ class SQLiteEventGenerator {
   ]
 }
 
-重要：请确保返回完整的JSON格式，所有括号和引号都要正确闭合。`;
+**再次提醒**：请确保返回完整的JSON格式，使用英文标点符号，所有括号和引号都要正确闭合。`;
     }
 
     /**
@@ -316,6 +325,10 @@ class SQLiteEventGenerator {
                     let cleanedResponse = this.cleanJsonResponse(response);
                     console.log(`🧹 清理后长度: ${cleanedResponse.length} 字符`);
                     
+                    // 预处理：修复常见的中文标点符号问题
+                    cleanedResponse = this.preprocessJsonString(cleanedResponse);
+                    console.log(`🔧 预处理后长度: ${cleanedResponse.length} 字符`);
+                    
                     // 解析响应
                     const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
                     if (!jsonMatch) {
@@ -331,7 +344,22 @@ class SQLiteEventGenerator {
                         data = JSON.parse(jsonMatch[0]);
                     } catch (parseError) {
                         console.error(`❌ ${storyline.name} 第${batch + 1}批JSON解析失败:`, parseError.message);
-                        console.error('尝试解析的JSON:', jsonMatch[0]);
+                        
+                        // 显示错误位置附近的内容
+                        const errorPos = parseError.message.match(/position (\d+)/);
+                        if (errorPos) {
+                            const pos = parseInt(errorPos[1]);
+                            const start = Math.max(0, pos - 50);
+                            const end = Math.min(jsonMatch[0].length, pos + 50);
+                            const context = jsonMatch[0].substring(start, end);
+                            console.error(`错误位置附近的内容 (位置 ${pos}):`);
+                            console.error(`"${context}"`);
+                            console.error(`错误字符: "${jsonMatch[0][pos] || 'EOF'}"`);
+                        }
+                        
+                        console.error('完整JSON长度:', jsonMatch[0].length);
+                        console.error('JSON开头:', jsonMatch[0].substring(0, 100));
+                        console.error('JSON结尾:', jsonMatch[0].substring(Math.max(0, jsonMatch[0].length - 100)));
                         
                         // 尝试修复常见的JSON问题
                         const fixedJson = this.attemptJsonFix(jsonMatch[0]);
@@ -572,6 +600,32 @@ class SQLiteEventGenerator {
     }
 
     /**
+     * 预处理JSON字符串，修复常见的中文标点符号问题
+     */
+    preprocessJsonString(jsonString) {
+        let processed = jsonString;
+        
+        // 修复中文标点符号
+        processed = processed.replace(/【/g, '[');  // 中文【 → 英文[
+        processed = processed.replace(/】/g, ']');  // 中文】 → 英文]
+        processed = processed.replace(/（/g, '(');  // 中文（ → 英文(
+        processed = processed.replace(/）/g, ')');  // 中文） → 英文)
+        processed = processed.replace(/，/g, ',');  // 中文，→ 英文,
+        processed = processed.replace(/：/g, ':');  // 中文：→ 英文:
+        processed = processed.replace(/；/g, ';');  // 中文；→ 英文;
+        processed = processed.replace(/"/g, '"');  // 中文左引号 → 英文引号
+        processed = processed.replace(/"/g, '"');  // 中文右引号 → 英文引号
+        
+        // 移除多余的逗号
+        processed = processed.replace(/,(\s*[}\]])/g, '$1');
+        
+        // 修复常见的JSON结构问题
+        processed = processed.replace(/,(\s*\n\s*[}\]])/g, '$1');
+        
+        return processed;
+    }
+
+    /**
      * 清理API响应，移除非JSON内容
      */
     cleanJsonResponse(response) {
@@ -635,10 +689,21 @@ class SQLiteEventGenerator {
         try {
             let fixed = jsonString;
             
-            // 1. 移除末尾的逗号
+            // 1. 修复中文标点符号混用问题
+            fixed = fixed.replace(/【/g, '[');  // 中文【 → 英文[
+            fixed = fixed.replace(/】/g, ']');  // 中文】 → 英文]
+            fixed = fixed.replace(/（/g, '(');  // 中文（ → 英文(
+            fixed = fixed.replace(/）/g, ')');  // 中文） → 英文)
+            fixed = fixed.replace(/，/g, ',');  // 中文，→ 英文,
+            fixed = fixed.replace(/：/g, ':');  // 中文：→ 英文:
+            fixed = fixed.replace(/；/g, ';');  // 中文；→ 英文;
+            fixed = fixed.replace(/"/g, '"');  // 中文左引号 → 英文引号
+            fixed = fixed.replace(/"/g, '"');  // 中文右引号 → 英文引号
+            
+            // 2. 移除末尾的逗号
             fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
             
-            // 2. 修复未闭合的字符串 - 检查中文字符截断
+            // 3. 修复未闭合的字符串 - 检查中文字符截断
             const quotes = (fixed.match(/"/g) || []).length;
             if (quotes % 2 !== 0) {
                 // 找到最后一个引号的位置
@@ -665,15 +730,21 @@ class SQLiteEventGenerator {
                 }
             }
             
-            // 3. 确保括号匹配
+            // 4. 确保括号匹配
             const openBraces = (fixed.match(/\{/g) || []).length;
             const closeBraces = (fixed.match(/\}/g) || []).length;
+            const openBrackets = (fixed.match(/\[/g) || []).length;
+            const closeBrackets = (fixed.match(/\]/g) || []).length;
             
             if (openBraces > closeBraces) {
                 fixed += '}'.repeat(openBraces - closeBraces);
             }
             
-            // 4. 移除可能的尾部垃圾字符
+            if (openBrackets > closeBrackets) {
+                fixed += ']'.repeat(openBrackets - closeBrackets);
+            }
+            
+            // 5. 移除可能的尾部垃圾字符
             fixed = fixed.replace(/[^}\]]*$/, '');
             if (!fixed.endsWith('}') && !fixed.endsWith(']')) {
                 if (fixed.includes('{')) {
@@ -712,7 +783,19 @@ class SQLiteEventGenerator {
                         }
                         
                         if (eventEnd > 0) {
-                            const truncated = jsonString.substring(0, eventEnd + 1) + ']}';
+                            let truncated = jsonString.substring(0, eventEnd + 1);
+                            
+                            // 修复中文标点
+                            truncated = truncated.replace(/【/g, '[');
+                            truncated = truncated.replace(/】/g, ']');
+                            truncated = truncated.replace(/（/g, '(');
+                            truncated = truncated.replace(/）/g, ')');
+                            truncated = truncated.replace(/，/g, ',');
+                            truncated = truncated.replace(/：/g, ':');
+                            truncated = truncated.replace(/"/g, '"');
+                            truncated = truncated.replace(/"/g, '"');
+                            
+                            truncated += ']}';
                             JSON.parse(truncated);
                             return truncated;
                         }
