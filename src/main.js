@@ -13,13 +13,39 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('🎮 冒险模拟器启动中...');
     
     try {
-        // 等待一小段时间确保所有脚本加载完成
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // 等待脚本加载完成
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // 检查必要的类是否存在
+        // 检查必要的类是否存在，最多等待5秒
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        while (attempts < maxAttempts) {
+            if (typeof GameEngine !== 'undefined' && 
+                typeof Character !== 'undefined' && 
+                typeof UIManager !== 'undefined') {
+                break;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
         if (typeof GameEngine === 'undefined') {
             console.error('❌ GameEngine 类未定义');
             showErrorMessage('GameEngine 类未加载，请检查脚本文件');
+            return;
+        }
+        
+        if (typeof Character === 'undefined') {
+            console.error('❌ Character 类未定义');
+            showErrorMessage('Character 类未加载，请检查脚本文件');
+            return;
+        }
+        
+        if (typeof UIManager === 'undefined') {
+            console.error('❌ UIManager 类未定义');
+            showErrorMessage('UIManager 类未加载，请检查脚本文件');
             return;
         }
         

@@ -106,33 +106,62 @@ class SQLiteEventGenerator {
      * 调用DeepSeek API
      */
     async callDeepSeek(prompt) {
-        const response = await axios.post(
-            'https://api.deepseek.com/v1/chat/completions',
-            {
-                model: 'deepseek-chat',
-                messages: [
-                    {
-                        role: 'system',
-                        content: '你是一个专业的游戏剧情设计师，擅长创造引人入胜的故事情节。请严格按照JSON格式返回结果。'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                temperature: 0.9,
-                max_tokens: 2000
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${process.env.DEEPSEEK_TOKEN}`,
-                    'Content-Type': 'application/json'
+        try {
+            console.log('🔗 正在调用DeepSeek API...');
+            
+            const response = await axios.post(
+                'https://api.deepseek.com/v1/chat/completions',
+                {
+                    model: 'deepseek-chat',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: '你是一个专业的游戏剧情设计师，擅长创造引人入胜的故事情节。请严格按照JSON格式返回结果。'
+                        },
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.9,
+                    max_tokens: 2000
                 },
-                timeout: 30000
-            }
-        );
+                {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.DEEPSEEK_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 60000, // 增加超时时间到60秒
+                    validateStatus: function (status) {
+                        return status < 500; // 接受所有小于500的状态码
+                    }
+                }
+            );
 
-        return response.data.choices[0].message.content;
+            if (response.status !== 200) {
+                throw new Error(`API返回状态码: ${response.status}, 消息: ${response.statusText}`);
+            }
+
+            if (!response.data || !response.data.choices || !response.data.choices[0]) {
+                throw new Error('API返回数据格式错误');
+            }
+
+            console.log('✅ API调用成功');
+            return response.data.choices[0].message.content;
+            
+        } catch (error) {
+            console.error('❌ DeepSeek API调用失败:', error.message);
+            
+            if (error.code === 'ECONNABORTED') {
+                throw new Error('API调用超时，请检查网络连接');
+            } else if (error.response) {
+                throw new Error(`API错误: ${error.response.status} - ${error.response.statusText}`);
+            } else if (error.request) {
+                throw new Error('网络请求失败，无法连接到API服务器');
+            } else {
+                throw error;
+            }
+        }
     }
 
     /**
@@ -238,6 +267,8 @@ class SQLiteEventGenerator {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
+        let totalApiFailures = 0;
+
         for (const [storylineId, storyline] of Object.entries(STORYLINES)) {
             try {
                 console.log(`🔄 生成 ${storyline.name} 事件...`);
@@ -248,39 +279,24 @@ class SQLiteEventGenerator {
                 // 解析响应
                 const jsonMatch = response.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) {
-                    console.error(`${storyline.name} 响应格式错误`);
+                    console.error(`${storyline.name} 响应格式错误，使用备用事件`);
+                    const fallbackEvents = this.generateFallbackEvents(storylineId, eventsPerStoryline);
+                    await this.insertEvents(insertStmt, fallbackEvents);
+                    newEvents.push(...fallbackEvents);
                     continue;
                 }
 
                 const data = JSON.parse(jsonMatch[0]);
                 if (data.events && Array.isArray(data.events)) {
                     // 批量插入事件
-                    const transaction = this.db.transaction((events) => {
-                        for (const event of events) {
-                            const eventId = uuidv4();
-                            insertStmt.run(
-                                eventId,
-                                event.title,
-                                event.description,
-                                storylineId,
-                                event.chapter || 1,
-                                JSON.stringify(event.tags || []),
-                                JSON.stringify(event.characters || []),
-                                event.location || '',
-                                JSON.stringify(event.effects || {}),
-                                event.impact_description || '',
-                                event.rarity || 'common',
-                                1, // generated
-                                'deepseek', // generator
-                                Date.now(), // timestamp
-                                '1.0' // version
-                            );
-                        }
-                    });
-                    
-                    transaction(data.events);
+                    await this.insertEvents(insertStmt, data.events, storylineId);
                     newEvents.push(...data.events);
                     console.log(`${storyline.name} 生成了 ${data.events.length} 个事件`);
+                } else {
+                    console.error(`${storyline.name} 数据格式错误，使用备用事件`);
+                    const fallbackEvents = this.generateFallbackEvents(storylineId, eventsPerStoryline);
+                    await this.insertEvents(insertStmt, fallbackEvents);
+                    newEvents.push(...fallbackEvents);
                 }
 
                 // 添加延迟避免API限制
@@ -288,11 +304,149 @@ class SQLiteEventGenerator {
 
             } catch (error) {
                 console.error(`生成 ${storyline.name} 事件失败:`, error.message);
+                totalApiFailures++;
+                
+                // 使用备用事件
+                console.log(`使用备用事件替代 ${storyline.name}`);
+                const fallbackEvents = this.generateFallbackEvents(storylineId, eventsPerStoryline);
+                await this.insertEvents(insertStmt, fallbackEvents);
+                newEvents.push(...fallbackEvents);
+                
                 continue;
             }
         }
 
+        if (totalApiFailures === Object.keys(STORYLINES).length) {
+            console.warn('⚠️ 所有API调用都失败了，已使用备用事件');
+        } else if (totalApiFailures > 0) {
+            console.warn(`⚠️ ${totalApiFailures} 个剧情类型使用了备用事件`);
+        }
+
         return newEvents;
+    }
+
+    /**
+     * 插入事件到数据库
+     */
+    async insertEvents(insertStmt, events, storylineId = null) {
+        const transaction = this.db.transaction((events) => {
+            for (const event of events) {
+                const eventId = uuidv4();
+                insertStmt.run(
+                    eventId,
+                    event.title,
+                    event.description,
+                    storylineId || event.storyline,
+                    event.chapter || 1,
+                    JSON.stringify(event.tags || []),
+                    JSON.stringify(event.characters || []),
+                    event.location || '',
+                    JSON.stringify(event.effects || {}),
+                    event.impact_description || '',
+                    event.rarity || 'common',
+                    1, // generated
+                    'deepseek', // generator
+                    Date.now(), // timestamp
+                    '1.0' // version
+                );
+            }
+        });
+        
+        transaction(events);
+    }
+
+    /**
+     * 生成备用事件（当API失败时使用）
+     */
+    generateFallbackEvents(storylineId, count) {
+        const storyline = STORYLINES[storylineId];
+        const events = [];
+        
+        const templates = {
+            xianxia: [
+                {
+                    title: "山中修炼",
+                    description: "你在深山中找到一处灵气充沛的洞府，决定在此修炼。经过数日的打坐吐纳，你感觉内力有所精进。",
+                    effects: { attributes: { intelligence: 1, constitution: 1 } }
+                },
+                {
+                    title: "遇见前辈",
+                    description: "路遇一位白发苍苍的老者，他看出你有修仙的资质，传授了你一些修炼心得。",
+                    effects: { attributes: { wisdom: 2 }, skills: ["基础修炼法"] }
+                },
+                {
+                    title: "采集灵草",
+                    description: "在山谷中发现了一株珍贵的灵草，小心采摘后收入囊中，这将对你的修炼大有帮助。",
+                    effects: { items: ["灵草"], status: { hp: 10 } }
+                }
+            ],
+            xuanhuan: [
+                {
+                    title: "魔法试炼",
+                    description: "你参加了魔法师公会的试炼，在激烈的魔法对决中展现了自己的实力，获得了认可。",
+                    effects: { attributes: { intelligence: 2 }, status: { mp: 15 } }
+                },
+                {
+                    title: "神秘遗迹",
+                    description: "探索一座古老的遗迹，在其中发现了失传的魔法知识，你的魔法造诣得到了提升。",
+                    effects: { skills: ["元素魔法"], attributes: { intelligence: 1 } }
+                }
+            ],
+            scifi: [
+                {
+                    title: "科技升级",
+                    description: "你获得了最新的科技装备，经过一番研究和调试，成功提升了自己的战斗能力。",
+                    effects: { items: ["高科技装备"], attributes: { dexterity: 2 } }
+                },
+                {
+                    title: "数据分析",
+                    description: "通过分析大量的数据，你发现了一些重要的模式和规律，这让你的思维更加敏锐。",
+                    effects: { attributes: { intelligence: 2 }, skills: ["数据分析"] }
+                }
+            ],
+            wuxia: [
+                {
+                    title: "武功切磋",
+                    description: "与江湖高手切磋武艺，在激烈的对战中你领悟了新的招式，武功更进一步。",
+                    effects: { attributes: { strength: 1, dexterity: 1 }, skills: ["新招式"] }
+                },
+                {
+                    title: "侠义之举",
+                    description: "路见不平，拔刀相助，你的侠义行为赢得了江湖人士的尊敬。",
+                    effects: { personality: { courage: 2, loyalty: 1 }, social: { reputation: 5 } }
+                }
+            ],
+            fantasy: [
+                {
+                    title: "龙族传说",
+                    description: "你听说了古老的龙族传说，这些神秘的故事激发了你的想象力和冒险精神。",
+                    effects: { personality: { curiosity: 2 }, attributes: { charisma: 1 } }
+                },
+                {
+                    title: "精灵祝福",
+                    description: "善良的精灵为你送上祝福，你感到身心都得到了净化和提升。",
+                    effects: { status: { hp: 20, mp: 10 }, personality: { compassion: 1 } }
+                }
+            ]
+        };
+        
+        const storylineTemplates = templates[storylineId] || templates.xianxia;
+        
+        for (let i = 0; i < count; i++) {
+            const template = storylineTemplates[i % storylineTemplates.length];
+            events.push({
+                ...template,
+                storyline: storylineId,
+                chapter: Math.floor(i / 5) + 1,
+                tags: storyline.themes.slice(0, 3),
+                characters: [],
+                location: `${storyline.name}世界`,
+                rarity: 'common',
+                impact_description: `这次经历让你在${storyline.name}的道路上更进一步。`
+            });
+        }
+        
+        return events;
     }
 
     /**

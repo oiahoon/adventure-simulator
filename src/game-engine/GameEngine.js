@@ -187,7 +187,7 @@ class GameEngine {
         // 创建角色按钮
         const createBtn = document.getElementById('create-character-btn');
         if (createBtn) {
-            createBtn.addEventListener('click', () => {
+            createBtn.addEventListener('click', async () => {
                 const name = document.getElementById('character-name').value.trim();
                 
                 if (!name) {
@@ -203,7 +203,7 @@ class GameEngine {
                 console.log('🎮 开始创建角色:', { name, profession: selectedProfession, attributes });
                 
                 // 创建角色时不传入storyline，让Character类自动分配
-                this.createCharacter(name, selectedProfession, attributes);
+                await this.createCharacter(name, selectedProfession, attributes);
             });
         }
 
@@ -373,7 +373,7 @@ class GameEngine {
     /**
      * 创建角色并开始游戏
      */
-    createCharacter(name, profession, attributes) {
+    async createCharacter(name, profession, attributes) {
         // 创建角色（剧情将自动分配）
         const character = new Character(name, profession, attributes);
         
