@@ -182,8 +182,8 @@ class SQLiteEventGenerator {
     buildEventPrompt(storyline, eventCount) {
         const themes = STORYLINES[storyline].themes.join('、');
         
-        // 减少单次生成的事件数量，避免响应过长
-        const actualCount = Math.min(eventCount, 10); // 最多一次生成10个事件
+        // 大幅减少单次生成的事件数量，避免响应过长被截断
+        const actualCount = Math.min(eventCount, 5); // 最多一次生成5个事件（从10减少到5）
         
         return `请为${STORYLINES[storyline].name}类型的游戏生成${actualCount}个事件。
 
@@ -191,7 +191,7 @@ class SQLiteEventGenerator {
 1. 事件类型：${STORYLINES[storyline].name}
 2. 主题元素：${themes}
 3. 事件特点：
-   - 丰富的故事情节和对话（150-300字）
+   - 简洁的故事情节（100-200字，不要过长）
    - 符合${STORYLINES[storyline].name}的世界观
    - 每个事件可以是纯故事性的，也可以对角色造成影响
    - 影响包括：属性变化、财富变化、社会威望、人格特征、技能获得等
@@ -202,13 +202,14 @@ class SQLiteEventGenerator {
 - 不要使用中文标点符号：【】（），：；""
 - JSON格式必须严格正确，所有括号和引号都要配对
 - 数组和对象的最后一个元素后不要加逗号
+- 保持描述简洁，避免过长的文本导致响应截断
 
 请按以下JSON格式返回${actualCount}个事件：
 {
   "events": [
     {
       "title": "事件标题",
-      "description": "详细的故事描述，包含对话和情节发展",
+      "description": "简洁的故事描述，包含对话和情节发展",
       "storyline": "${storyline}",
       "chapter": 1,
       "tags": ["标签1", "标签2"],
@@ -230,7 +231,7 @@ class SQLiteEventGenerator {
   ]
 }
 
-**再次提醒**：请确保返回完整的JSON格式，使用英文标点符号，所有括号和引号都要正确闭合。`;
+**再次提醒**：请确保返回完整的JSON格式，使用英文标点符号，所有括号和引号都要正确闭合，保持内容简洁避免截断。`;
     }
 
     /**
@@ -298,7 +299,7 @@ class SQLiteEventGenerator {
             
             try {
                 let totalGenerated = 0;
-                const batchSize = 10; // 每批生成10个事件
+                const batchSize = 5; // 减少每批生成数量，避免响应过长
                 const batches = Math.ceil(eventsPerStoryline / batchSize);
                 
                 console.log(`📊 计划分 ${batches} 批生成，每批 ${batchSize} 个事件`);
@@ -370,16 +371,19 @@ class SQLiteEventGenerator {
                                 console.log('✅ JSON修复成功！');
                             } catch (fixError) {
                                 console.error('❌ JSON修复也失败了:', fixError.message);
-                                throw new Error(`JSON解析失败: ${parseError.message}`);
+                                console.warn(`⚠️ 跳过 ${storyline.name} 第${batch + 1}批，继续下一批...`);
+                                continue; // 跳过这个批次，继续下一个
                             }
                         } else {
-                            throw new Error(`JSON解析失败: ${parseError.message}`);
+                            console.warn(`⚠️ 跳过 ${storyline.name} 第${batch + 1}批，继续下一批...`);
+                            continue; // 跳过这个批次，继续下一个
                         }
                     }
 
                     if (!data.events || !Array.isArray(data.events)) {
                         console.error(`❌ ${storyline.name} 第${batch + 1}批数据结构错误:`, JSON.stringify(data, null, 2));
-                        throw new Error('数据结构错误：缺少events数组');
+                        console.warn(`⚠️ 跳过 ${storyline.name} 第${batch + 1}批，继续下一批...`);
+                        continue; // 跳过这个批次，继续下一个
                     }
 
                     console.log(`✅ ${storyline.name} 第${batch + 1}批解析成功，获得 ${data.events.length} 个事件`);
@@ -700,35 +704,94 @@ class SQLiteEventGenerator {
             fixed = fixed.replace(/"/g, '"');  // 中文左引号 → 英文引号
             fixed = fixed.replace(/"/g, '"');  // 中文右引号 → 英文引号
             
-            // 2. 移除末尾的逗号
-            fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+            // 2. 处理截断的JSON - 检查是否以不完整的字段结尾
+            const truncationPatterns = [
+                /"[^"]*$/,                    // 未闭合的字符串
+                /:\s*$/,                      // 冒号后没有值
+                /,\s*$/,                      // 逗号后没有内容
+                /"impact_description":\s*$/,  // 特定的截断模式
+                /"description":\s*$/,         // 描述字段截断
+                /"title":\s*$/               // 标题字段截断
+            ];
             
-            // 3. 修复未闭合的字符串 - 检查中文字符截断
-            const quotes = (fixed.match(/"/g) || []).length;
-            if (quotes % 2 !== 0) {
-                // 找到最后一个引号的位置
-                const lastQuoteIndex = fixed.lastIndexOf('"');
-                if (lastQuoteIndex > 0) {
-                    const afterLastQuote = fixed.substring(lastQuoteIndex + 1);
+            let wasTruncated = false;
+            for (const pattern of truncationPatterns) {
+                if (pattern.test(fixed)) {
+                    console.log('🔧 检测到JSON截断，尝试修复...');
+                    wasTruncated = true;
+                    break;
+                }
+            }
+            
+            if (wasTruncated) {
+                // 找到最后一个完整的事件
+                const eventPattern = /"title":\s*"[^"]+"/g;
+                const eventMatches = [...fixed.matchAll(eventPattern)];
+                
+                if (eventMatches.length > 0) {
+                    // 找到最后一个完整事件的开始位置
+                    const lastEventMatch = eventMatches[eventMatches.length - 1];
+                    const lastEventStart = lastEventMatch.index;
                     
-                    // 检查是否是中文字符被截断
-                    if (afterLastQuote.trim() && !afterLastQuote.includes('"')) {
-                        // 查找最后一个完整的中文字符或英文单词
-                        let cutPoint = lastQuoteIndex + 1;
-                        for (let i = fixed.length - 1; i > lastQuoteIndex; i--) {
+                    // 从最后一个事件开始，向前查找完整的事件
+                    let searchPos = lastEventStart;
+                    let braceCount = 0;
+                    let inString = false;
+                    let escapeNext = false;
+                    let lastCompleteEventEnd = -1;
+                    
+                    // 向前查找倒数第二个完整事件
+                    if (eventMatches.length > 1) {
+                        const secondLastEventMatch = eventMatches[eventMatches.length - 2];
+                        searchPos = secondLastEventMatch.index;
+                        
+                        for (let i = searchPos; i < fixed.length; i++) {
                             const char = fixed[i];
-                            // 如果是完整的中文字符或英文字母
-                            if (/[\u4e00-\u9fff]/.test(char) || /[a-zA-Z]/.test(char)) {
-                                cutPoint = i + 1;
-                                break;
+                            
+                            if (escapeNext) {
+                                escapeNext = false;
+                                continue;
+                            }
+                            
+                            if (char === '\\') {
+                                escapeNext = true;
+                                continue;
+                            }
+                            
+                            if (char === '"' && !escapeNext) {
+                                inString = !inString;
+                                continue;
+                            }
+                            
+                            if (!inString) {
+                                if (char === '{') braceCount++;
+                                if (char === '}') {
+                                    braceCount--;
+                                    if (braceCount === 0) {
+                                        lastCompleteEventEnd = i;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        
-                        // 截断到最后一个完整字符，然后添加引号
-                        fixed = fixed.substring(0, cutPoint) + '"' + fixed.substring(cutPoint).replace(/[^}\]]*$/, '');
+                    }
+                    
+                    if (lastCompleteEventEnd > 0) {
+                        // 截断到最后一个完整事件
+                        fixed = fixed.substring(0, lastCompleteEventEnd + 1);
+                        console.log('🔧 截断到最后一个完整事件，位置:', lastCompleteEventEnd);
+                    } else {
+                        // 如果找不到完整事件，尝试简单截断
+                        const lastBrace = fixed.lastIndexOf('}');
+                        if (lastBrace > 0) {
+                            fixed = fixed.substring(0, lastBrace + 1);
+                        }
                     }
                 }
             }
+            
+            // 3. 移除末尾的逗号
+            fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
             
             // 4. 确保括号匹配
             const openBraces = (fixed.match(/\{/g) || []).length;
@@ -744,16 +807,21 @@ class SQLiteEventGenerator {
                 fixed += ']'.repeat(openBrackets - closeBrackets);
             }
             
-            // 5. 移除可能的尾部垃圾字符
-            fixed = fixed.replace(/[^}\]]*$/, '');
-            if (!fixed.endsWith('}') && !fixed.endsWith(']')) {
-                if (fixed.includes('{')) {
-                    fixed += '}';
+            // 5. 确保JSON以正确的结构结尾
+            if (!fixed.trim().endsWith(']}')) {
+                if (fixed.includes('"events"')) {
+                    if (!fixed.endsWith(']')) {
+                        fixed += ']';
+                    }
+                    if (!fixed.endsWith('}')) {
+                        fixed += '}';
+                    }
                 }
             }
             
             // 验证修复后的JSON
             JSON.parse(fixed);
+            console.log('✅ JSON修复成功');
             return fixed;
             
         } catch (error) {
@@ -762,12 +830,14 @@ class SQLiteEventGenerator {
             // 尝试更激进的修复 - 截断到最后一个完整的事件
             try {
                 const eventMatches = jsonString.match(/"title":\s*"[^"]*"/g);
-                if (eventMatches && eventMatches.length > 0) {
-                    // 找到最后一个完整事件的位置
+                if (eventMatches && eventMatches.length > 1) {
+                    // 保留除最后一个事件外的所有事件
                     const lastEventIndex = jsonString.lastIndexOf(eventMatches[eventMatches.length - 1]);
-                    if (lastEventIndex > 0) {
-                        // 从最后一个事件开始，向后查找完整的事件结构
-                        let searchStart = lastEventIndex;
+                    const secondLastEventIndex = jsonString.lastIndexOf(eventMatches[eventMatches.length - 2]);
+                    
+                    if (secondLastEventIndex > 0) {
+                        // 从倒数第二个事件开始，查找完整的事件结构
+                        let searchStart = secondLastEventIndex;
                         let braceCount = 0;
                         let eventEnd = -1;
                         
@@ -797,6 +867,7 @@ class SQLiteEventGenerator {
                             
                             truncated += ']}';
                             JSON.parse(truncated);
+                            console.log('✅ 激进修复成功');
                             return truncated;
                         }
                     }
