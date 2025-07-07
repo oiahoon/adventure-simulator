@@ -502,9 +502,12 @@ class GameEngine {
             if (this.gameState.gameTime % eventInterval === 0) {
                 try {
                     // 非阻塞的事件触发
-                    this.eventSystem.triggerRandomEvent(this.gameState).catch(error => {
-                        console.error('事件触发失败:', error);
-                    });
+                    const eventPromise = this.eventSystem.triggerRandomEvent(this.gameState);
+                    if (eventPromise && typeof eventPromise.catch === 'function') {
+                        eventPromise.catch(function(error) {
+                            console.error('事件触发失败:', error);
+                        });
+                    }
                 } catch (error) {
                     console.error('事件系统错误:', error);
                 }

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript语法测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .log-area {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .success {
+            color: #44ff44;
+        }
+        .warning {
+            color: #ffaa44;
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 JavaScript语法测试</h1>
+        
+        <div class="test-section">
+            <h2>语法检查结果</h2>
+            <div id="test-log" class="log-area"></div>
+            <button onclick="runTests()">运行测试</button>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+    </div>
+
+    <!-- 模拟日志容器 -->
+    <div id="log-content" style="display: none;"></div>
+
+    <!-- 引入脚本进行测试 -->
+    <script src="src/components/Character.js"></script>
+    <script src="src/ui/UIManager-compatible.js"></script>
+    <script src="src/events/EventSystem.js"></script>
+
+    <script>
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            
+            logArea.innerHTML += '<div class="' + className + '">[' + timestamp + '] ' + message + '</div>';
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            console.log('[' + type.toUpperCase() + '] ' + message);
+        }
+
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = '';
+        }
+
+        function runTests() {
+            log('🚀 开始JavaScript语法测试...');
+            
+            // 测试1: 基本类创建
+            try {
+                const testChar = new Character('测试', 'warrior');
+                log('✅ Character类创建成功', 'success');
+            } catch (error) {
+                log('❌ Character类创建失败: ' + error.message, 'error');
+            }
+            
+            // 测试2: UIManager兼容版本
+            try {
+                const uiManager = new UIManager();
+                log('✅ UIManager兼容版本创建成功', 'success');
+            } catch (error) {
+                log('❌ UIManager创建失败: ' + error.message, 'error');
+            }
+            
+            // 测试3: EventSystem
+            try {
+                const eventSystem = new EventSystem();
+                log('✅ EventSystem创建成功', 'success');
+            } catch (error) {
+                log('❌ EventSystem创建失败: ' + error.message, 'error');
+            }
+            
+            // 测试4: 异步方法调用
+            try {
+                const uiManager = new UIManager();
+                const promise = uiManager.addLogEntry('test', '测试消息');
+                if (promise && typeof promise.then === 'function') {
+                    log('✅ 异步方法调用正常', 'success');
+                } else {
+                    log('⚠️ 异步方法返回值异常', 'warning');
+                }
+            } catch (error) {
+                log('❌ 异步方法调用失败: ' + error.message, 'error');
+            }
+            
+            // 测试5: 箭头函数兼容性
+            try {
+                // 测试传统函数语法
+                var testFunc = function(x) {
+                    return x * 2;
+                };
+                var result = testFunc(5);
+                if (result === 10) {
+                    log('✅ 传统函数语法正常', 'success');
+                } else {
+                    log('❌ 传统函数语法异常', 'error');
+                }
+            } catch (error) {
+                log('❌ 函数语法测试失败: ' + error.message, 'error');
+            }
+            
+            // 测试6: Promise兼容性
+            try {
+                var testPromise = Promise.resolve('测试');
+                testPromise.then(function(value) {
+                    log('✅ Promise语法正常: ' + value, 'success');
+                }).catch(function(error) {
+                    log('❌ Promise测试失败: ' + error.message, 'error');
+                });
+            } catch (error) {
+                log('❌ Promise兼容性测试失败: ' + error.message, 'error');
+            }
+            
+            // 测试7: 模板字符串替代
+            try {
+                var name = '测试';
+                var level = 5;
+                var message = '角色 ' + name + ' 达到了 ' + level + ' 级';
+                log('✅ 字符串拼接正常: ' + message, 'success');
+            } catch (error) {
+                log('❌ 字符串拼接测试失败: ' + error.message, 'error');
+            }
+            
+            log('🎉 语法测试完成！', 'success');
+        }
+
+        // 页面加载时自动运行测试
+        window.addEventListener('load', function() {
+            setTimeout(runTests, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -186,11 +186,11 @@ class UIManager {
             contentDiv.appendChild(effectsDiv);
             
             // 添加淡入效果
-            setTimeout(() => {
+            setTimeout(function() {
                 effectsDiv.style.opacity = '0';
                 effectsDiv.style.transform = 'translateY(10px)';
                 effectsDiv.style.transition = 'all 0.5s ease';
-                setTimeout(() => {
+                setTimeout(function() {
                     effectsDiv.style.opacity = '1';
                     effectsDiv.style.transform = 'translateY(0)';
                 }, 100);
@@ -212,8 +212,9 @@ class UIManager {
         }
         
         // 自动滚动到底部
-        setTimeout(() => {
-            this.logContainer.scrollTop = this.logContainer.scrollHeight;
+        const self = this;
+        setTimeout(function() {
+            self.logContainer.scrollTop = self.logContainer.scrollHeight;
         }, 100);
         
         // 立即返回，不等待打字效果
@@ -248,19 +249,20 @@ class UIManager {
         // 分批显示文本，避免阻塞
         const batchSize = 5; // 每批显示5个字符
         let currentIndex = 0;
+        const self = this;
         
-        const displayBatch = () => {
+        function displayBatch() {
             const endIndex = Math.min(currentIndex + batchSize, text.length);
             element.textContent += text.slice(currentIndex, endIndex);
             currentIndex = endIndex;
             
             if (currentIndex < text.length) {
-                // 使用requestAnimationFrame而不是setTimeout，更流畅
-                setTimeout(displayBatch, this.typingSpeed);
+                // 使用setTimeout而不是requestAnimationFrame，更兼容
+                setTimeout(displayBatch, self.typingSpeed);
             } else {
-                this.isTyping = false;
+                self.isTyping = false;
             }
-        };
+        }
         
         displayBatch();
         
