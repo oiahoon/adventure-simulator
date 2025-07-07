@@ -133,6 +133,22 @@ class Character {
     }
 
     /**
+     * 获取剧情线名称
+     */
+    getStorylineName() {
+        // 根据角色名字或职业返回剧情线
+        const storylines = {
+            warrior: '武侠江湖',
+            mage: '仙侠修真',
+            rogue: '江湖浪子',
+            monk: '佛门修行',
+            hunter: '山林传奇',
+            scholar: '书香门第'
+        };
+        return storylines[this.profession] || '江湖奇缘';
+    }
+
+    /**
      * 获取最大生命值
      */
     getMaxHP() {

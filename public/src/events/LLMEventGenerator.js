@@ -31,22 +31,10 @@ class LLMEventGenerator {
      * 检查后端API可用性
      */
     async checkAvailability() {
-        try {
-            const response = await fetch(`${this.apiEndpoint}/health`, { 
-                method: 'GET',
-                timeout: 5000 
-            });
-            
-            if (response.ok) {
-                this.isEnabled = true;
-                console.log('✅ 后端API连接成功，LLM事件生成器已启用');
-            } else {
-                console.warn('⚠️ 后端API响应异常，LLM服务不可用');
-            }
-        } catch (error) {
-            console.warn('⚠️ 无法连接后端API，LLM服务不可用:', error.message);
-            this.isEnabled = false;
-        }
+        // 在前端部署中禁用API调用
+        console.log('🔧 前端部署模式，跳过LLM API检查');
+        this.isEnabled = false;
+        return false;
     }
 
     /**
