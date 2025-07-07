@@ -1,0 +1,64 @@
+name: LLM Story Generation
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'  # 每12小时运行一次
+  workflow_dispatch:
+    inputs:
+      story_count:
+        description: '生成故事数量'
+        default: '20'
+        type: string
+      story_type:
+        description: '故事类型'
+        default: 'side_quest'
+        type: choice
+        options:
+        - main_quest
+        - side_quest
+        - npc_stories
+        - sect_events
+        - romance_plots
+        - mystery_cases
+
+jobs:
+  generate-stories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: 🏮 Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 📦 Install Dependencies
+      run: pip install requests python-dotenv
+
+    - name: 🤖 Generate Stories
+      env:
+        DEEPSEEK_TOKEN: ${{ secrets.DEEPSEEK_TOKEN }}
+      run: |
+        python scripts/llm_story_generator.py \
+          --story-type "${{ github.event.inputs.story_type || 'side_quest' }}" \
+          --count "${{ github.event.inputs.story_count || '20' }}" \
+          --complexity "medium" \
+          --themes "martial_arts,romance,mystery"
+
+    - name: 📤 Commit Stories
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "LLM Story Bot"
+        git add frontend/src/data/stories/
+        git commit -m "🏮 Generate ${{ github.event.inputs.story_type || 'side_quest' }} stories via LLM
+
+        📊 Generated: ${{ github.event.inputs.story_count || '20' }} stories
+        🎭 Type: ${{ github.event.inputs.story_type || 'side_quest' }}
+        🤖 Source: DeepSeek LLM
+        ⏰ Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" || echo "No new stories"
+        git push
