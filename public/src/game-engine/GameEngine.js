@@ -526,11 +526,21 @@ class GameEngine {
             console.error('事件系统错误:', error);
         }
     }
-        
-        // 定期保存游戏状态
-        if (this.gameState.gameTime % 10 === 0 && window.ProgressManager) {
-            window.ProgressManager.autoSave(this);
+
+    /**
+     * 检查游戏结束条件
+     */
+    checkGameEnd() {
+        if (!this.gameState || !this.gameState.character) {
+            return true;
         }
+        
+        // 检查角色是否死亡
+        if (this.gameState.character.status.hp <= 0) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
