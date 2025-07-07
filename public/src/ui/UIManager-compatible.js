@@ -288,6 +288,22 @@ class UIManager {
     }
 
     /**
+     * 更新角色显示
+     */
+    updateCharacterDisplay(character) {
+        this.updateCharacterPanel(character);
+    }
+
+    /**
+     * 更新所有UI
+     */
+    updateAll(gameState) {
+        if (gameState && gameState.character) {
+            this.updateCharacterPanel(gameState.character);
+        }
+    }
+
+    /**
      * 导出故事
      */
     exportStory() {
