@@ -2,22 +2,10 @@
   "name": "adventure-simulator",
   "version": "1.0.0",
   "description": "江湖奇缘 - 智能文字MUD游戏",
-  "main": "index.html",
   "scripts": {
-    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
-    "backend:dev": "cd backend && npm run dev",
-    "frontend:dev": "cd frontend && python3 -m http.server 8080",
-    "backend:start": "cd backend && npm start",
-    "install:all": "npm install && cd backend && npm install",
-    "build": "echo 'Static site - no build needed'"
+    "dev": "echo 'Development mode'",
+    "build": "echo 'No build needed - static site'"
   },
-  "keywords": ["mud", "game", "text-based", "llm", "wuxia", "vercel"],
-  "author": "江湖奇缘开发团队",
-  "license": "MIT",
-  "devDependencies": {
-    "concurrently": "^8.2.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "keywords": ["mud", "game", "vercel"],
+  "license": "MIT"
 }
