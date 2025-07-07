@@ -295,6 +295,41 @@ class UIManager {
     }
 
     /**
+     * 添加效果日志
+     */
+    addEffectsLog(effects, character) {
+        if (!effects) return;
+        
+        var effectMessages = [];
+        
+        // 属性变化
+        if (effects.attributes) {
+            for (var attr in effects.attributes) {
+                var value = effects.attributes[attr];
+                if (Math.abs(value) > 0) {
+                    var sign = value > 0 ? '+' : '';
+                    effectMessages.push(attr + ': ' + sign + value);
+                }
+            }
+        }
+        
+        // 状态变化
+        if (effects.status) {
+            for (var stat in effects.status) {
+                var value = effects.status[stat];
+                if (Math.abs(value) > 0) {
+                    var sign = value > 0 ? '+' : '';
+                    effectMessages.push(stat + ': ' + sign + value);
+                }
+            }
+        }
+        
+        if (effectMessages.length > 0) {
+            this.addLogEntry('effect', '💫 ' + effectMessages.join(', '));
+        }
+    }
+
+    /**
      * 更新所有UI
      */
     updateAll(gameState) {

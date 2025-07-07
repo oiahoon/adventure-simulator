@@ -428,15 +428,24 @@ class EventSystem {
             this.applyEventEffects(event.effects, gameState, event.impact_description);
         }
         
+        // 强制更新UI显示
+        if (window.gameEngine && window.gameEngine.uiManager) {
+            window.gameEngine.uiManager.updateCharacterPanel(gameState.character);
+        }
+        
         // 检查成就
         if (window.AchievementSystem) {
-            const newAchievements = window.AchievementSystem.checkAchievements(gameState.character);
-            if (newAchievements.length > 0) {
-                // 成就已在AchievementSystem中处理UI更新
+            try {
+                var newAchievements = window.AchievementSystem.checkAchievements(gameState.character);
+                if (newAchievements.length > 0) {
+                    // 成就已在AchievementSystem中处理UI更新
+                }
+                
+                // 更新社会地位
+                window.AchievementSystem.updateSocialStatus(gameState.character);
+            } catch (error) {
+                console.warn('成就系统检查失败:', error);
             }
-            
-            // 更新社会地位
-            window.AchievementSystem.updateSocialStatus(gameState.character);
         }
         
         console.log('📅 处理事件:', event.title);

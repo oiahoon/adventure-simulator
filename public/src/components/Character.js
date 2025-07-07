@@ -12,6 +12,18 @@ class Character {
         // 基础属性
         this.attributes = this.initializeAttributes(profession);
         
+        // 人格属性 (0-100)
+        this.personality = {
+            courage: Math.floor(Math.random() * 30) + 40,      // 勇气 40-70
+            wisdom: Math.floor(Math.random() * 30) + 40,       // 智慧 40-70
+            compassion: Math.floor(Math.random() * 30) + 40,   // 慈悲 40-70
+            ambition: Math.floor(Math.random() * 30) + 40,     // 野心 40-70
+            curiosity: Math.floor(Math.random() * 30) + 40,    // 好奇心 40-70
+            patience: Math.floor(Math.random() * 30) + 40,     // 耐心 40-70
+            pride: Math.floor(Math.random() * 30) + 40,        // 骄傲 40-70
+            loyalty: Math.floor(Math.random() * 30) + 40       // 忠诚 40-70
+        };
+        
         // 状态
         this.status = {
             hp: this.getMaxHP(),
