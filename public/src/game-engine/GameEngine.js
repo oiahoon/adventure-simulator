@@ -471,7 +471,7 @@ class GameEngine {
     }
 
     /**
-     * 游戏步进（优化版，添加错误处理）
+     * 游戏步进（修复版）
      */
     async gameStep() {
         if (!this.gameState || !this.isRunning) {
@@ -489,21 +489,21 @@ class GameEngine {
             // 更新角色状态
             this.updateCharacterStatus();
             
-            // 控制事件触发频率 - 不是每步都触发事件
+            // 控制事件触发频率
             this.gameState.gameTime++;
             
             // 检查是否应该改变地点
-            if (this.gameState.gameTime % 20 === 0) { // 每20步检查一次
+            if (this.gameState.gameTime % 20 === 0) {
                 this.checkLocationChange();
             }
             
-            // 增加事件触发频率，让游戏更有趣
-            const eventInterval = Math.floor(Math.random() * 3) + 2; // 2-4步触发一次（原来5-10步）
+            // 触发事件
+            var eventInterval = Math.floor(Math.random() * 3) + 2;
             if (this.gameState.gameTime % eventInterval === 0) {
                 try {
-                    // 非阻塞的事件触发
-                    const eventPromise = this.eventSystem.triggerRandomEvent(this.gameState);
+                    var eventPromise = this.eventSystem.triggerRandomEvent(this.gameState);
                     if (eventPromise && typeof eventPromise.catch === 'function') {
+                        var self = this;
                         eventPromise.catch(function(error) {
                             console.error('事件触发失败:', error);
                         });
@@ -518,15 +518,8 @@ class GameEngine {
             
         } catch (error) {
             console.error('游戏步进错误:', error);
-            // 不要停止游戏，继续运行
         }
     }
-            } catch (error) {
-                console.error('触发事件失败:', error);
-                // 降级到传统事件
-                this.eventSystem.triggerGenericEvent(this.gameState);
-            }
-        }
         
         // 更新UI - 确保角色信息正确显示
         this.uiManager.updateAll(this.gameState);
