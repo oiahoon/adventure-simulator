@@ -547,8 +547,14 @@ class GameEngine {
      * 更新UI显示
      */
     updateUI() {
-        if (this.uiManager && this.gameState) {
+        if (this.uiManager && this.gameState && this.gameState.character) {
+            // 强制更新角色面板
+            this.uiManager.updateCharacterPanel(this.gameState.character);
+            
+            // 更新所有UI
             this.uiManager.updateAll(this.gameState);
+            
+            console.log('🎨 强制UI更新完成');
         }
     }
 

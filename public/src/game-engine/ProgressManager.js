@@ -107,10 +107,11 @@ class ProgressManager {
                 social: { ...gameState.character.social },
                 status: { ...gameState.character.status },
                 equipment: { ...gameState.character.equipment },
-                inventory: [...gameState.character.inventory],
-                skills: [...gameState.character.skills],
-                achievements: [...gameState.character.achievements],
-                relationships: Object.fromEntries(gameState.character.relationships)
+                inventory: Array.isArray(gameState.character.inventory) ? [...gameState.character.inventory] : [],
+                skills: Array.isArray(gameState.character.skills) ? [...gameState.character.skills] : [],
+                achievements: Array.isArray(gameState.character.achievements) ? [...gameState.character.achievements] : [],
+                relationships: (gameState.character.relationships && typeof gameState.character.relationships === 'object') ? 
+                    Object.fromEntries(Object.entries(gameState.character.relationships)) : {}
             },
             gameState: {
                 currentLocation: gameState.currentLocation,

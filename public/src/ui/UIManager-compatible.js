@@ -214,15 +214,15 @@ class UIManager {
      * 更新角色面板
      */
     updateCharacterPanel(character) {
-        if (!character || !this.characterPanel) return;
+        if (!character) return;
         
         try {
-            // 更新基本信息
-            var nameEl = document.getElementById('character-name');
+            // 更新基本信息 - 使用正确的ID
+            var nameEl = document.getElementById('character-display-name');
             if (nameEl) nameEl.textContent = character.name;
             
             var levelEl = document.getElementById('character-level');
-            if (levelEl) levelEl.textContent = character.level;
+            if (levelEl) levelEl.textContent = '等级 ' + character.level;
             
             var professionEl = document.getElementById('character-profession');
             if (professionEl) professionEl.textContent = character.getProfessionName();
@@ -233,14 +233,22 @@ class UIManager {
                 var attr = attributes[i];
                 var el = document.getElementById('display-' + attr);
                 if (el && character.attributes[attr] !== undefined) {
-                    el.textContent = character.attributes[attr];
-                    // 添加变化动画效果
-                    el.style.color = '#00ff41';
-                    setTimeout(function(element) {
-                        return function() {
-                            element.style.color = '';
-                        };
-                    }(el), 1000);
+                    var oldValue = parseInt(el.textContent) || 0;
+                    var newValue = character.attributes[attr];
+                    
+                    el.textContent = newValue;
+                    
+                    // 如果值发生变化，添加高亮效果
+                    if (oldValue !== newValue) {
+                        el.style.color = '#00ff41';
+                        el.style.fontWeight = 'bold';
+                        setTimeout(function(element) {
+                            return function() {
+                                element.style.color = '';
+                                element.style.fontWeight = '';
+                            };
+                        }(el), 2000);
+                    }
                 }
             }
             
@@ -250,16 +258,35 @@ class UIManager {
             // 更新其他信息
             var wealthEl = document.getElementById('wealth-display');
             if (wealthEl && character.wealth !== undefined) {
+                var oldWealth = parseInt(wealthEl.textContent) || 0;
                 wealthEl.textContent = character.wealth;
+                
                 // 财富变化动画
-                wealthEl.style.color = '#ffd700';
-                setTimeout(function() {
-                    wealthEl.style.color = '';
-                }, 1000);
+                if (oldWealth !== character.wealth) {
+                    wealthEl.style.color = '#ffd700';
+                    wealthEl.style.fontWeight = 'bold';
+                    setTimeout(function() {
+                        wealthEl.style.color = '';
+                        wealthEl.style.fontWeight = '';
+                    }, 2000);
+                }
             }
             
             var locationEl = document.getElementById('location-display');
-            if (locationEl) locationEl.textContent = character.location;
+            if (locationEl) {
+                var oldLocation = locationEl.textContent;
+                locationEl.textContent = character.location;
+                
+                // 位置变化动画
+                if (oldLocation !== character.location) {
+                    locationEl.style.color = '#00ccff';
+                    locationEl.style.fontWeight = 'bold';
+                    setTimeout(function() {
+                        locationEl.style.color = '';
+                        locationEl.style.fontWeight = '';
+                    }, 2000);
+                }
+            }
             
             // 更新声望显示
             var reputationEl = document.getElementById('reputation-display');
@@ -267,7 +294,7 @@ class UIManager {
                 reputationEl.textContent = character.social.reputation;
             }
             
-            console.log('🎨 角色面板更新完成');
+            console.log('🎨 角色面板更新完成 - ' + character.name + ' 等级' + character.level);
             
         } catch (error) {
             console.error('更新角色面板失败:', error);
