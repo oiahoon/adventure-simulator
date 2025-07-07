@@ -1,16 +1,17 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/backend/src/server.js"
-    }
-  ],
   "functions": {
-    "backend/src/server.js": {
+    "api/index.js": {
       "maxDuration": 30
     }
   },
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/",
+      "destination": "/api/index.js"
+    }
+  ]
 }

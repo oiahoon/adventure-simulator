@@ -1,14 +1,14 @@
 {
-  "name": "adventure-simulator-api",
+  "name": "jianghu-api",
   "version": "1.0.0",
-  "description": "API endpoints for Adventure Simulator",
-  "main": "generate-events.js",
+  "description": "江湖奇缘 API for Vercel",
+  "main": "index.js",
   "dependencies": {
-    "sqlite3": "^5.1.6",
-    "sqlite": "^5.1.1",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
     "axios": "^1.6.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=16.0.0"
   }
 }
