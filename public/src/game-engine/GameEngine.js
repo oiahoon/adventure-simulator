@@ -471,33 +471,53 @@ class GameEngine {
     }
 
     /**
-     * 游戏步进
+     * 游戏步进（优化版，添加错误处理）
      */
     async gameStep() {
-        if (!this.gameState || !this.isRunning) return;
-        
-        // 检查游戏结束条件
-        if (this.checkGameEnd()) {
-            this.endGame();
+        if (!this.gameState || !this.isRunning) {
+            console.warn('⚠️ 游戏状态无效或游戏未运行');
             return;
         }
         
-        // 更新角色状态
-        this.updateCharacterStatus();
-        
-        // 控制事件触发频率 - 不是每步都触发事件
-        this.gameState.gameTime++;
-        
-        // 检查是否应该改变地点
-        if (this.gameState.gameTime % 20 === 0) { // 每20步检查一次
-            this.checkLocationChange();
+        try {
+            // 检查游戏结束条件
+            if (this.checkGameEnd()) {
+                this.endGame();
+                return;
+            }
+            
+            // 更新角色状态
+            this.updateCharacterStatus();
+            
+            // 控制事件触发频率 - 不是每步都触发事件
+            this.gameState.gameTime++;
+            
+            // 检查是否应该改变地点
+            if (this.gameState.gameTime % 20 === 0) { // 每20步检查一次
+                this.checkLocationChange();
+            }
+            
+            // 增加事件触发频率，让游戏更有趣
+            const eventInterval = Math.floor(Math.random() * 3) + 2; // 2-4步触发一次（原来5-10步）
+            if (this.gameState.gameTime % eventInterval === 0) {
+                try {
+                    // 非阻塞的事件触发
+                    this.eventSystem.triggerRandomEvent(this.gameState).catch(error => {
+                        console.error('事件触发失败:', error);
+                    });
+                } catch (error) {
+                    console.error('事件系统错误:', error);
+                }
+            }
+            
+            // 更新UI显示
+            this.updateUI();
+            
+        } catch (error) {
+            console.error('游戏步进错误:', error);
+            // 不要停止游戏，继续运行
         }
-        
-        // 增加事件触发频率，让游戏更有趣
-        const eventInterval = Math.floor(Math.random() * 3) + 2; // 2-4步触发一次（原来5-10步）
-        if (this.gameState.gameTime % eventInterval === 0) {
-            try {
-                await this.eventSystem.triggerRandomEvent(this.gameState);
+    }
             } catch (error) {
                 console.error('触发事件失败:', error);
                 // 降级到传统事件

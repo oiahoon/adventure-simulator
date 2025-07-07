@@ -136,7 +136,7 @@ class UIManager {
     }
 
     /**
-     * 添加日志条目（带打字效果的统一日志）
+     * 添加日志条目（优化版，避免阻塞）
      */
     async addLogEntry(type, content, effects = null, timestamp = null) {
         if (!this.logContainer) {
@@ -175,8 +175,8 @@ class UIManager {
         // 添加到容器
         this.logContainer.appendChild(logEntry);
         
-        // 打字效果显示故事内容
-        await this.typeText(storyDiv, content);
+        // 非阻塞的打字效果
+        this.typeText(storyDiv, content);
         
         // 如果有影响，显示影响结果
         if (effects && this.hasSignificantEffects(effects)) {
@@ -206,28 +206,66 @@ class UIManager {
             effects: effects
         });
         
+        // 限制日志长度
+        if (this.storyLog.length > 1000) {
+            this.storyLog = this.storyLog.slice(-800);
+        }
+        
+        // 自动滚动到底部
+        setTimeout(() => {
+            this.logContainer.scrollTop = this.logContainer.scrollHeight;
+        }, 100);
+        
+        // 立即返回，不等待打字效果
+        return Promise.resolve();
+    }
+        this.storyLog.push({
+            timestamp: now,
+            gameTime: gameTime,
+            type: type,
+            content: content,
+            effects: effects
+        });
+        
         // 自动滚动到底部
         this.scrollToBottom();
     }
 
     /**
-     * 打字效果
+     * 打字效果（优化版，避免卡顿）
      */
     async typeText(element, text) {
         this.isTyping = true;
         element.textContent = '';
         
-        for (let i = 0; i < text.length; i++) {
-            element.textContent += text[i];
-            await new Promise(resolve => setTimeout(resolve, this.typingSpeed));
-            
-            // 如果文本很长，在句号、感叹号、问号后稍作停顿
-            if (['。', '！', '？', '.', '!', '?'].includes(text[i])) {
-                await new Promise(resolve => setTimeout(resolve, this.typingSpeed * 3));
-            }
+        // 如果游戏在快速模式或文本很长，直接显示
+        if (this.typingSpeed <= 10 || text.length > 200) {
+            element.textContent = text;
+            this.isTyping = false;
+            return;
         }
         
-        this.isTyping = false;
+        // 分批显示文本，避免阻塞
+        const batchSize = 5; // 每批显示5个字符
+        let currentIndex = 0;
+        
+        const displayBatch = () => {
+            const endIndex = Math.min(currentIndex + batchSize, text.length);
+            element.textContent += text.slice(currentIndex, endIndex);
+            currentIndex = endIndex;
+            
+            if (currentIndex < text.length) {
+                // 使用requestAnimationFrame而不是setTimeout，更流畅
+                setTimeout(displayBatch, this.typingSpeed);
+            } else {
+                this.isTyping = false;
+            }
+        };
+        
+        displayBatch();
+        
+        // 不等待打字完成，立即返回
+        return Promise.resolve();
     }
 
     /**

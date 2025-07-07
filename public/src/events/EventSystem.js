@@ -587,35 +587,38 @@ class EventSystem {
     }
 
     /**
-     * 显示事件
+     * 显示事件（优化版，避免阻塞）
      */
     async displayEvent(event, gameState) {
         // 统一使用日志系统显示事件
         if (window.gameEngine && window.gameEngine.uiManager) {
-            // 添加事件标题和描述到日志
-            await window.gameEngine.uiManager.addLogEntry(
+            // 添加事件标题和描述到日志（非阻塞）
+            window.gameEngine.uiManager.addLogEntry(
                 'event', 
                 `📅 ${event.title}`, 
                 null,
                 true // 标记为重要事件
             );
             
-            // 添加事件描述
-            await window.gameEngine.uiManager.addLogEntry(
+            // 添加事件描述（非阻塞）
+            window.gameEngine.uiManager.addLogEntry(
                 'story', 
                 event.description, 
                 event.effects
             );
             
-            // 如果有影响描述，也添加到日志
+            // 如果有影响描述，也添加到日志（非阻塞）
             if (event.impact_description) {
-                await window.gameEngine.uiManager.addLogEntry(
+                window.gameEngine.uiManager.addLogEntry(
                     'impact', 
                     `💭 ${event.impact_description}`, 
                     null
                 );
             }
         }
+        
+        // 立即返回，不等待UI更新完成
+        return Promise.resolve();
     }
 
     /**

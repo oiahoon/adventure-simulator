@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏启动测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #00cc33;
+        }
+        .log-area {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .success {
+            color: #44ff44;
+        }
+        .warning {
+            color: #ffaa44;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 游戏启动测试</h1>
+        
+        <div class="test-section">
+            <h2>1. 系统检查</h2>
+            <button onclick="checkSystems()">检查所有系统</button>
+            <button onclick="checkClasses()">检查类定义</button>
+            <button onclick="checkUI()">检查UI元素</button>
+        </div>
+
+        <div class="test-section">
+            <h2>2. 游戏引擎测试</h2>
+            <button onclick="initGameEngine()">初始化游戏引擎</button>
+            <button onclick="createTestCharacter()">创建测试角色</button>
+            <button onclick="startGameLoop()">启动游戏循环</button>
+            <button onclick="triggerTestEvent()">触发测试事件</button>
+        </div>
+
+        <div class="test-section">
+            <h2>3. 事件系统测试</h2>
+            <button onclick="testEventSystem()">测试事件系统</button>
+            <button onclick="testUIManager()">测试UI管理器</button>
+            <button onclick="testEventDisplay()">测试事件显示</button>
+        </div>
+
+        <div class="test-section">
+            <h2>4. 游戏循环测试</h2>
+            <button onclick="runGameSteps(5)">运行5步</button>
+            <button onclick="runGameSteps(10)">运行10步</button>
+            <button onclick="stopGame()">停止游戏</button>
+        </div>
+
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div id="test-log" class="log-area"></div>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+    </div>
+
+    <!-- 引入游戏脚本 -->
+    <script src="src/data/DatabaseManager.js"></script>
+    <script src="src/game-engine/ProgressManager.js"></script>
+    <script src="src/components/AchievementSystem.js"></script>
+    <script src="src/events/GeneratedEventLoader.js"></script>
+    <script src="src/events/LLMEventGenerator.js"></script>
+    <script src="src/events/AIEventGenerator.js"></script>
+    <script src="src/events/EventSystem.js"></script>
+    <script src="src/components/Character.js"></script>
+    <script src="src/components/CharacterGrowth.js"></script>
+    <script src="src/ui/CharacterGrowthUI.js"></script>
+    <script src="src/game-engine/GameEngine.js"></script>
+    <script src="src/ui/UIManager.js"></script>
+
+    <script>
+        let testGameEngine = null;
+        let testCharacter = null;
+
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            
+            logArea.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = '';
+        }
+
+        function checkSystems() {
+            log('🔍 开始系统检查...');
+            
+            const requiredClasses = [
+                'Character', 'GameEngine', 'EventSystem', 'UIManager',
+                'CharacterGrowth', 'CharacterGrowthUI'
+            ];
+            
+            const optionalClasses = [
+                'AIEventGenerator', 'LLMEventGenerator', 'GeneratedEventLoader',
+                'AchievementSystem', 'ProgressManager', 'DatabaseManager'
+            ];
+            
+            let allGood = true;
+            
+            requiredClasses.forEach(className => {
+                if (typeof window[className] !== 'undefined') {
+                    log(`✅ ${className} - 已加载`, 'success');
+                } else {
+                    log(`❌ ${className} - 未找到`, 'error');
+                    allGood = false;
+                }
+            });
+            
+            optionalClasses.forEach(className => {
+                if (typeof window[className] !== 'undefined') {
+                    log(`✅ ${className} - 已加载 (可选)`, 'success');
+                } else {
+                    log(`⚠️ ${className} - 未找到 (可选)`, 'warning');
+                }
+            });
+            
+            if (allGood) {
+                log('🎉 所有必需系统检查通过！', 'success');
+            } else {
+                log('❌ 系统检查失败，缺少必需组件', 'error');
+            }
+        }
+
+        function checkClasses() {
+            log('🔍 检查类构造函数...');
+            
+            try {
+                // 测试Character类
+                const testChar = new Character('测试', 'warrior');
+                log('✅ Character类构造正常', 'success');
+                
+                // 测试CharacterGrowth类
+                const testGrowth = new CharacterGrowth();
+                log('✅ CharacterGrowth类构造正常', 'success');
+                
+                // 测试EventSystem类
+                const testEvents = new EventSystem();
+                log('✅ EventSystem类构造正常', 'success');
+                
+            } catch (error) {
+                log(`❌ 类构造失败: ${error.message}`, 'error');
+            }
+        }
+
+        function checkUI() {
+            log('🔍 检查UI元素...');
+            
+            // 创建模拟的UI元素
+            if (!document.getElementById('log-content')) {
+                const logDiv = document.createElement('div');
+                logDiv.id = 'log-content';
+                logDiv.style.display = 'none';
+                document.body.appendChild(logDiv);
+                log('✅ 创建了模拟日志容器', 'success');
+            }
+            
+            log('✅ UI元素检查完成', 'success');
+        }
+
+        function initGameEngine() {
+            log('🎮 初始化游戏引擎...');
+            
+            try {
+                testGameEngine = new GameEngine();
+                log('✅ 游戏引擎初始化成功', 'success');
+                window.gameEngine = testGameEngine; // 设置全局引用
+            } catch (error) {
+                log(`❌ 游戏引擎初始化失败: ${error.message}`, 'error');
+            }
+        }
+
+        function createTestCharacter() {
+            log('👤 创建测试角色...');
+            
+            try {
+                testCharacter = new Character('测试勇士', 'warrior');
+                log('✅ 测试角色创建成功', 'success');
+                
+                if (testGameEngine) {
+                    // 创建游戏状态
+                    testGameEngine.gameState = {
+                        character: testCharacter,
+                        gameTime: 0,
+                        eventHistory: [],
+                        addEventToHistory: function(event) {
+                            this.eventHistory.push(event);
+                        }
+                    };
+                    log('✅ 游戏状态设置完成', 'success');
+                }
+            } catch (error) {
+                log(`❌ 角色创建失败: ${error.message}`, 'error');
+            }
+        }
+
+        function startGameLoop() {
+            log('🔄 启动游戏循环...');
+            
+            if (!testGameEngine) {
+                log('❌ 请先初始化游戏引擎', 'error');
+                return;
+            }
+            
+            if (!testGameEngine.gameState) {
+                log('❌ 请先创建测试角色', 'error');
+                return;
+            }
+            
+            try {
+                testGameEngine.startGame();
+                log('✅ 游戏循环启动成功', 'success');
+            } catch (error) {
+                log(`❌ 游戏循环启动失败: ${error.message}`, 'error');
+            }
+        }
+
+        function triggerTestEvent() {
+            log('📅 触发测试事件...');
+            
+            if (!testGameEngine || !testGameEngine.gameState) {
+                log('❌ 游戏未初始化', 'error');
+                return;
+            }
+            
+            try {
+                testGameEngine.eventSystem.triggerRandomEvent(testGameEngine.gameState);
+                log('✅ 测试事件触发成功', 'success');
+            } catch (error) {
+                log(`❌ 事件触发失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testEventSystem() {
+            log('📅 测试事件系统...');
+            
+            try {
+                const eventSystem = new EventSystem();
+                log('✅ 事件系统创建成功', 'success');
+                
+                // 测试事件模板
+                if (eventSystem.eventTemplates && eventSystem.eventTemplates.length > 0) {
+                    log(`✅ 事件模板加载成功: ${eventSystem.eventTemplates.length} 个`, 'success');
+                } else {
+                    log('⚠️ 事件模板为空', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ 事件系统测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testUIManager() {
+            log('🎨 测试UI管理器...');
+            
+            try {
+                const uiManager = new UIManager();
+                log('✅ UI管理器创建成功', 'success');
+                
+                // 测试添加日志条目
+                uiManager.addLogEntry('test', '这是一个测试消息');
+                log('✅ 日志条目添加测试成功', 'success');
+                
+            } catch (error) {
+                log(`❌ UI管理器测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testEventDisplay() {
+            log('📺 测试事件显示...');
+            
+            if (!testGameEngine || !testGameEngine.gameState) {
+                log('❌ 游戏未初始化', 'error');
+                return;
+            }
+            
+            try {
+                const testEvent = {
+                    title: '测试事件',
+                    description: '这是一个用于测试的事件描述。',
+                    effects: {
+                        attributes: { strength: 1 }
+                    }
+                };
+                
+                testGameEngine.eventSystem.displayEvent(testEvent, testGameEngine.gameState);
+                log('✅ 事件显示测试成功', 'success');
+                
+            } catch (error) {
+                log(`❌ 事件显示测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        function runGameSteps(steps) {
+            log(`🏃 运行 ${steps} 个游戏步骤...`);
+            
+            if (!testGameEngine || !testGameEngine.gameState) {
+                log('❌ 游戏未初始化', 'error');
+                return;
+            }
+            
+            let completedSteps = 0;
+            const runStep = () => {
+                if (completedSteps < steps) {
+                    try {
+                        testGameEngine.gameStep();
+                        completedSteps++;
+                        log(`✅ 步骤 ${completedSteps}/${steps} 完成`);
+                        
+                        // 继续下一步
+                        setTimeout(runStep, 500);
+                    } catch (error) {
+                        log(`❌ 步骤 ${completedSteps + 1} 失败: ${error.message}`, 'error');
+                    }
+                } else {
+                    log(`🎉 所有 ${steps} 个步骤完成！`, 'success');
+                }
+            };
+            
+            runStep();
+        }
+
+        function stopGame() {
+            log('🛑 停止游戏...');
+            
+            if (testGameEngine) {
+                testGameEngine.isRunning = false;
+                if (testGameEngine.gameLoop) {
+                    clearInterval(testGameEngine.gameLoop);
+                    testGameEngine.gameLoop = null;
+                }
+                log('✅ 游戏已停止', 'success');
+            } else {
+                log('⚠️ 没有运行中的游戏', 'warning');
+            }
+        }
+
+        // 页面加载时自动检查系统
+        window.addEventListener('load', function() {
+            log('🚀 测试页面加载完成');
+            setTimeout(checkSystems, 1000);
+        });
+    </script>
+</body>
+</html>
