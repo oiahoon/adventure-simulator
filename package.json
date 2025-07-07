@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "江湖奇缘 - 智能文字MUD游戏",
   "scripts": {
-    "dev": "echo 'Development mode'",
-    "build": "echo 'No build needed - static site'"
+    "build": "mkdir -p public && cp index.html public/ && cp -r src public/ && echo 'Build complete'"
   },
   "keywords": ["mud", "game", "vercel"],
   "license": "MIT"
