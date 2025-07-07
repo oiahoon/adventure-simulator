@@ -74,6 +74,18 @@ class Character {
             scholar: 0
         };
 
+        // 社会属性
+        this.social = {
+            reputation: 0,          // 总声望 (-1000 到 1000)
+            influence: 0,           // 影响力 (0-1000)
+            connections: [],        // 人脉关系
+            enemies: [],            // 敌对关系
+            organizations: [],      // 所属组织
+            titles: [],            // 称号
+            socialStatus: 'commoner', // 社会地位
+            karma: 0               // 因果业力 (-1000 到 1000)
+        };
+
         // 门派状态
         this.sectStatus = null;
         
