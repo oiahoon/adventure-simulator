@@ -149,6 +149,72 @@ class Character {
     }
 
     /**
+     * 获取升级所需经验
+     */
+    getRequiredExperience(level) {
+        if (!level) level = this.level + 1;
+        return level * 100 + (level - 1) * 50;
+    }
+
+    /**
+     * 获得经验值
+     */
+    gainExperience(amount) {
+        this.experience += amount;
+        console.log('✨ ' + this.name + ' 获得了 ' + amount + ' 点经验');
+        
+        // 检查升级
+        this.checkLevelUp();
+    }
+
+    /**
+     * 检查升级
+     */
+    checkLevelUp() {
+        var expRequired = this.getRequiredExperience();
+        if (this.experience >= expRequired) {
+            this.levelUp();
+        }
+    }
+
+    /**
+     * 升级
+     */
+    levelUp() {
+        this.level++;
+        
+        // 属性成长
+        var growth = this.getProfessionGrowth();
+        for (var attr in growth) {
+            if (this.attributes[attr] !== undefined) {
+                this.attributes[attr] += growth[attr];
+            }
+        }
+
+        // 恢复状态
+        this.status.hp = this.getMaxHP();
+        this.status.mp = this.getMaxMP();
+
+        console.log('🎉 ' + this.name + ' 升级到 ' + this.level + ' 级！');
+    }
+
+    /**
+     * 获取职业成长加成
+     */
+    getProfessionGrowth() {
+        var growthPatterns = {
+            warrior: { strength: 3, constitution: 2, dexterity: 1 },
+            mage: { intelligence: 3, charisma: 2, constitution: 1 },
+            rogue: { dexterity: 3, luck: 2, intelligence: 1 },
+            monk: { constitution: 2, strength: 2, charisma: 2 },
+            hunter: { dexterity: 2, strength: 2, luck: 2 },
+            scholar: { intelligence: 2, charisma: 3, luck: 1 }
+        };
+        
+        return growthPatterns[this.profession] || { strength: 1, constitution: 1, dexterity: 1 };
+    }
+
+    /**
      * 获取最大生命值
      */
     getMaxHP() {

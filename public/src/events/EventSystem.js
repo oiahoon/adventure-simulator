@@ -46,6 +46,14 @@ class EventSystem {
     }
 
     /**
+     * 随机选择数组中的元素
+     */
+    randomSelect(array) {
+        if (!array || array.length === 0) return null;
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    /**
      * 加载事件模板
      */
     loadEventTemplates() {

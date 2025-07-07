@@ -544,6 +544,48 @@ class GameEngine {
     }
 
     /**
+     * 更新UI显示
+     */
+    updateUI() {
+        if (this.uiManager && this.gameState) {
+            this.uiManager.updateAll(this.gameState);
+        }
+    }
+
+    /**
+     * 更新角色状态
+     */
+    updateCharacterStatus() {
+        if (!this.gameState || !this.gameState.character) return;
+        
+        var character = this.gameState.character;
+        
+        // 简单的状态恢复
+        if (character.status.hp < character.getMaxHP()) {
+            character.status.hp = Math.min(character.getMaxHP(), character.status.hp + 1);
+        }
+        
+        if (character.status.mp < character.getMaxMP()) {
+            character.status.mp = Math.min(character.getMaxMP(), character.status.mp + 1);
+        }
+    }
+
+    /**
+     * 检查位置变化
+     */
+    checkLocationChange() {
+        // 简单的位置变化逻辑
+        if (Math.random() < 0.1) { // 10%概率改变位置
+            var locations = ['新手村', '森林', '山洞', '城镇', '荒野', '古庙'];
+            var newLocation = locations[Math.floor(Math.random() * locations.length)];
+            if (this.gameState.character.location !== newLocation) {
+                this.gameState.character.location = newLocation;
+                console.log('📍 ' + this.gameState.character.name + ' 来到了 ' + newLocation);
+            }
+        }
+    }
+
+    /**
      * 检查并处理地点变化
      */
     checkLocationChange() {
