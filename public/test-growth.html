@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色成长系统测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #00cc33;
+        }
+        .character-info {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .error {
+            color: #ff4444;
+            background: #441111;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #44ff44;
+            background: #114411;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 角色成长系统测试</h1>
+        
+        <div class="test-section">
+            <h2>1. 创建测试角色</h2>
+            <button onclick="createTestCharacter()">创建武者角色</button>
+            <button onclick="createMageCharacter()">创建术士角色</button>
+            <div id="character-display"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. 成长系统测试</h2>
+            <button onclick="gainExperience()">获得经验 (100点)</button>
+            <button onclick="levelUpTest()">强制升级</button>
+            <button onclick="addAttributePoints()">添加属性点</button>
+            <button onclick="addSkillPoints()">添加技能点</button>
+        </div>
+
+        <div class="test-section">
+            <h2>3. 技能系统测试</h2>
+            <button onclick="learnBasicCombat()">学习基础武功</button>
+            <button onclick="learnBasicQi()">学习基础内功</button>
+            <button onclick="showSkillTree()">显示技能树</button>
+        </div>
+
+        <div class="test-section">
+            <h2>4. 装备系统测试</h2>
+            <button onclick="addTestEquipment()">添加测试装备</button>
+            <button onclick="equipWeapon()">装备武器</button>
+            <button onclick="showEquipment()">显示装备</button>
+        </div>
+
+        <div class="test-section">
+            <h2>5. UI测试</h2>
+            <button onclick="showGrowthUI()">显示成长界面</button>
+            <button onclick="hideGrowthUI()">隐藏成长界面</button>
+        </div>
+
+        <div id="test-results"></div>
+    </div>
+
+    <!-- 引入必要的脚本 -->
+    <script src="src/components/Character.js"></script>
+    <script src="src/components/CharacterGrowth.js"></script>
+    <script src="src/ui/CharacterGrowthUI.js"></script>
+
+    <script>
+        let testCharacter = null;
+        let growthSystem = null;
+        let growthUI = null;
+
+        // 初始化测试环境
+        function initTest() {
+            try {
+                growthSystem = new CharacterGrowth();
+                growthUI = new CharacterGrowthUI();
+                log('✅ 测试环境初始化成功', 'success');
+            } catch (error) {
+                log('❌ 测试环境初始化失败: ' + error.message, 'error');
+            }
+        }
+
+        // 创建测试角色
+        function createTestCharacter() {
+            try {
+                testCharacter = new Character('测试武者', 'warrior');
+                displayCharacter();
+                log('✅ 创建武者角色成功', 'success');
+            } catch (error) {
+                log('❌ 创建角色失败: ' + error.message, 'error');
+            }
+        }
+
+        function createMageCharacter() {
+            try {
+                testCharacter = new Character('测试术士', 'mage');
+                displayCharacter();
+                log('✅ 创建术士角色成功', 'success');
+            } catch (error) {
+                log('❌ 创建角色失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示角色信息
+        function displayCharacter() {
+            if (!testCharacter) {
+                log('❌ 没有角色可显示', 'error');
+                return;
+            }
+
+            const info = testCharacter.getDetailedInfo();
+            const html = `
+                <div class="character-info">
+                    <h3>${info.basic.name} (${info.basic.professionName})</h3>
+                    <p><strong>等级:</strong> ${info.basic.level} | <strong>经验:</strong> ${info.basic.experience}</p>
+                    <p><strong>生命值:</strong> ${info.status.hp}/${info.status.maxHP} | <strong>法力值:</strong> ${info.status.mp}/${info.status.maxMP}</p>
+                    <p><strong>属性:</strong> 
+                        力量${info.attributes.strength} 
+                        体质${info.attributes.constitution} 
+                        敏捷${info.attributes.dexterity} 
+                        智力${info.attributes.intelligence} 
+                        魅力${info.attributes.charisma} 
+                        幸运${info.attributes.luck}
+                    </p>
+                    <p><strong>战斗:</strong> 
+                        攻击${info.combat.attack} 
+                        防御${info.combat.defense} 
+                        暴击${info.combat.critical}% 
+                        闪避${info.combat.dodge}%
+                    </p>
+                    <p><strong>可用点数:</strong> 
+                        属性点${info.growth.availableAttributePoints} 
+                        技能点${info.growth.availableSkillPoints}
+                    </p>
+                    <p><strong>财富:</strong> ${info.wealth} 金币</p>
+                </div>
+            `;
+            document.getElementById('character-display').innerHTML = html;
+        }
+
+        // 获得经验测试
+        function gainExperience() {
+            if (!testCharacter || !growthSystem) {
+                log('❌ 请先创建角色和初始化系统', 'error');
+                return;
+            }
+
+            try {
+                const result = growthSystem.gainExperience(testCharacter, 100, '测试');
+                displayCharacter();
+                
+                if (result.levelUp) {
+                    log('🎉 角色升级了！新等级: ' + result.levelUp.newLevel, 'success');
+                } else {
+                    log('✅ 获得100点经验', 'success');
+                }
+            } catch (error) {
+                log('❌ 获得经验失败: ' + error.message, 'error');
+            }
+        }
+
+        // 强制升级测试
+        function levelUpTest() {
+            if (!testCharacter || !growthSystem) {
+                log('❌ 请先创建角色和初始化系统', 'error');
+                return;
+            }
+
+            try {
+                // 给足够的经验升级
+                testCharacter.experience = growthSystem.growthConfig.levelExperience[testCharacter.level + 1] || 1000;
+                const result = growthSystem.levelUp(testCharacter);
+                displayCharacter();
+                
+                if (result.success) {
+                    log('🎉 强制升级成功！' + result.message, 'success');
+                } else {
+                    log('❌ 升级失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                log('❌ 升级测试失败: ' + error.message, 'error');
+            }
+        }
+
+        // 添加属性点
+        function addAttributePoints() {
+            if (!testCharacter) {
+                log('❌ 请先创建角色', 'error');
+                return;
+            }
+
+            testCharacter.availableAttributePoints += 5;
+            displayCharacter();
+            log('✅ 添加了5个属性点', 'success');
+        }
+
+        // 添加技能点
+        function addSkillPoints() {
+            if (!testCharacter) {
+                log('❌ 请先创建角色', 'error');
+                return;
+            }
+
+            testCharacter.availableSkillPoints += 3;
+            displayCharacter();
+            log('✅ 添加了3个技能点', 'success');
+        }
+
+        // 学习技能测试
+        function learnBasicCombat() {
+            if (!testCharacter || !growthSystem) {
+                log('❌ 请先创建角色和初始化系统', 'error');
+                return;
+            }
+
+            try {
+                const result = growthSystem.learnSkill(testCharacter, 'martial', 'basic_combat');
+                displayCharacter();
+                
+                if (result.success) {
+                    log('📚 学习技能成功: ' + result.message, 'success');
+                } else {
+                    log('❌ 学习技能失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                log('❌ 学习技能异常: ' + error.message, 'error');
+            }
+        }
+
+        function learnBasicQi() {
+            if (!testCharacter || !growthSystem) {
+                log('❌ 请先创建角色和初始化系统', 'error');
+                return;
+            }
+
+            try {
+                const result = growthSystem.learnSkill(testCharacter, 'internal', 'basic_qi');
+                displayCharacter();
+                
+                if (result.success) {
+                    log('📚 学习内功成功: ' + result.message, 'success');
+                } else {
+                    log('❌ 学习内功失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                log('❌ 学习内功异常: ' + error.message, 'error');
+            }
+        }
+
+        // 显示技能树
+        function showSkillTree() {
+            if (!growthSystem) {
+                log('❌ 请先初始化系统', 'error');
+                return;
+            }
+
+            console.log('技能树:', growthSystem.skillTrees);
+            log('✅ 技能树已输出到控制台', 'success');
+        }
+
+        // 装备测试
+        function addTestEquipment() {
+            if (!testCharacter) {
+                log('❌ 请先创建角色', 'error');
+                return;
+            }
+
+            testCharacter.addItem({
+                name: '测试铁剑',
+                type: 'weapon',
+                rarity: 'common',
+                effects: { attack: 15 }
+            });
+
+            testCharacter.addItem({
+                name: '测试皮甲',
+                type: 'armor',
+                rarity: 'common',
+                effects: { defense: 10, hp: 20 }
+            });
+
+            displayCharacter();
+            log('✅ 添加了测试装备', 'success');
+        }
+
+        function equipWeapon() {
+            if (!testCharacter || !growthSystem) {
+                log('❌ 请先创建角色和初始化系统', 'error');
+                return;
+            }
+
+            // 找到武器
+            const weapon = testCharacter.inventory.find(item => item.type === 'weapon');
+            if (!weapon) {
+                log('❌ 背包中没有武器', 'error');
+                return;
+            }
+
+            try {
+                const result = growthSystem.equipItem(testCharacter, weapon.id);
+                displayCharacter();
+                
+                if (result.success) {
+                    log('⚔️ 装备武器成功: ' + result.message, 'success');
+                } else {
+                    log('❌ 装备武器失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                log('❌ 装备武器异常: ' + error.message, 'error');
+            }
+        }
+
+        function showEquipment() {
+            if (!testCharacter) {
+                log('❌ 请先创建角色', 'error');
+                return;
+            }
+
+            console.log('装备:', testCharacter.equipment);
+            console.log('背包:', testCharacter.inventory);
+            log('✅ 装备信息已输出到控制台', 'success');
+        }
+
+        // UI测试
+        function showGrowthUI() {
+            if (!testCharacter || !growthUI) {
+                log('❌ 请先创建角色和初始化UI', 'error');
+                return;
+            }
+
+            try {
+                growthUI.show(testCharacter);
+                log('✅ 显示成长界面', 'success');
+            } catch (error) {
+                log('❌ 显示界面失败: ' + error.message, 'error');
+            }
+        }
+
+        function hideGrowthUI() {
+            if (!growthUI) {
+                log('❌ 请先初始化UI', 'error');
+                return;
+            }
+
+            try {
+                growthUI.hide();
+                log('✅ 隐藏成长界面', 'success');
+            } catch (error) {
+                log('❌ 隐藏界面失败: ' + error.message, 'error');
+            }
+        }
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            resultsDiv.appendChild(logEntry);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            
+            console.log(message);
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            initTest();
+        });
+    </script>
+</body>
+</html>

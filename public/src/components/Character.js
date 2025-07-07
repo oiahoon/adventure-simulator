@@ -137,9 +137,9 @@ class Character {
      */
     getMaxHP() {
         const base = 100 + (this.attributes.constitution * 10);
-        const equipment = this.equipmentEffects?.hp || 0;
-        const skills = this.maxStats?.hp || 0;
-        return base + equipment + skills;
+        const equipment = (this.equipmentEffects && this.equipmentEffects.hp) || 0;
+        const skills = (this.maxStats && this.maxStats.hp) || 0;
+        return Math.max(base, base + equipment + skills);
     }
 
     /**
@@ -147,18 +147,18 @@ class Character {
      */
     getMaxMP() {
         const base = 50 + (this.attributes.intelligence * 5);
-        const equipment = this.equipmentEffects?.mp || 0;
-        const skills = this.maxStats?.mp || 0;
-        return base + equipment + skills;
+        const equipment = (this.equipmentEffects && this.equipmentEffects.mp) || 0;
+        const skills = (this.maxStats && this.maxStats.mp) || 0;
+        return Math.max(base, base + equipment + skills);
     }
 
     /**
      * 获取总攻击力
      */
     getTotalAttack() {
-        const base = this.combatStats.attack || this.attributes.strength;
-        const equipment = this.equipmentEffects?.attack || 0;
-        const weapon = this.equipment.weapon?.effects?.attack || 0;
+        const base = (this.combatStats && this.combatStats.attack) || this.attributes.strength;
+        const equipment = (this.equipmentEffects && this.equipmentEffects.attack) || 0;
+        const weapon = (this.equipment.weapon && this.equipment.weapon.effects && this.equipment.weapon.effects.attack) || 0;
         return base + equipment + weapon;
     }
 
@@ -166,9 +166,9 @@ class Character {
      * 获取总防御力
      */
     getTotalDefense() {
-        const base = this.combatStats.defense || this.attributes.constitution;
-        const equipment = this.equipmentEffects?.defense || 0;
-        const armor = this.equipment.armor?.effects?.defense || 0;
+        const base = (this.combatStats && this.combatStats.defense) || this.attributes.constitution;
+        const equipment = (this.equipmentEffects && this.equipmentEffects.defense) || 0;
+        const armor = (this.equipment.armor && this.equipment.armor.effects && this.equipment.armor.effects.defense) || 0;
         return base + equipment + armor;
     }
 
@@ -176,9 +176,9 @@ class Character {
      * 获取暴击率
      */
     getCriticalRate() {
-        const base = this.combatStats.critical || 0;
-        const equipment = this.equipmentEffects?.critical || 0;
-        const weapon = this.equipment.weapon?.effects?.critical || 0;
+        const base = (this.combatStats && this.combatStats.critical) || 0;
+        const equipment = (this.equipmentEffects && this.equipmentEffects.critical) || 0;
+        const weapon = (this.equipment.weapon && this.equipment.weapon.effects && this.equipment.weapon.effects.critical) || 0;
         return Math.min(50, base + equipment + weapon); // 最高50%暴击率
     }
 
@@ -186,8 +186,8 @@ class Character {
      * 获取闪避率
      */
     getDodgeRate() {
-        const base = this.combatStats.dodge || this.attributes.dexterity;
-        const equipment = this.equipmentEffects?.dodge || 0;
+        const base = (this.combatStats && this.combatStats.dodge) || this.attributes.dexterity;
+        const equipment = (this.equipmentEffects && this.equipmentEffects.dodge) || 0;
         return Math.min(30, Math.floor((base + equipment) / 2)); // 最高30%闪避率
     }
 

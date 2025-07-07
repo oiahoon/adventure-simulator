@@ -403,11 +403,15 @@ class CharacterGrowth {
      * 更新角色数据
      */
     updateCharacterStats(character) {
+        // 确保必要的属性存在
+        if (!character.maxStats) character.maxStats = {};
+        if (!character.combatStats) character.combatStats = {};
+        if (!character.status) character.status = { hp: 100, mp: 50 };
+
         // 更新最大生命值和法力值
         const baseHP = 100 + (character.attributes.constitution * 10);
         const baseMP = 50 + (character.attributes.intelligence * 5);
         
-        character.maxStats = character.maxStats || {};
         character.maxStats.hp = baseHP + (character.maxStats.hp || 0);
         character.maxStats.mp = baseMP + (character.maxStats.mp || 0);
 
@@ -416,7 +420,6 @@ class CharacterGrowth {
         character.status.mp = Math.min(character.status.mp, character.maxStats.mp);
 
         // 更新战斗数据
-        if (!character.combatStats) character.combatStats = {};
         character.combatStats.attack = (character.combatStats.attack || 0) + character.attributes.strength;
         character.combatStats.defense = (character.combatStats.defense || 0) + character.attributes.constitution;
     }
