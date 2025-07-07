@@ -424,12 +424,14 @@ class EventSystem {
         await this.displayEvent(event, gameState);
         
         // 应用事件影响
+        var hasRealEffects = false;
         if (event.effects) {
-            this.applyEventEffects(event.effects, gameState, event.impact_description);
+            hasRealEffects = this.applyEventEffects(event.effects, gameState, event.impact_description);
         }
         
-        // 强制更新UI显示
-        if (window.gameEngine && window.gameEngine.uiManager) {
+        // 只有当事件真正产生影响时才更新UI
+        if (hasRealEffects && window.gameEngine && window.gameEngine.uiManager) {
+            console.log('🎨 事件产生了实际影响，更新角色面板');
             window.gameEngine.uiManager.updateCharacterPanel(gameState.character);
         }
         

@@ -485,7 +485,7 @@ class GameEngine {
                 return;
             }
             
-            // 更新角色状态
+            // 更新角色状态（轻微的自然恢复）
             this.updateCharacterStatus();
             
             // 控制事件触发频率
@@ -502,8 +502,7 @@ class GameEngine {
                 this.triggerGameEvent();
             }
             
-            // 更新UI显示
-            this.updateUI();
+            // 不再每步都更新UI，只在事件发生时更新
             
         } catch (error) {
             console.error('游戏步进错误:', error);
