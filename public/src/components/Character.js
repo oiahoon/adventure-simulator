@@ -51,7 +51,8 @@ class Character {
         // 成长相关
         this.availableAttributePoints = 0;
         this.availableSkillPoints = 0;
-        this.skills = {};
+        this.skills = []; // 修复：应该是数组而不是对象
+        this.skillLevels = {}; // 新增：技能等级对象
         this.equipment = {
             weapon: null,
             armor: null,
@@ -256,6 +257,35 @@ class Character {
         }
         
         return Math.random() < baseChance;
+    }
+
+    /**
+     * 学习技能
+     */
+    learnSkill(skillName) {
+        if (!this.skills.includes(skillName)) {
+            this.skills.push(skillName);
+            if (!this.skillLevels[skillName]) {
+                this.skillLevels[skillName] = 1;
+            } else {
+                this.skillLevels[skillName]++;
+            }
+            console.log('📚 ' + this.name + ' 学会了技能: ' + skillName);
+        }
+    }
+
+    /**
+     * 检查是否拥有技能
+     */
+    hasSkill(skillName) {
+        return this.skills.includes(skillName);
+    }
+
+    /**
+     * 获取技能等级
+     */
+    getSkillLevel(skillName) {
+        return this.skillLevels[skillName] || 0;
     }
 
     /**

@@ -542,12 +542,15 @@ class EventSystem {
         
         // 应用技能获得
         if (effects.skills && effects.skills.length > 0) {
-            effects.skills.forEach(skill => {
-                if (!character.skills.includes(skill)) {
-                    character.skills.push(skill);
+            console.log('📚 应用技能变化:', effects.skills);
+            for (var i = 0; i < effects.skills.length; i++) {
+                var skill = effects.skills[i];
+                if (typeof skill === 'string' && !character.skills.includes(skill)) {
+                    character.learnSkill(skill);
+                    console.log('  学会技能: ' + skill);
                     hasEffects = true;
                 }
-            });
+            }
         }
         
         // 应用物品获得
