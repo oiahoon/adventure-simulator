@@ -239,6 +239,26 @@ class Character {
     }
 
     /**
+     * 检查是否应该改变位置
+     */
+    shouldChangeLocation() {
+        // 基于角色属性和随机因素决定是否改变位置
+        var baseChance = 0.1; // 基础10%概率
+        
+        // 游侠职业更容易移动
+        if (this.profession === 'rogue' || this.profession === 'hunter') {
+            baseChance += 0.05;
+        }
+        
+        // 高敏捷角色更容易移动
+        if (this.attributes.dexterity > 15) {
+            baseChance += 0.03;
+        }
+        
+        return Math.random() < baseChance;
+    }
+
+    /**
      * 获取最大生命值
      */
     getMaxHP() {

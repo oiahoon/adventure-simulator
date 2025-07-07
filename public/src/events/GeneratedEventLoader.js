@@ -15,6 +15,31 @@ class GeneratedEventLoader {
     }
 
     /**
+     * 获取随机生成事件
+     */
+    async getRandomEvent(gameState) {
+        try {
+            await this.loadGeneratedEvents();
+            
+            if (this.generatedEvents.length === 0) {
+                console.warn('⚠️ 没有可用的生成事件');
+                return null;
+            }
+            
+            // 随机选择一个事件
+            var randomIndex = Math.floor(Math.random() * this.generatedEvents.length);
+            var event = this.generatedEvents[randomIndex];
+            
+            console.log('📚 获取生成事件:', event.title);
+            return event;
+            
+        } catch (error) {
+            console.error('获取随机生成事件失败:', error);
+            return null;
+        }
+    }
+
+    /**
      * 异步加载生成的事件
      */
     async loadGeneratedEvents() {

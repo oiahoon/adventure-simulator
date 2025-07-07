@@ -216,35 +216,62 @@ class UIManager {
     updateCharacterPanel(character) {
         if (!character || !this.characterPanel) return;
         
-        // 更新基本信息
-        var nameEl = document.getElementById('character-name');
-        if (nameEl) nameEl.textContent = character.name;
-        
-        var levelEl = document.getElementById('character-level');
-        if (levelEl) levelEl.textContent = character.level;
-        
-        var professionEl = document.getElementById('character-profession');
-        if (professionEl) professionEl.textContent = character.getProfessionName();
-        
-        // 更新属性显示
-        var attributes = ['strength', 'intelligence', 'dexterity', 'constitution', 'charisma', 'luck'];
-        for (var i = 0; i < attributes.length; i++) {
-            var attr = attributes[i];
-            var el = document.getElementById('display-' + attr);
-            if (el && character.attributes[attr] !== undefined) {
-                el.textContent = character.attributes[attr];
+        try {
+            // 更新基本信息
+            var nameEl = document.getElementById('character-name');
+            if (nameEl) nameEl.textContent = character.name;
+            
+            var levelEl = document.getElementById('character-level');
+            if (levelEl) levelEl.textContent = character.level;
+            
+            var professionEl = document.getElementById('character-profession');
+            if (professionEl) professionEl.textContent = character.getProfessionName();
+            
+            // 更新属性显示
+            var attributes = ['strength', 'intelligence', 'dexterity', 'constitution', 'charisma', 'luck'];
+            for (var i = 0; i < attributes.length; i++) {
+                var attr = attributes[i];
+                var el = document.getElementById('display-' + attr);
+                if (el && character.attributes[attr] !== undefined) {
+                    el.textContent = character.attributes[attr];
+                    // 添加变化动画效果
+                    el.style.color = '#00ff41';
+                    setTimeout(function(element) {
+                        return function() {
+                            element.style.color = '';
+                        };
+                    }(el), 1000);
+                }
             }
+            
+            // 更新状态条
+            this.updateStatusBars(character);
+            
+            // 更新其他信息
+            var wealthEl = document.getElementById('wealth-display');
+            if (wealthEl && character.wealth !== undefined) {
+                wealthEl.textContent = character.wealth;
+                // 财富变化动画
+                wealthEl.style.color = '#ffd700';
+                setTimeout(function() {
+                    wealthEl.style.color = '';
+                }, 1000);
+            }
+            
+            var locationEl = document.getElementById('location-display');
+            if (locationEl) locationEl.textContent = character.location;
+            
+            // 更新声望显示
+            var reputationEl = document.getElementById('reputation-display');
+            if (reputationEl && character.social && character.social.reputation !== undefined) {
+                reputationEl.textContent = character.social.reputation;
+            }
+            
+            console.log('🎨 角色面板更新完成');
+            
+        } catch (error) {
+            console.error('更新角色面板失败:', error);
         }
-        
-        // 更新状态条
-        this.updateStatusBars(character);
-        
-        // 更新其他信息
-        var wealthEl = document.getElementById('wealth-display');
-        if (wealthEl) wealthEl.textContent = character.wealth;
-        
-        var locationEl = document.getElementById('location-display');
-        if (locationEl) locationEl.textContent = character.location;
     }
 
     /**
