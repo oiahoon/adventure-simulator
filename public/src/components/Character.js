@@ -1,838 +1,438 @@
 /**
- * 角色类
- * 管理角色的属性、状态、人格和社会属性
+ * 角色类 - 增强版，支持完整的RPG成长系统
  */
 class Character {
-    constructor(name, profession, attributes = {}, storyline = null) {
+    constructor(name, profession) {
+        this.id = `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this.name = name;
         this.profession = profession;
-        
-        // 如果没有指定剧情，则根据角色名字自动分配
-        this.storyline = storyline || this.autoAssignStoryline(name);
-        
         this.level = 1;
         this.experience = 0;
         
         // 基础属性
-        this.attributes = {
-            strength: attributes.strength || 10,
-            intelligence: attributes.intelligence || 10,
-            dexterity: attributes.dexterity || 10,
-            constitution: attributes.constitution || 10,
-            charisma: attributes.charisma || 10,
-            luck: attributes.luck || 10
-        };
+        this.attributes = this.initializeAttributes(profession);
         
-        // 人格属性 (0-100)
-        this.personality = {
-            courage: Math.floor(Math.random() * 30) + 40,      // 勇气 40-70
-            wisdom: Math.floor(Math.random() * 30) + 40,       // 智慧 40-70
-            compassion: Math.floor(Math.random() * 30) + 40,   // 慈悲 40-70
-            ambition: Math.floor(Math.random() * 30) + 40,     // 野心 40-70
-            curiosity: Math.floor(Math.random() * 30) + 40,    // 好奇心 40-70
-            patience: Math.floor(Math.random() * 30) + 40,     // 耐心 40-70
-            pride: Math.floor(Math.random() * 30) + 40,        // 骄傲 40-70
-            loyalty: Math.floor(Math.random() * 30) + 40       // 忠诚 40-70
-        };
-        
-        // 社会属性
-        this.social = {
-            reputation: 0,          // 声望 (-1000 到 1000)
-            influence: 0,           // 影响力 (0-1000)
-            connections: [],        // 人脉关系
-            enemies: [],            // 敌对关系
-            organizations: [],      // 所属组织
-            titles: [],            // 称号
-            socialStatus: 'commoner', // 社会地位
-            karma: 0               // 因果业力 (-1000 到 1000)
-        };
-        
-        // 当前状态
+        // 状态
         this.status = {
             hp: this.getMaxHP(),
             mp: this.getMaxMP(),
             fatigue: 0,
-            wealth: this.getInitialWealth(),
-            cultivation: this.getInitialCultivation(), // 修为境界
-            mentalState: 'normal'   // 心理状态
+            hunger: 100,
+            thirst: 100
         };
-        
-        // 装备和物品
+
+        // 最大状态值
+        this.maxStats = {
+            hp: this.getMaxHP(),
+            mp: this.getMaxMP()
+        };
+
+        // 战斗属性
+        this.combatStats = {
+            attack: this.attributes.strength,
+            defense: this.attributes.constitution,
+            critical: 0,
+            dodge: this.attributes.dexterity,
+            speed: this.attributes.dexterity
+        };
+
+        // 成长相关
+        this.availableAttributePoints = 0;
+        this.availableSkillPoints = 0;
+        this.skills = {};
         this.equipment = {
             weapon: null,
             armor: null,
             accessory: null,
-            treasure: null  // 法宝/神器
+            boots: null
         };
-        
+
+        // 游戏进度
+        this.location = '新手村';
+        this.wealth = 100;
         this.inventory = [];
-        this.skills = this.getInitialSkills();
+        
+        // 社交和声望
+        this.reputation = {
+            righteous: 0,
+            evil: 0,
+            jianghu: 0,
+            sect: 0,
+            merchant: 0,
+            scholar: 0
+        };
+
+        // 门派状态
+        this.sectStatus = null;
+        
+        // 特殊效果
+        this.specialEffects = {};
+        this.equipmentEffects = {};
+        
+        // 成就和统计
         this.achievements = [];
-        this.relationships = new Map(); // 人际关系网络
-        
-        // 根据职业调整人格
-        this.adjustPersonalityByProfession();
-        
-        console.log(`👤 角色创建: ${name} (${this.getProfessionName()}) - ${this.getStorylineName()}`);
+        this.statistics = {
+            eventsCompleted: 0,
+            monstersDefeated: 0,
+            questsCompleted: 0,
+            itemsFound: 0,
+            timePlayedMinutes: 0
+        };
+
+        // 创建时间
+        this.createdAt = Date.now();
+        this.lastActiveAt = Date.now();
+
+        console.log(`👤 创建角色: ${this.name} (${this.getProfessionName()})`);
     }
 
     /**
-     * 根据角色名字自动分配剧情类型
+     * 初始化属性
      */
-    autoAssignStoryline(name) {
-        // 中文名字特征检测
-        const chinesePattern = /[\u4e00-\u9fa5]/;
-        const isChineseName = chinesePattern.test(name);
-        
-        // 特定字符检测
-        const nameFeatures = {
-            // 仙侠修真关键字
-            xianxia: ['仙', '道', '玄', '真', '灵', '天', '云', '剑', '风', '月', '星', '雪', '冰', '火', '雷', '龙', '凤'],
-            // 玄幻关键字
-            xuanhuan: ['魔', '神', '圣', '帝', '王', '皇', '尊', '主', '君', '霸', '战', '斗', '血', '影', '暗', '光'],
-            // 武侠关键字
-            wuxia: ['侠', '武', '刀', '枪', '棍', '拳', '掌', '腿', '功', '法', '招', '式', '江', '湖', '门', '派'],
-            // 西幻关键字
-            fantasy: ['艾', '莉', '安', '娜', '亚', '瑟', '拉', '尔', '丝', '特', '克', '斯', '德', '伦', '卡', '罗']
+    initializeAttributes(profession) {
+        const baseAttributes = {
+            strength: 10,
+            constitution: 10,
+            dexterity: 10,
+            intelligence: 10,
+            charisma: 10,
+            luck: 10
         };
-        
-        // 计算每种剧情的匹配分数
-        const scores = {};
-        for (const [storyline, keywords] of Object.entries(nameFeatures)) {
-            scores[storyline] = 0;
-            keywords.forEach(keyword => {
-                if (name.includes(keyword)) {
-                    scores[storyline] += 1;
-                }
-            });
-        }
-        
-        // 找出最高分的剧情类型
-        let maxScore = 0;
-        let selectedStoryline = 'xianxia'; // 默认仙侠
-        
-        for (const [storyline, score] of Object.entries(scores)) {
-            if (score > maxScore) {
-                maxScore = score;
-                selectedStoryline = storyline;
-            }
-        }
-        
-        // 如果没有明显特征，根据名字长度和是否中文进行分配
-        if (maxScore === 0) {
-            if (isChineseName) {
-                // 中文名字随机分配中式剧情
-                const chineseStorylines = ['xianxia', 'xuanhuan', 'wuxia'];
-                selectedStoryline = chineseStorylines[Math.floor(Math.random() * chineseStorylines.length)];
-            } else {
-                // 英文名字倾向于西幻或科幻
-                const westernStorylines = ['fantasy', 'scifi'];
-                selectedStoryline = westernStorylines[Math.floor(Math.random() * westernStorylines.length)];
-            }
-        }
-        
-        console.log(`🎭 根据角色名字"${name}"自动分配剧情: ${this.getStorylineName()} (匹配分数: ${maxScore})`);
-        return selectedStoryline;
+
+        // 职业特化加成
+        const professionBonus = {
+            warrior: { strength: 5, constitution: 3, dexterity: 2 },
+            mage: { intelligence: 5, charisma: 3, constitution: 2 },
+            rogue: { dexterity: 5, luck: 3, intelligence: 2 },
+            monk: { constitution: 3, strength: 3, charisma: 3, dexterity: 1 },
+            hunter: { dexterity: 3, strength: 3, constitution: 2, luck: 2 },
+            scholar: { intelligence: 3, charisma: 4, luck: 2, constitution: 1 }
+        };
+
+        const bonus = professionBonus[profession] || {};
+        Object.entries(bonus).forEach(([attr, value]) => {
+            baseAttributes[attr] += value;
+        });
+
+        return baseAttributes;
     }
+
+    /**
+     * 获取职业中文名
+     */
     getProfessionName() {
-        const names = {
+        const professionNames = {
             warrior: '武者',
             mage: '术士', 
             rogue: '游侠',
-            priest: '僧侣',
-            ranger: '猎户',
-            noble: '文士'
+            monk: '僧侣',
+            hunter: '猎户',
+            scholar: '文士'
         };
-        return names[this.profession] || '江湖人士';
-    }
-
-    /**
-     * 获取剧情类型名称
-     */
-    getStorylineName() {
-        const names = {
-            xianxia: '仙侠修真',
-            xuanhuan: '玄幻奇缘',
-            scifi: '科幻未来',
-            wuxia: '武侠江湖',
-            fantasy: '西幻冒险'
-        };
-        return names[this.storyline] || '未知剧情';
-    }
-
-    /**
-     * 根据职业调整人格特征
-     */
-    adjustPersonalityByProfession() {
-        const adjustments = {
-            warrior: {
-                courage: 20,
-                pride: 15,
-                loyalty: 10,
-                patience: -10
-            },
-            mage: {
-                wisdom: 20,
-                curiosity: 15,
-                patience: 10,
-                pride: 10
-            },
-            rogue: {
-                curiosity: 15,
-                ambition: 10,
-                patience: -5,
-                loyalty: -10
-            },
-            priest: {
-                compassion: 20,
-                wisdom: 10,
-                patience: 15,
-                pride: -10
-            },
-            ranger: {
-                patience: 15,
-                wisdom: 10,
-                curiosity: 5,
-                ambition: -5
-            },
-            noble: {
-                pride: 20,
-                ambition: 15,
-                influence: 10,
-                compassion: -5
-            }
-        };
-
-        const adjustment = adjustments[this.profession];
-        if (adjustment) {
-            Object.keys(adjustment).forEach(trait => {
-                if (this.personality[trait] !== undefined) {
-                    this.personality[trait] = Math.max(0, Math.min(100, 
-                        this.personality[trait] + adjustment[trait]
-                    ));
-                }
-            });
-        }
-    }
-
-    /**
-     * 获取初始修为境界
-     */
-    getInitialCultivation() {
-        const cultivationLevels = {
-            xianxia: ['练气期', '筑基期', '金丹期', '元婴期', '化神期'],
-            xuanhuan: ['斗者', '斗师', '大斗师', '斗灵', '斗王'],
-            scifi: ['普通人', '基因改造者', '超能力者', '机械改造人', '数字生命'],
-            wuxia: ['不入流', '三流', '二流', '一流', '宗师'],
-            fantasy: ['学徒', '见习', '正式', '专家', '大师']
-        };
-        
-        const levels = cultivationLevels[this.storyline] || cultivationLevels.xianxia;
-        return levels[0];
+        return professionNames[this.profession] || '未知';
     }
 
     /**
      * 获取最大生命值
      */
     getMaxHP() {
-        const base = 80;
-        const constitutionBonus = this.attributes.constitution * 5;
-        const levelBonus = (this.level - 1) * 10;
-        return base + constitutionBonus + levelBonus;
+        const base = 100 + (this.attributes.constitution * 10);
+        const equipment = this.equipmentEffects?.hp || 0;
+        const skills = this.maxStats?.hp || 0;
+        return base + equipment + skills;
     }
 
     /**
-     * 获取最大魔法值
+     * 获取最大法力值
      */
     getMaxMP() {
-        const base = 30;
-        const intelligenceBonus = this.attributes.intelligence * 3;
-        const levelBonus = (this.level - 1) * 5;
-        return base + intelligenceBonus + levelBonus;
+        const base = 50 + (this.attributes.intelligence * 5);
+        const equipment = this.equipmentEffects?.mp || 0;
+        const skills = this.maxStats?.mp || 0;
+        return base + equipment + skills;
     }
 
     /**
-     * 获取初始财富
+     * 获取总攻击力
      */
-    getInitialWealth() {
-        const base = 100;
-        const professionBonus = {
-            warrior: 50,
-            mage: 30,
-            rogue: 80,
-            priest: 40,
-            ranger: 60,
-            noble: 500
-        };
-        return base + (professionBonus[this.profession] || 0);
+    getTotalAttack() {
+        const base = this.combatStats.attack || this.attributes.strength;
+        const equipment = this.equipmentEffects?.attack || 0;
+        const weapon = this.equipment.weapon?.effects?.attack || 0;
+        return base + equipment + weapon;
     }
 
     /**
-     * 获取初始技能
+     * 获取总防御力
      */
-    getInitialSkills() {
-        const skillSets = {
-            warrior: ['基础刀法', '内功心法', '铁布衫'],
-            mage: ['符咒之术', '奇门遁甲', '炼丹术'],
-            rogue: ['轻功身法', '暗器手法', '易容术'],
-            priest: ['佛门武学', '医术', '禅定'],
-            ranger: ['弓箭术', '追踪术', '野外生存'],
-            noble: ['诗词歌赋', '琴棋书画', '社交礼仪']
-        };
-        return skillSets[this.profession] || ['基础武学'];
+    getTotalDefense() {
+        const base = this.combatStats.defense || this.attributes.constitution;
+        const equipment = this.equipmentEffects?.defense || 0;
+        const armor = this.equipment.armor?.effects?.defense || 0;
+        return base + equipment + armor;
     }
 
     /**
-     * 获取战斗力
+     * 获取暴击率
      */
-    getCombatPower() {
-        const str = this.attributes.strength;
-        const dex = this.attributes.dexterity;
-        const level = this.level;
-        
-        let base = str * 2 + dex + level * 3;
-        
-        // 职业加成
-        const professionMultiplier = {
-            warrior: 1.3,
-            mage: 0.8,
-            rogue: 1.1,
-            priest: 0.9,
-            ranger: 1.2,
-            noble: 0.7
-        };
-        
-        base *= (professionMultiplier[this.profession] || 1.0);
-        
-        // 装备加成
-        if (this.equipment.weapon) {
-            base += this.equipment.weapon.attack || 0;
-        }
-        
-        return Math.floor(base);
+    getCriticalRate() {
+        const base = this.combatStats.critical || 0;
+        const equipment = this.equipmentEffects?.critical || 0;
+        const weapon = this.equipment.weapon?.effects?.critical || 0;
+        return Math.min(50, base + equipment + weapon); // 最高50%暴击率
     }
 
     /**
-     * 获取魔法力
+     * 获取闪避率
      */
-    getMagicPower() {
-        const int = this.attributes.intelligence;
-        const level = this.level;
-        
-        let base = int * 2 + level * 2;
-        
-        // 职业加成
-        const professionMultiplier = {
-            warrior: 0.5,
-            mage: 1.5,
-            rogue: 0.7,
-            priest: 1.3,
-            ranger: 0.8,
-            noble: 0.9
-        };
-        
-        base *= (professionMultiplier[this.profession] || 1.0);
-        
-        return Math.floor(base);
-    }
-
-    /**
-     * 获取社交能力
-     */
-    getSocialPower() {
-        const cha = this.attributes.charisma;
-        const rep = this.status.reputation;
-        const wealth = this.status.wealth;
-        
-        let base = cha * 2 + rep * 0.1 + Math.log(wealth + 1) * 5;
-        
-        // 职业加成
-        const professionMultiplier = {
-            warrior: 0.8,
-            mage: 0.9,
-            rogue: 0.7,
-            priest: 1.2,
-            ranger: 0.8,
-            noble: 1.5
-        };
-        
-        base *= (professionMultiplier[this.profession] || 1.0);
-        
-        return Math.floor(base);
-    }
-
-    /**
-     * 获取探索能力
-     */
-    getExplorationPower() {
-        const dex = this.attributes.dexterity;
-        const int = this.attributes.intelligence;
-        const luck = this.attributes.luck;
-        
-        let base = dex + int + luck * 1.5;
-        
-        // 职业加成
-        const professionMultiplier = {
-            warrior: 0.9,
-            mage: 1.1,
-            rogue: 1.4,
-            priest: 1.0,
-            ranger: 1.3,
-            noble: 0.8
-        };
-        
-        base *= (professionMultiplier[this.profession] || 1.0);
-        
-        return Math.floor(base);
-    }
-
-    /**
-     * 获取生存能力
-     */
-    getSurvivalPower() {
-        const con = this.attributes.constitution;
-        const luck = this.attributes.luck;
-        const level = this.level;
-        
-        let base = con * 2 + luck + level;
-        
-        // 职业加成
-        const professionMultiplier = {
-            warrior: 1.2,
-            mage: 0.8,
-            rogue: 1.0,
-            priest: 1.1,
-            ranger: 1.4,
-            noble: 0.9
-        };
-        
-        base *= (professionMultiplier[this.profession] || 1.0);
-        
-        return Math.floor(base);
-    }
-
-    /**
-     * 增加经验值
-     */
-    gainExperience(amount) {
-        this.experience += amount;
-        
-        // 检查升级
-        const requiredExp = this.getRequiredExperience();
-        if (this.experience >= requiredExp) {
-            this.levelUp();
-        }
-    }
-
-    /**
-     * 获取升级所需经验
-     */
-    getRequiredExperience() {
-        return this.level * 100 + Math.pow(this.level, 2) * 10;
-    }
-
-    /**
-     * 升级
-     */
-    levelUp() {
-        const oldLevel = this.level;
-        this.level++;
-        
-        // 升级时恢复HP和MP
-        this.status.hp = this.getMaxHP();
-        this.status.mp = this.getMaxMP();
-        
-        // 随机属性提升
-        this.randomAttributeIncrease();
-        
-        console.log(`🎉 ${this.name} 升级到 ${this.level} 级！`);
-        
-        return {
-            oldLevel,
-            newLevel: this.level,
-            attributeGains: this.getLastAttributeGains()
-        };
-    }
-
-    /**
-     * 随机属性提升
-     */
-    randomAttributeIncrease() {
-        const attributes = Object.keys(this.attributes);
-        const gains = {};
-        
-        // 每次升级获得2-4点属性
-        const totalGains = 2 + Math.floor(Math.random() * 3);
-        
-        for (let i = 0; i < totalGains; i++) {
-            const attr = attributes[Math.floor(Math.random() * attributes.length)];
-            gains[attr] = (gains[attr] || 0) + 1;
-            this.attributes[attr]++;
-        }
-        
-        this.lastAttributeGains = gains;
-    }
-
-    /**
-     * 获取最后一次属性提升
-     */
-    getLastAttributeGains() {
-        return this.lastAttributeGains || {};
-    }
-
-    /**
-     * 受到伤害
-     */
-    takeDamage(amount) {
-        this.status.hp = Math.max(0, this.status.hp - amount);
-        return this.status.hp <= 0;
+    getDodgeRate() {
+        const base = this.combatStats.dodge || this.attributes.dexterity;
+        const equipment = this.equipmentEffects?.dodge || 0;
+        return Math.min(30, Math.floor((base + equipment) / 2)); // 最高30%闪避率
     }
 
     /**
      * 恢复生命值
      */
     heal(amount) {
-        this.status.hp = Math.min(this.getMaxHP(), this.status.hp + amount);
+        const maxHP = this.getMaxHP();
+        const oldHP = this.status.hp;
+        this.status.hp = Math.min(maxHP, this.status.hp + amount);
+        const actualHeal = this.status.hp - oldHP;
+        
+        if (actualHeal > 0) {
+            console.log(`💚 ${this.name} 恢复了 ${actualHeal} 点生命值`);
+        }
+        
+        return actualHeal;
     }
 
     /**
-     * 消耗魔法值
+     * 恢复法力值
      */
-    consumeMP(amount) {
-        if (this.status.mp >= amount) {
-            this.status.mp -= amount;
+    restoreMana(amount) {
+        const maxMP = this.getMaxMP();
+        const oldMP = this.status.mp;
+        this.status.mp = Math.min(maxMP, this.status.mp + amount);
+        const actualRestore = this.status.mp - oldMP;
+        
+        if (actualRestore > 0) {
+            console.log(`💙 ${this.name} 恢复了 ${actualRestore} 点法力值`);
+        }
+        
+        return actualRestore;
+    }
+
+    /**
+     * 受到伤害
+     */
+    takeDamage(damage) {
+        const actualDamage = Math.max(1, damage - this.getTotalDefense());
+        this.status.hp = Math.max(0, this.status.hp - actualDamage);
+        
+        console.log(`💔 ${this.name} 受到了 ${actualDamage} 点伤害`);
+        
+        return {
+            damage: actualDamage,
+            isDead: this.status.hp <= 0
+        };
+    }
+
+    /**
+     * 获得财富
+     */
+    gainWealth(amount) {
+        this.wealth += amount;
+        console.log(`💰 ${this.name} 获得了 ${amount} 金币`);
+    }
+
+    /**
+     * 消费财富
+     */
+    spendWealth(amount) {
+        if (this.wealth >= amount) {
+            this.wealth -= amount;
+            console.log(`💸 ${this.name} 花费了 ${amount} 金币`);
             return true;
         }
         return false;
-    }
-
-    /**
-     * 恢复魔法值
-     */
-    restoreMP(amount) {
-        this.status.mp = Math.min(this.getMaxMP(), this.status.mp + amount);
-    }
-
-    /**
-     * 增加疲劳
-     */
-    addFatigue(amount) {
-        this.status.fatigue = Math.min(100, this.status.fatigue + amount);
-    }
-
-    /**
-     * 减少疲劳
-     */
-    reduceFatigue(amount) {
-        this.status.fatigue = Math.max(0, this.status.fatigue - amount);
-    }
-
-    /**
-     * 改变财富
-     */
-    changeWealth(amount) {
-        this.status.wealth = Math.max(0, this.status.wealth + amount);
-    }
-
-    /**
-     * 改变声望
-     */
-    changeReputation(amount) {
-        this.status.reputation += amount;
     }
 
     /**
      * 添加物品到背包
      */
     addItem(item) {
-        if (!this.inventory) {
-            this.inventory = [];
-        }
+        this.inventory.push({
+            ...item,
+            id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            obtainedAt: Date.now()
+        });
         
-        // 如果是字符串，转换为物品对象
-        if (typeof item === 'string') {
-            item = {
-                name: item,
-                type: 'misc',
-                description: '获得的物品',
-                quantity: 1,
-                obtainedAt: Date.now()
-            };
-        }
-        
-        // 检查是否已有相同物品
-        const existingItem = this.inventory.find(inv => inv.name === item.name);
-        if (existingItem) {
-            existingItem.quantity = (existingItem.quantity || 1) + (item.quantity || 1);
-        } else {
-            this.inventory.push(item);
-        }
-        
-        console.log(`🎒 ${this.name}获得物品: ${item.name}`);
-        
-        // 如果物品有即时效果，立即应用
-        if (item.effect) {
-            this.applyItemEffect(item.effect);
-        }
+        this.statistics.itemsFound++;
+        console.log(`🎒 ${this.name} 获得了物品: ${item.name}`);
     }
 
     /**
-     * 应用物品效果
+     * 使用物品
      */
-    applyItemEffect(effect) {
-        if (effect.hp) {
-            this.status.hp = Math.min(this.getMaxHP(), this.status.hp + effect.hp);
-            console.log(`💚 生命值恢复: +${effect.hp}`);
+    useItem(itemId) {
+        const itemIndex = this.inventory.findIndex(item => item.id === itemId);
+        if (itemIndex === -1) {
+            return { success: false, message: '物品不存在' };
         }
-        if (effect.mp) {
-            this.status.mp = Math.min(this.getMaxMP(), this.status.mp + effect.mp);
-            console.log(`💙 魔法值恢复: +${effect.mp}`);
-        }
-        if (effect.strength) {
-            this.attributes.strength += effect.strength;
-            console.log(`💪 力量提升: +${effect.strength}`);
-        }
-        if (effect.intelligence) {
-            this.attributes.intelligence += effect.intelligence;
-            console.log(`🧠 智力提升: +${effect.intelligence}`);
-        }
-        if (effect.dexterity) {
-            this.attributes.dexterity += effect.dexterity;
-            console.log(`🏃 敏捷提升: +${effect.dexterity}`);
-        }
-    }
 
-    /**
-     * 从背包移除物品
-     */
-    removeItem(itemName) {
-        const index = this.inventory.findIndex(item => item.name === itemName);
-        if (index !== -1) {
-            return this.inventory.splice(index, 1)[0];
-        }
-        return null;
-    }
+        const item = this.inventory[itemIndex];
+        let result = { success: true, message: `使用了 ${item.name}` };
 
-    /**
-     * 装备物品
-     */
-    equipItem(item) {
-        if (item.type === 'weapon') {
-            this.equipment.weapon = item;
-        } else if (item.type === 'armor') {
-            this.equipment.armor = item;
-        } else if (item.type === 'accessory') {
-            this.equipment.accessory = item;
-        }
-    }
-
-    /**
-     * 学习技能
-     */
-    learnSkill(skillName) {
-        if (!this.skills.includes(skillName)) {
-            this.skills.push(skillName);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 获得称号
-     */
-    gainTitle(title) {
-        if (!this.titles.includes(title)) {
-            this.titles.push(title);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 检查是否有足够的能力进行某个行动
-     */
-    canPerformAction(actionType, difficulty = 50) {
-        let power = 0;
-        
-        switch (actionType) {
-            case 'combat':
-                power = this.getCombatPower();
+        // 根据物品类型执行效果
+        switch (item.type) {
+            case 'healing_potion':
+                const healAmount = item.effects?.heal || 50;
+                this.heal(healAmount);
+                result.message = `使用了 ${item.name}，恢复了 ${healAmount} 点生命值`;
                 break;
-            case 'magic':
-                power = this.getMagicPower();
+                
+            case 'mana_potion':
+                const manaAmount = item.effects?.mana || 30;
+                this.restoreMana(manaAmount);
+                result.message = `使用了 ${item.name}，恢复了 ${manaAmount} 点法力值`;
                 break;
-            case 'social':
-                power = this.getSocialPower();
+                
+            case 'experience_pill':
+                const expAmount = item.effects?.experience || 100;
+                // 这里需要调用成长系统的获得经验方法
+                result.message = `使用了 ${item.name}，获得了 ${expAmount} 点经验`;
                 break;
-            case 'exploration':
-                power = this.getExplorationPower();
-                break;
-            case 'survival':
-                power = this.getSurvivalPower();
-                break;
+                
             default:
-                power = this.level * 10;
+                result = { success: false, message: '无法使用此物品' };
+                return result;
         }
-        
-        // 添加随机因素
-        const randomFactor = Math.random() * 20 - 10; // -10 到 +10
-        const finalPower = power + randomFactor;
-        
-        return finalPower >= difficulty;
+
+        // 移除已使用的物品（如果是消耗品）
+        if (item.consumable !== false) {
+            this.inventory.splice(itemIndex, 1);
+        }
+
+        return result;
     }
 
     /**
-     * 获取角色状态描述
+     * 更新活跃时间
      */
-    getStatusDescription() {
-        const hpPercent = (this.status.hp / this.getMaxHP()) * 100;
-        const mpPercent = (this.status.mp / this.getMaxMP()) * 100;
-        
-        let status = '良好';
-        
-        if (hpPercent < 25) {
-            status = '濒死';
-        } else if (hpPercent < 50) {
-            status = '受伤';
-        } else if (this.status.fatigue > 75) {
-            status = '疲惫';
-        } else if (mpPercent < 25) {
-            status = '魔力枯竭';
-        }
-        
-        return status;
+    updateActivity() {
+        this.lastActiveAt = Date.now();
     }
 
     /**
-     * 获取角色完整信息
+     * 获取角色详细信息
      */
-    getFullInfo() {
+    getDetailedInfo() {
         return {
-            name: this.name,
-            profession: this.getProfessionName(),
-            level: this.level,
-            experience: this.experience,
-            requiredExp: this.getRequiredExperience(),
-            attributes: { ...this.attributes },
-            status: { ...this.status },
-            maxHP: this.getMaxHP(),
-            maxMP: this.getMaxMP(),
-            combatPower: this.getCombatPower(),
-            magicPower: this.getMagicPower(),
-            socialPower: this.getSocialPower(),
-            explorationPower: this.getExplorationPower(),
-            survivalPower: this.getSurvivalPower(),
-            statusDescription: this.getStatusDescription(),
-            skills: [...this.skills],
-            titles: [...this.titles],
-            equipment: { ...this.equipment },
-            inventoryCount: this.inventory.length
+            basic: {
+                id: this.id,
+                name: this.name,
+                profession: this.profession,
+                professionName: this.getProfessionName(),
+                level: this.level,
+                experience: this.experience
+            },
+            attributes: this.attributes,
+            status: {
+                ...this.status,
+                maxHP: this.getMaxHP(),
+                maxMP: this.getMaxMP()
+            },
+            combat: {
+                attack: this.getTotalAttack(),
+                defense: this.getTotalDefense(),
+                critical: this.getCriticalRate(),
+                dodge: this.getDodgeRate()
+            },
+            growth: {
+                availableAttributePoints: this.availableAttributePoints,
+                availableSkillPoints: this.availableSkillPoints,
+                skills: this.skills
+            },
+            equipment: this.equipment,
+            inventory: this.inventory,
+            wealth: this.wealth,
+            location: this.location,
+            reputation: this.reputation,
+            sectStatus: this.sectStatus,
+            achievements: this.achievements,
+            statistics: this.statistics
         };
     }
 
     /**
-     * 根据属性和等级获取可访问的地点
+     * 保存角色数据
      */
-    getAvailableLocations() {
-        const locations = [
-            { name: '新手村', minLevel: 1, description: '安全的起始地点' },
-            { name: '森林边缘', minLevel: 2, description: '充满机遇的森林' },
-            { name: '古老废墟', minLevel: 5, description: '神秘的古代遗迹' },
-            { name: '山脉小径', minLevel: 8, description: '险峻的山路' },
-            { name: '魔法学院', minLevel: 10, description: '知识的殿堂', requireIntelligence: 15 },
-            { name: '竞技场', minLevel: 12, description: '战士的试炼场', requireStrength: 15 },
-            { name: '盗贼公会', minLevel: 15, description: '阴影中的组织', requireDexterity: 18 },
-            { name: '神殿', minLevel: 18, description: '神圣的祈祷之地', requireCharisma: 16 },
-            { name: '龙穴', minLevel: 25, description: '传说中的龙族栖息地' },
-            { name: '异次元裂缝', minLevel: 30, description: '通往未知世界的门户' }
-        ];
+    save() {
+        const saveData = {
+            ...this.getDetailedInfo(),
+            savedAt: Date.now()
+        };
         
-        return locations.filter(location => {
-            if (this.level < location.minLevel) return false;
-            if (location.requireStrength && this.attributes.strength < location.requireStrength) return false;
-            if (location.requireIntelligence && this.attributes.intelligence < location.requireIntelligence) return false;
-            if (location.requireDexterity && this.attributes.dexterity < location.requireDexterity) return false;
-            if (location.requireCharisma && this.attributes.charisma < location.requireCharisma) return false;
-            return true;
-        });
+        localStorage.setItem(`character_${this.id}`, JSON.stringify(saveData));
+        console.log(`💾 角色 ${this.name} 数据已保存`);
+        
+        return saveData;
     }
 
     /**
-     * 根据属性影响事件结果
+     * 从保存数据加载角色
      */
-    getAttributeInfluence(eventType) {
-        const influences = {};
-        
-        // 根据不同事件类型，不同属性有不同影响
-        switch (eventType) {
-            case 'combat':
-                influences.strength = this.attributes.strength / 20;
-                influences.dexterity = this.attributes.dexterity / 25;
-                influences.constitution = this.attributes.constitution / 30;
-                break;
-            case 'social':
-                influences.charisma = this.attributes.charisma / 20;
-                influences.intelligence = this.attributes.intelligence / 25;
-                break;
-            case 'exploration':
-                influences.dexterity = this.attributes.dexterity / 20;
-                influences.luck = this.attributes.luck / 15;
-                influences.intelligence = this.attributes.intelligence / 30;
-                break;
-            case 'magic':
-                influences.intelligence = this.attributes.intelligence / 15;
-                influences.charisma = this.attributes.charisma / 25;
-                break;
-            case 'survival':
-                influences.constitution = this.attributes.constitution / 20;
-                influences.strength = this.attributes.strength / 25;
-                influences.intelligence = this.attributes.intelligence / 30;
-                break;
-            default:
-                Object.keys(this.attributes).forEach(attr => {
-                    influences[attr] = this.attributes[attr] / 30;
-                });
+    static load(characterId) {
+        const saveData = localStorage.getItem(`character_${characterId}`);
+        if (!saveData) {
+            return null;
         }
-        
-        return influences;
+
+        try {
+            const data = JSON.parse(saveData);
+            const character = new Character(data.basic.name, data.basic.profession);
+            
+            // 恢复所有数据
+            Object.assign(character, data);
+            character.id = data.basic.id;
+            
+            console.log(`📂 加载角色: ${character.name}`);
+            return character;
+        } catch (error) {
+            console.error('加载角色数据失败:', error);
+            return null;
+        }
     }
 
     /**
-     * 检查是否应该改变地点
+     * 获取所有保存的角色
      */
-    shouldChangeLocation(currentLocation, gameTime) {
-        const levelFactor = this.level / 5;  // 增加等级影响
-        const timeFactor = gameTime / 50;     // 增加时间影响
-        const randomFactor = Math.random() * 0.3; // 增加随机因素
+    static getAllSavedCharacters() {
+        const characters = [];
         
-        const changeChance = Math.min(0.6, levelFactor * 0.2 + timeFactor * 0.1 + randomFactor);
-        
-        console.log(`🗺️ 地点变化检查: 等级${this.level}, 时间${gameTime}, 概率${(changeChance * 100).toFixed(1)}%`);
-        
-        const shouldChange = Math.random() < changeChance;
-        if (shouldChange) {
-            console.log(`✅ 决定改变地点！当前: ${currentLocation}`);
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('character_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    characters.push({
+                        id: data.basic.id,
+                        name: data.basic.name,
+                        profession: data.basic.professionName,
+                        level: data.basic.level,
+                        location: data.location,
+                        savedAt: data.savedAt
+                    });
+                } catch (error) {
+                    console.warn(`无法加载角色数据: ${key}`, error);
+                }
+            }
         }
         
-        return shouldChange;
-    }
-
-    /**
-     * 获取下一个推荐地点
-     */
-    getNextRecommendedLocation(currentLocation) {
-        const available = this.getAvailableLocations();
-        const current = available.find(loc => loc.name === currentLocation);
-        
-        if (!current) return available[0]?.name || '新手村';
-        
-        const currentIndex = available.indexOf(current);
-        
-        if (Math.random() < 0.7 && currentIndex < available.length - 1) {
-            return available[currentIndex + 1].name;
-        } else {
-            const otherLocations = available.filter(loc => loc.name !== currentLocation);
-            return otherLocations[Math.floor(Math.random() * otherLocations.length)]?.name || currentLocation;
-        }
+        return characters.sort((a, b) => b.savedAt - a.savedAt);
     }
 }
+
+// 全局导出
+window.Character = Character;
