@@ -471,11 +471,10 @@ class GameEngine {
     }
 
     /**
-     * 游戏步进（修复版）
+     * 游戏步进
      */
-    async gameStep() {
+    gameStep() {
         if (!this.gameState || !this.isRunning) {
-            console.warn('⚠️ 游戏状态无效或游戏未运行');
             return;
         }
         
@@ -500,17 +499,7 @@ class GameEngine {
             // 触发事件
             var eventInterval = Math.floor(Math.random() * 3) + 2;
             if (this.gameState.gameTime % eventInterval === 0) {
-                try {
-                    var eventPromise = this.eventSystem.triggerRandomEvent(this.gameState);
-                    if (eventPromise && typeof eventPromise.catch === 'function') {
-                        var self = this;
-                        eventPromise.catch(function(error) {
-                            console.error('事件触发失败:', error);
-                        });
-                    }
-                } catch (error) {
-                    console.error('事件系统错误:', error);
-                }
+                this.triggerGameEvent();
             }
             
             // 更新UI显示
@@ -520,13 +509,23 @@ class GameEngine {
             console.error('游戏步进错误:', error);
         }
     }
-        
-        // 更新UI - 确保角色信息正确显示
-        this.uiManager.updateAll(this.gameState);
-        
-        // 强制更新角色显示
-        this.uiManager.updateCharacterDisplay(this.gameState.character);
-        this.uiManager.updateStatusBars(this.gameState.character);
+
+    /**
+     * 触发游戏事件
+     */
+    triggerGameEvent() {
+        try {
+            var eventPromise = this.eventSystem.triggerRandomEvent(this.gameState);
+            if (eventPromise && typeof eventPromise.catch === 'function') {
+                var self = this;
+                eventPromise.catch(function(error) {
+                    console.error('事件触发失败:', error);
+                });
+            }
+        } catch (error) {
+            console.error('事件系统错误:', error);
+        }
+    }
         
         // 定期保存游戏状态
         if (this.gameState.gameTime % 10 === 0 && window.ProgressManager) {
