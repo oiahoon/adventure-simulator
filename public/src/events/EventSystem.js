@@ -542,6 +542,131 @@ class EventSystem {
             });
         }
         
+    /**
+     * 应用事件效果 - 完整版，支持所有角色属性
+     */
+    applyEventEffects(effects, gameState, impactDescription) {
+        var character = gameState.character;
+        var hasEffects = false;
+        var effectLog = [];
+        
+        console.log('🔧 开始应用事件效果:', effects);
+        
+        // 应用属性变化
+        if (effects.attributes) {
+            console.log('📊 应用属性变化:', effects.attributes);
+            for (var attr in effects.attributes) {
+                var value = effects.attributes[attr];
+                if (Math.abs(value) > 0 && character.attributes[attr] !== undefined) {
+                    var oldValue = character.attributes[attr];
+                    character.attributes[attr] += value;
+                    character.attributes[attr] = Math.max(1, character.attributes[attr]);
+                    
+                    var changeText = attr + ': ' + oldValue + ' → ' + character.attributes[attr] + ' (' + (value > 0 ? '+' : '') + value + ')';
+                    console.log('  ' + changeText);
+                    effectLog.push(changeText);
+                    hasEffects = true;
+                }
+            }
+        }
+        
+        // 应用状态变化（生命值、法力值等）
+        if (effects.status) {
+            console.log('💫 应用状态变化:', effects.status);
+            for (var stat in effects.status) {
+                var value = effects.status[stat];
+                if (Math.abs(value) > 0) {
+                    if (stat === 'experience') {
+                        var oldExp = character.experience;
+                        var oldLevel = character.level;
+                        character.gainExperience(value);
+                        
+                        var expChangeText = '经验: ' + oldExp + ' → ' + character.experience + ' (+' + value + ')';
+                        console.log('  ' + expChangeText);
+                        effectLog.push(expChangeText);
+                        
+                        // 检查是否升级了
+                        if (character.level > oldLevel) {
+                            var levelUpText = '🎉 升级! ' + oldLevel + ' → ' + character.level + ' 级';
+                            console.log('  ' + levelUpText);
+                            effectLog.push(levelUpText);
+                        }
+                        hasEffects = true;
+                        
+                    } else if (stat === 'wealth') {
+                        var oldWealth = character.wealth;
+                        character.gainWealth(value);
+                        
+                        var wealthChangeText = '财富: ' + oldWealth + ' → ' + character.wealth + ' (' + (value > 0 ? '+' : '') + value + ')';
+                        console.log('  ' + wealthChangeText);
+                        effectLog.push(wealthChangeText);
+                        hasEffects = true;
+                        
+                    } else if (stat === 'hp') {
+                        var oldHP = character.status.hp;
+                        character.status.hp += value;
+                        character.status.hp = Math.max(1, Math.min(character.getMaxHP(), character.status.hp));
+                        
+                        var hpChangeText = '生命值: ' + oldHP + ' → ' + character.status.hp + ' (' + (value > 0 ? '+' : '') + value + ')';
+                        console.log('  ' + hpChangeText);
+                        effectLog.push(hpChangeText);
+                        hasEffects = true;
+                        
+                        // 检查是否死亡
+                        if (character.status.hp <= 0) {
+                            console.log('💀 角色死亡！游戏结束');
+                            this.triggerGameOver(gameState, '角色生命值耗尽');
+                        }
+                        
+                    } else if (stat === 'mp') {
+                        var oldMP = character.status.mp;
+                        character.status.mp += value;
+                        character.status.mp = Math.max(0, Math.min(character.getMaxMP(), character.status.mp));
+                        
+                        var mpChangeText = '法力值: ' + oldMP + ' → ' + character.status.mp + ' (' + (value > 0 ? '+' : '') + value + ')';
+                        console.log('  ' + mpChangeText);
+                        effectLog.push(mpChangeText);
+                        hasEffects = true;
+                    }
+                }
+            }
+        }
+        
+        // 应用位置变化
+        if (effects.location && effects.location !== character.location) {
+            var oldLocation = character.location;
+            character.location = effects.location;
+            
+            var locationChangeText = '📍 位置变化: ' + oldLocation + ' → ' + character.location;
+            console.log('  ' + locationChangeText);
+            effectLog.push(locationChangeText);
+            hasEffects = true;
+        }
+        
+        // 应用声望变化
+        if (effects.reputation) {
+            console.log('🌟 应用声望变化:', effects.reputation);
+            for (var repType in effects.reputation) {
+                var value = effects.reputation[repType];
+                if (Math.abs(value) > 0) {
+                    if (character.reputation[repType] !== undefined) {
+                        var oldRep = character.reputation[repType];
+                        character.reputation[repType] += value;
+                        
+                        var repChangeText = '声望(' + repType + '): ' + oldRep + ' → ' + character.reputation[repType] + ' (' + (value > 0 ? '+' : '') + value + ')';
+                        console.log('  ' + repChangeText);
+                        effectLog.push(repChangeText);
+                        hasEffects = true;
+                    }
+                    
+                    // 更新总声望
+                    if (character.social && character.social.reputation !== undefined) {
+                        character.social.reputation += value;
+                    }
+                }
+            }
+        }
+        
         // 应用技能获得
         if (effects.skills && effects.skills.length > 0) {
             console.log('📚 应用技能变化:', effects.skills);
@@ -549,11 +674,78 @@ class EventSystem {
                 var skill = effects.skills[i];
                 if (typeof skill === 'string' && !character.skills.includes(skill)) {
                     character.learnSkill(skill);
-                    console.log('  学会技能: ' + skill);
+                    
+                    var skillText = '学会技能: ' + skill;
+                    console.log('  ' + skillText);
+                    effectLog.push(skillText);
                     hasEffects = true;
                 }
             }
         }
+        
+        // 应用人格变化
+        if (effects.personality) {
+            console.log('🧠 应用人格变化:', effects.personality);
+            if (!character.personality) {
+                character.personality = {
+                    courage: 50, wisdom: 50, compassion: 50, ambition: 50,
+                    curiosity: 50, patience: 50, pride: 50, loyalty: 50
+                };
+            }
+            
+            for (var trait in effects.personality) {
+                var value = effects.personality[trait];
+                if (Math.abs(value) > 0 && character.personality[trait] !== undefined) {
+                    var oldValue = character.personality[trait];
+                    character.personality[trait] += value;
+                    character.personality[trait] = Math.max(0, Math.min(100, character.personality[trait]));
+                    
+                    var personalityText = '人格(' + trait + '): ' + oldValue + ' → ' + character.personality[trait] + ' (' + (value > 0 ? '+' : '') + value + ')';
+                    console.log('  ' + personalityText);
+                    effectLog.push(personalityText);
+                    hasEffects = true;
+                }
+            }
+        }
+        
+        // 记录效果到UI日志
+        if (hasEffects && effectLog.length > 0) {
+            if (window.gameEngine && window.gameEngine.uiManager && window.gameEngine.uiManager.addLogEntry) {
+                window.gameEngine.uiManager.addLogEntry('effect', '💫 事件影响: ' + effectLog.join(', '));
+            }
+        }
+        
+        if (hasEffects) {
+            console.log('✅ 事件效果应用完成 - 角色属性发生了实际变化');
+            console.log('📋 变化摘要:', effectLog);
+        } else {
+            console.log('ℹ️ 事件没有产生实际的角色属性变化');
+        }
+        
+        return hasEffects;
+    }
+
+    /**
+     * 触发游戏结束
+     */
+    triggerGameOver(gameState, reason) {
+        console.log('🎮 游戏结束:', reason);
+        
+        if (window.gameEngine) {
+            window.gameEngine.isRunning = false;
+            if (window.gameEngine.gameLoop) {
+                clearInterval(window.gameEngine.gameLoop);
+            }
+            
+            // 显示游戏结束信息
+            if (window.gameEngine.uiManager) {
+                window.gameEngine.uiManager.addLogEntry('system', '💀 游戏结束: ' + reason);
+                window.gameEngine.uiManager.addLogEntry('system', '🎯 最终等级: ' + gameState.character.level);
+                window.gameEngine.uiManager.addLogEntry('system', '💰 最终财富: ' + gameState.character.wealth);
+                window.gameEngine.uiManager.addLogEntry('system', '📍 最终位置: ' + gameState.character.location);
+            }
+        }
+    }
         
         // 应用物品获得
         if (effects.items && effects.items.length > 0) {

@@ -185,11 +185,29 @@ class Character {
      * 获得经验值
      */
     gainExperience(amount) {
+        var oldExp = this.experience;
+        var oldLevel = this.level;
+        
         this.experience += amount;
-        console.log('✨ ' + this.name + ' 获得了 ' + amount + ' 点经验');
+        console.log('✨ ' + this.name + ' 获得了 ' + amount + ' 点经验 (' + oldExp + ' → ' + this.experience + ')');
         
         // 检查升级
         this.checkLevelUp();
+        
+        // 如果升级了，返回升级信息
+        if (this.level > oldLevel) {
+            return {
+                levelUp: true,
+                oldLevel: oldLevel,
+                newLevel: this.level,
+                experienceGained: amount
+            };
+        }
+        
+        return {
+            levelUp: false,
+            experienceGained: amount
+        };
     }
 
     /**
@@ -197,8 +215,9 @@ class Character {
      */
     checkLevelUp() {
         var expRequired = this.getRequiredExperience();
-        if (this.experience >= expRequired) {
+        while (this.experience >= expRequired && this.level < 50) { // 最高50级
             this.levelUp();
+            expRequired = this.getRequiredExperience();
         }
     }
 
@@ -206,21 +225,45 @@ class Character {
      * 升级
      */
     levelUp() {
+        var oldLevel = this.level;
         this.level++;
         
         // 属性成长
         var growth = this.getProfessionGrowth();
+        var attributeGains = [];
+        
         for (var attr in growth) {
             if (this.attributes[attr] !== undefined) {
+                var oldValue = this.attributes[attr];
                 this.attributes[attr] += growth[attr];
+                attributeGains.push(attr + '+' + growth[attr]);
             }
         }
-
-        // 恢复状态
-        this.status.hp = this.getMaxHP();
+        
+        // 升级时恢复生命值和法力值
+        var oldMaxHP = this.getMaxHP();
+        var oldMaxMP = this.getMaxMP();
+        
+        this.status.hp = this.getMaxHP(); // 升级时完全恢复
         this.status.mp = this.getMaxMP();
-
-        console.log('🎉 ' + this.name + ' 升级到 ' + this.level + ' 级！');
+        
+        // 获得技能点和属性点
+        this.availableSkillPoints += 2;
+        this.availableAttributePoints += 1;
+        
+        console.log('🎉 ' + this.name + ' 升级! ' + oldLevel + ' → ' + this.level + ' 级');
+        console.log('📊 属性提升: ' + attributeGains.join(', '));
+        console.log('💚 生命值上限: ' + oldMaxHP + ' → ' + this.getMaxHP());
+        console.log('💙 法力值上限: ' + oldMaxMP + ' → ' + this.getMaxMP());
+        console.log('🎯 获得技能点: +2, 属性点: +1');
+        
+        return {
+            oldLevel: oldLevel,
+            newLevel: this.level,
+            attributeGains: attributeGains,
+            skillPointsGained: 2,
+            attributePointsGained: 1
+        };
     }
 
     /**
@@ -286,6 +329,64 @@ class Character {
      */
     getSkillLevel(skillName) {
         return this.skillLevels[skillName] || 0;
+    }
+
+    /**
+     * 获得财富
+     */
+    gainWealth(amount) {
+        var oldWealth = this.wealth;
+        this.wealth += amount;
+        this.wealth = Math.max(0, this.wealth); // 财富不能为负数
+        
+        if (amount > 0) {
+            console.log('💰 ' + this.name + ' 获得了 ' + amount + ' 金币 (' + oldWealth + ' → ' + this.wealth + ')');
+        } else {
+            console.log('💸 ' + this.name + ' 失去了 ' + Math.abs(amount) + ' 金币 (' + oldWealth + ' → ' + this.wealth + ')');
+        }
+        
+        return {
+            oldWealth: oldWealth,
+            newWealth: this.wealth,
+            change: amount
+        };
+    }
+
+    /**
+     * 检查是否有足够的财富
+     */
+    hasEnoughWealth(amount) {
+        return this.wealth >= amount;
+    }
+
+    /**
+     * 消费财富
+     */
+    spendWealth(amount, reason) {
+        if (this.hasEnoughWealth(amount)) {
+            var result = this.gainWealth(-amount);
+            console.log('🛒 ' + this.name + ' 花费了 ' + amount + ' 金币用于: ' + (reason || '未知'));
+            return true;
+        } else {
+            console.log('❌ ' + this.name + ' 财富不足，需要 ' + amount + ' 金币，但只有 ' + this.wealth + ' 金币');
+            return false;
+        }
+    }
+
+    /**
+     * 改变位置
+     */
+    changeLocation(newLocation, reason) {
+        var oldLocation = this.location;
+        this.location = newLocation;
+        
+        console.log('📍 ' + this.name + ' 从 ' + oldLocation + ' 来到了 ' + newLocation + (reason ? ' (' + reason + ')' : ''));
+        
+        return {
+            oldLocation: oldLocation,
+            newLocation: newLocation,
+            reason: reason
+        };
     }
 
     /**
