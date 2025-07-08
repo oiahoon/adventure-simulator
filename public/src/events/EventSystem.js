@@ -352,14 +352,14 @@ class EventSystem {
                     } else if (stat === 'hp') {
                         var oldHP = character.status.hp;
                         character.status.hp += value;
-                        character.status.hp = Math.max(1, Math.min(character.getMaxHP(), character.status.hp));
+                        character.status.hp = Math.max(0, Math.min(character.getMaxHP(), character.status.hp)); // 允许HP降到0
                         
                         var hpChangeText = '生命值: ' + oldHP + ' → ' + character.status.hp + ' (' + (value > 0 ? '+' : '') + value + ')';
                         console.log('  ' + hpChangeText);
                         effectLog.push(hpChangeText);
                         hasEffects = true;
                         
-                        // 检查是否死亡
+                        // 检查是否死亡 - HP <= 0 才死亡
                         if (character.status.hp <= 0) {
                             console.log('💀 角色死亡！游戏结束');
                             this.triggerGameOver(gameState, '角色生命值耗尽');

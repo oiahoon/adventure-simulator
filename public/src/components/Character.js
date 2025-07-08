@@ -215,7 +215,7 @@ class Character {
      */
     checkLevelUp() {
         var expRequired = this.getRequiredExperience();
-        while (this.experience >= expRequired && this.level < 50) { // 最高50级
+        while (this.experience >= expRequired) { // 移除等级上限，允许无限升级
             this.levelUp();
             expRequired = this.getRequiredExperience();
         }

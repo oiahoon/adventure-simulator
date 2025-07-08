@@ -1,8 +1,16 @@
 {
-  "totalGenerated": 0,
-  "lastGeneration": null,
-  "generationHistory": [],
-  "providerStats": {},
+  "totalGenerated": 5,
+  "lastGeneration": "2025-07-08T01:09:50.225Z",
+  "generationHistory": [
+    {
+      "timestamp": "2025-07-08T01:09:50.225Z",
+      "count": 5,
+      "provider": "DeepSeek (Mock)"
+    }
+  ],
+  "providerStats": {
+    "DeepSeek": 5
+  },
   "categoryStats": {},
   "rarityStats": {},
   "metadata": {
