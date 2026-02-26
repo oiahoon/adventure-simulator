@@ -108,6 +108,7 @@
     { id: "ach-rare", tier: "gold", title: "离谱见证者", desc: "触发至少 5 次稀有事件。", when: "any", check: () => state.metrics.rareEvents >= 5 },
     { id: "ach-frugal", tier: "silver", title: "精打细算", desc: "通关时金币不低于 300。", when: "win", check: () => state.player.gold >= 300 },
     { id: "ach-courage", tier: "silver", title: "逆风赶路人", desc: "死亡时胜场不低于 10。", when: "lose", check: () => state.metrics.victories >= 10 },
+    { id: "ach-streak", tier: "gold", title: "连胜节拍器", desc: "最高连胜达到 5。", when: "any", check: () => state.metrics.maxWinStreak >= 5 },
     { id: "ach-solidarity", tier: "gold", title: "人间互助网", desc: "累计触发随机事件达到 12。", when: "any", check: () => state.metrics.randomEvents >= 12 },
     { id: "ach-mainline", tier: "gold", title: "主线通勤王", desc: "主线节点完成数达到 20。", when: "any", check: () => countMainlineCompleted() >= 20 },
     { id: "ach-steady", tier: "silver", title: "扛压体质", desc: "最终等级达到 9 级。", when: "any", check: () => state.player.level >= 9 },
@@ -179,9 +180,16 @@
       debt: 70,
       heat: 12
     },
+    uiState: {
+      turnSummary: "待开始",
+      turnDelta: "-",
+      nextRisk: "-"
+    },
     metrics: {
       battles: 0,
       victories: 0,
+      winStreak: 0,
+      maxWinStreak: 0,
       travels: 0,
       shops: 0,
       loots: 0,
@@ -223,6 +231,19 @@
     kpiDebt: document.getElementById("kpi-debt"),
     kpiHeat: document.getElementById("kpi-heat"),
     kpiChapter: document.getElementById("kpi-chapter"),
+    killHp: document.getElementById("kill-hp"),
+    killMorale: document.getElementById("kill-morale"),
+    killFatigue: document.getElementById("kill-fatigue"),
+    killDebt: document.getElementById("kill-debt"),
+    killHeat: document.getElementById("kill-heat"),
+    killHpText: document.getElementById("kill-hp-text"),
+    killMoraleText: document.getElementById("kill-morale-text"),
+    killFatigueText: document.getElementById("kill-fatigue-text"),
+    killDebtText: document.getElementById("kill-debt-text"),
+    killHeatText: document.getElementById("kill-heat-text"),
+    turnSummary: document.getElementById("turn-summary"),
+    turnDelta: document.getElementById("turn-delta"),
+    turnRisk: document.getElementById("turn-risk"),
     canvas: document.getElementById("world-canvas"),
     shareCanvas: document.getElementById("share-canvas"),
     downloadShareLink: document.getElementById("download-share-link"),
@@ -408,6 +429,63 @@
     els.kpiDebt.textContent = String(state.cityStatus.debt);
     els.kpiHeat.textContent = String(state.cityStatus.heat);
     els.kpiChapter.textContent = `第${chapter.id}章`;
+  }
+
+  function riskLevelText() {
+    const hpRatio = state.player ? state.player.hp / Math.max(1, state.player.hpMax) : 1;
+    let score = 0;
+    if (hpRatio < 0.35) score += 3;
+    else if (hpRatio < 0.6) score += 2;
+    if (state.cityStatus.morale < 30) score += 2;
+    if (state.cityStatus.fatigue > 70) score += 2;
+    if (state.cityStatus.debt > 180) score += 2;
+    if (state.cityStatus.heat > 65) score += 2;
+    if (score >= 7) return "极高";
+    if (score >= 4) return "中高";
+    if (score >= 2) return "可控";
+    return "低";
+  }
+
+  function setKilllineBar(el, textEl, value, max, invertRisk) {
+    const pct = clamp((value / Math.max(1, max)) * 100, 0, 100);
+    const display = invertRisk ? 100 - pct : pct;
+    el.style.width = `${display}%`;
+    if (display < 35) {
+      el.style.background = "linear-gradient(90deg, #ef4444, #f97316)";
+    } else if (display < 65) {
+      el.style.background = "linear-gradient(90deg, #f59e0b, #facc15)";
+    } else {
+      el.style.background = "linear-gradient(90deg, #22c55e, #3b82f6)";
+    }
+    textEl.textContent = `${Math.round(value)}`;
+  }
+
+  function updateKilllinePanel() {
+    if (!state.player) {
+      return;
+    }
+    setKilllineBar(els.killHp, els.killHpText, state.player.hp, state.player.hpMax, false);
+    setKilllineBar(els.killMorale, els.killMoraleText, state.cityStatus.morale, 100, false);
+    setKilllineBar(els.killFatigue, els.killFatigueText, state.cityStatus.fatigue, 100, true);
+    setKilllineBar(els.killDebt, els.killDebtText, state.cityStatus.debt, 300, true);
+    setKilllineBar(els.killHeat, els.killHeatText, state.cityStatus.heat, 100, true);
+    els.turnSummary.textContent = `回合反馈：${state.uiState.turnSummary}`;
+    els.turnDelta.textContent = `变化：${state.uiState.turnDelta}`;
+    els.turnRisk.textContent = `下回合风险：${state.uiState.nextRisk}`;
+  }
+
+  function finalizeTurnFeedback(before, label) {
+    if (!state.player || !before) return;
+    const dHp = state.player.hp - before.hp;
+    const dGold = state.player.gold - before.gold;
+    const dMorale = state.cityStatus.morale - before.morale;
+    const dFatigue = state.cityStatus.fatigue - before.fatigue;
+    const dDebt = state.cityStatus.debt - before.debt;
+    const dHeat = state.cityStatus.heat - before.heat;
+    const streak = state.metrics.winStreak > 0 ? ` 连胜${state.metrics.winStreak}` : "";
+    state.uiState.turnSummary = `${label}${streak}`;
+    state.uiState.turnDelta = `HP ${dHp >= 0 ? "+" : ""}${dHp} | 金币 ${dGold >= 0 ? "+" : ""}${dGold} | 精神 ${dMorale >= 0 ? "+" : ""}${dMorale} | 疲劳 ${dFatigue >= 0 ? "+" : ""}${dFatigue} | 债务 ${dDebt >= 0 ? "+" : ""}${dDebt} | 热度 ${dHeat >= 0 ? "+" : ""}${dHeat}`;
+    state.uiState.nextRisk = riskLevelText();
   }
 
   function reqSatisfied(req) {
@@ -618,6 +696,7 @@
       `家庭阶段: ${state.story.familyStage} (${state.story.childCount} 个孩子)`,
       `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue}`,
       `债务 ${state.cityStatus.debt} / 热度 ${state.cityStatus.heat}`,
+      `连胜 ${state.metrics.winStreak} / 最高连胜 ${state.metrics.maxWinStreak}`,
       "",
       "属性:",
       `力量 ${p.stats.str}  敏捷 ${p.stats.agi}  体魄 ${p.stats.vit}`,
@@ -649,6 +728,7 @@
       `主线节点完成: ${result.mainlineCompleted}`,
       `支线任务完成: ${result.sideQuestCompletions}`,
       `稀有遭遇: ${result.rareEvents} 次`,
+      `最高连胜: ${result.maxWinStreak}`,
       `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
       `代表成就: ${result.topAchievement}`,
       `家庭阶段: ${result.familyStage} (${result.childCount} 个孩子)`,
@@ -803,6 +883,7 @@
       `支线完成数: ${result.sideQuestCompletions}`,
       `达成成就: ${result.achievements.length} 个 / ${result.achievementPoints} 分`,
       `代表成就: ${result.topAchievement}`,
+      `最高连胜: ${result.maxWinStreak}`,
       `家庭阶段: ${result.familyStage} (${result.childCount}孩)`,
       `精神/疲劳: ${result.cityStatus.morale}/${result.cityStatus.fatigue}`,
       `债务/热度: ${result.cityStatus.debt}/${result.cityStatus.heat}`,
@@ -838,6 +919,7 @@
     els.sheet.textContent = formatSheet();
     els.endingSheet.textContent = formatEndingSheet();
     updateKpiStrip();
+    updateKilllinePanel();
     drawMap();
   }
 
@@ -1065,6 +1147,7 @@
 
     if (p.hp <= 0) {
       p.hp = 0;
+      state.metrics.winStreak = 0;
       updateCityStatus({ morale: -12 });
       addLog("你在战斗中陨落。江湖之路至此终结。");
       endRun(false);
@@ -1073,9 +1156,12 @@
 
     if (enemy.hp <= 0) {
       state.metrics.victories += 1;
+      state.metrics.winStreak += 1;
+      state.metrics.maxWinStreak = Math.max(state.metrics.maxWinStreak, state.metrics.winStreak);
       const fortune = perk.fortune;
+      const streakBonus = state.metrics.winStreak * 3;
       const expGain = Math.floor(enemy.rewardExp * fortune);
-      const goldGain = Math.floor(enemy.rewardGold * fortune);
+      const goldGain = Math.floor(enemy.rewardGold * fortune) + streakBonus;
       p.gold += goldGain;
       updateCityStatus({ morale: 5, debt: -3 });
       gainExp(expGain);
@@ -1090,6 +1176,8 @@
         addLog("你斩落血煞教主，江湖传名。");
         endRun(true);
       }
+    } else {
+      state.metrics.winStreak = 0;
     }
   }
 
@@ -1697,6 +1785,15 @@
       endRun(false);
       return;
     }
+    const before = {
+      hp: p.hp,
+      gold: p.gold,
+      morale: state.cityStatus.morale,
+      fatigue: state.cityStatus.fatigue,
+      debt: state.cityStatus.debt,
+      heat: state.cityStatus.heat
+    };
+    let turnLabel = "日常推进";
 
     applyCityPressure();
 
@@ -1707,34 +1804,44 @@
     }
 
     if (maybeBossBattle()) {
+      turnLabel = "终局交锋";
+      finalizeTurnFeedback(before, turnLabel);
       render();
       return;
     }
 
     if (maybeRandomEvent()) {
+      turnLabel = "随机事件";
       maybeCompleteSideQuest();
       maybeProgressMainlineTask();
       updateChapterProgress();
+      finalizeTurnFeedback(before, turnLabel);
       render();
       return;
     }
 
     if (doRestOrShop()) {
+      turnLabel = "休整补给";
       maybeCompleteSideQuest();
       maybeProgressMainlineTask();
       updateChapterProgress();
+      finalizeTurnFeedback(before, turnLabel);
       render();
       return;
     }
 
     const roll = random();
     if (roll < 0.44) {
+      turnLabel = "战斗回合";
       doEncounter(false);
     } else if (roll < 0.74) {
+      turnLabel = "移动回合";
       doTravel();
     } else if (roll < 0.9) {
+      turnLabel = "搜刮回合";
       doLoot();
     } else {
+      turnLabel = "混合回合";
       doRestOrShop() || doTravel();
     }
 
@@ -1747,6 +1854,7 @@
     maybeProgressMainlineTask();
     updateChapterProgress();
     maybeOpenChoice();
+    finalizeTurnFeedback(before, turnLabel);
     render();
   }
 
@@ -1880,6 +1988,7 @@
         `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
         `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}`,
+        `最高连胜：${state.metrics.maxWinStreak}`,
         `代表成就：${topAchievement}`,
         `名场面：${highlight}`,
         `同种子挑战：${challengeUrl}`
@@ -1890,6 +1999,7 @@
         `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个(${achievementPoints}分)`,
         `目前家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}，这都没倒`,
+        `最高连胜：${state.metrics.maxWinStreak}`,
         `代表成就：${topAchievement}`,
         `最离谱一幕：${highlight}`,
         `来复刻我这条命运线：${challengeUrl}`
@@ -1899,6 +2009,7 @@
         `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}(${achievementPoints}分)，也就一般发挥`,
         `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 热度 ${state.cityStatus.heat}`,
+        `最高连胜：${state.metrics.maxWinStreak}`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
     ];
@@ -1915,6 +2026,7 @@
       day: state.day,
       battles: state.metrics.battles,
       victories: state.metrics.victories,
+      maxWinStreak: state.metrics.maxWinStreak,
       rareEvents: state.metrics.rareEvents,
       mainlineCompleted,
       sideQuestCompletions,
@@ -1989,6 +2101,8 @@
     state.metrics = {
       battles: 0,
       victories: 0,
+      winStreak: 0,
+      maxWinStreak: 0,
       travels: 0,
       shops: 0,
       loots: 0,
@@ -1997,6 +2111,11 @@
       rareEvents: 0,
       chapterAdvances: 0,
       sideQuestCompletions: 0
+    };
+    state.uiState = {
+      turnSummary: "待开始",
+      turnDelta: "-",
+      nextRisk: "低"
     };
     state.runResult = null;
     state.flags = {
@@ -2201,6 +2320,7 @@
             achievements: state.runResult.achievements.map((a) => a.id),
             achievement_points: state.runResult.achievementPoints,
             top_achievement: state.runResult.topAchievement,
+            max_win_streak: state.runResult.maxWinStreak,
             city_status: state.runResult.cityStatus,
             family_stage: state.runResult.familyStage,
             child_count: state.runResult.childCount,

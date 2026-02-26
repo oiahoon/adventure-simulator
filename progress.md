@@ -53,3 +53,8 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added high-impact black-swan events per user request: severe helping-fall fraud (can bankrupt/end run), malicious legal accusation after blind-date (can escalate to run-ending), and divorce asset split (cuts 50% gold).
 - Added milestones and achievements for legal-storm and divorce arcs.
 - Legal-risk events are configured as rare/high-consequence and integrated with city pressure systems.
+- UIUX pass inspired by killline structure: added killline dashboard bars and per-turn feedback card (delta + next-risk level), mobile-first presentation kept.
+- Added gameplay depth: win streak system with scaling bonus rewards, max-streak tracking, and streak achievement.
+- Added dynamic turn feedback generation based on real per-turn state deltas (hp/gold/morale/fatigue/debt/heat).
+- Added additional high-impact social issue arcs: bride price shock, mortgage apply/overdue, second-child decision, and helping-fall fraud + vindication chain.
+- Validation: JS syntax checks passed; Playwright run still blocked by missing Chromium runtime in environment.

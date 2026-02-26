@@ -95,6 +95,70 @@ body {
   font-weight: 800;
 }
 
+.killline-panel {
+  padding-bottom: 10px;
+}
+
+.killline-grid {
+  margin: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.killline-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 46px;
+  align-items: center;
+  gap: 8px;
+}
+
+.killline-row span {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.killline-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #edf2f7;
+  overflow: hidden;
+  border: 1px solid #d4deea;
+}
+
+.killline-track i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #39a98f, #4f9cf8);
+  transition: width 0.25s ease;
+}
+
+.killline-row em {
+  text-align: right;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.turn-card {
+  margin: 10px;
+  border: 1px solid #d4deea;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 10px;
+}
+
+.turn-card p {
+  margin: 0;
+  font-size: 0.81rem;
+  line-height: 1.5;
+}
+
+.turn-card p + p {
+  margin-top: 4px;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 1fr;
