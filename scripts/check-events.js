@@ -19,7 +19,9 @@ const KNOWN_QUEUE_EVENTS = new Set([
   "queue:jobhunt-feedback",
   "queue:exam-result",
   "queue:mortgage-followup",
-  "queue:parenting-support"
+  "queue:parenting-support",
+  "queue:legal-review",
+  "queue:abroad-feedback"
 ]);
 
 const result = { errors: [], warnings: [] };

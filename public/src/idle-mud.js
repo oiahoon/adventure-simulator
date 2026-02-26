@@ -1061,6 +1061,27 @@
       }
       return true;
     }
+    if (item.eventId === "queue:legal-review") {
+      if (state.story.milestones.some((m) => m.includes("扶人风波"))) {
+        setEngineFlag("legal.review.ready", true, 12);
+        addBias("tag:legal", 1.22, 7);
+        addBias("tag:relief", 1.3, 8);
+        updateCityStatus({ fatigue: -1, heat: -1 });
+        addLog("后续事件：平台/社区开始复核证据，平反窗口正在打开。");
+      } else {
+        updateCityStatus({ fatigue: 1 });
+        addLog("后续事件：复核排队中，暂未进入实质流程。");
+      }
+      return true;
+    }
+    if (item.eventId === "queue:abroad-feedback") {
+      setEngineFlag("career.abroad.callback", true, 10);
+      addBias("tag:abroad", 1.25, 8);
+      addBias("tag:jobhunt", 1.08, 6);
+      updateCityStatus({ fatigue: 1, heat: 1 });
+      addLog("后续事件：海外经历反馈回流，岗位匹配与落差正在同步出现。");
+      return true;
+    }
     return false;
   }
 

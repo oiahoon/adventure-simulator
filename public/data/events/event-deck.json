@@ -459,7 +459,8 @@
               "player": { "stats": { "int": 1, "spi": 1 }, "gold": { "mode": "subRand", "min": 35, "max": 90 } },
               "city": { "debt": 18, "morale": 4, "fatigue": 2 },
               "milestone": "海外项目启动",
-              "setFlags": [{ "key": "career.abroad.active", "value": true, "ttl": 16 }]
+              "setFlags": [{ "key": "career.abroad.active", "value": true, "ttl": 16 }],
+              "enqueue": [{ "eventId": "queue:abroad-feedback", "dueIn": 2, "priority": 81 }]
             }
           ]
         },
@@ -468,7 +469,12 @@
           "outcomes": [
             {
               "city": { "morale": -2, "debt": 4 },
-              "milestone": "留学计划暂缓"
+              "milestone": "留学计划暂缓",
+              "setFlags": [
+                { "key": "career.abroad.active", "value": true, "ttl": 8 },
+                { "key": "career.abroad.planPaused", "value": true, "ttl": 8 }
+              ],
+              "enqueue": [{ "eventId": "queue:abroad-feedback", "dueIn": 3, "priority": 72 }]
             }
           ]
         }
@@ -480,16 +486,33 @@
       "text": "你带着新经历回到求职市场，却发现岗位匹配并不顺滑。",
       "deck": "career",
       "tags": ["abroad", "jobhunt", "career"],
-      "baseWeight": 0.62,
-      "cooldown": 9,
-      "requireFlags": ["career.abroad.active"],
+      "baseWeight": 0.9,
+      "cooldown": 6,
+      "requireFlags": ["career.abroad.active", "career.abroad.callback"],
       "prereqEventsAny": ["abroad-offer-rmb-pressure"],
-      "outcomes": [
+      "branches": [
         {
-          "player": { "exp": 20 },
-          "city": { "morale": -3, "heat": 3 },
-          "milestone": "海归求职落差",
-          "clearFlags": ["career.abroad.active"]
+          "name": "预期落差",
+          "when": { "engineFlagTrue": "career.abroad.planPaused" },
+          "outcomes": [
+            {
+              "player": { "exp": 16 },
+              "city": { "morale": -2, "heat": 2 },
+              "milestone": "海归预期落差",
+              "clearFlags": ["career.abroad.active", "career.abroad.callback", "career.abroad.planPaused"]
+            }
+          ]
+        },
+        {
+          "name": "回流求职",
+          "outcomes": [
+            {
+              "player": { "exp": 20 },
+              "city": { "morale": -3, "heat": 3 },
+              "milestone": "海归求职落差",
+              "clearFlags": ["career.abroad.active", "career.abroad.callback", "career.abroad.planPaused"]
+            }
+          ]
         }
       ]
     },
@@ -576,7 +599,8 @@
               "player": { "gold": { "mode": "subRand", "min": 10, "max": 40 } },
               "city": { "morale": -8, "fatigue": 6, "heat": 8 },
               "milestone": "扶人风波",
-              "setFlags": [{ "key": "legal.risk", "value": true, "ttl": 8 }]
+              "setFlags": [{ "key": "legal.risk", "value": true, "ttl": 8 }],
+              "enqueue": [{ "eventId": "queue:legal-review", "dueIn": 2, "priority": 84 }]
             }
           ]
         }
@@ -588,15 +612,15 @@
       "text": "调取监控后真相还原，旁观者向你道歉。",
       "deck": "social",
       "tags": ["legal", "relief"],
-      "baseWeight": 0.94,
-      "cooldown": 6,
+      "baseWeight": 1.22,
+      "cooldown": 4,
       "requireFlags": ["legal.risk"],
       "prereqEventsAny": ["helping-fall-fraud"],
       "outcomes": [
         {
           "city": { "morale": 6, "heat": -6, "debt": -4 },
           "milestone": "扶人风波平反",
-          "clearFlags": ["legal.risk"]
+          "clearFlags": ["legal.risk", "legal.review.ready"]
         }
       ]
     },

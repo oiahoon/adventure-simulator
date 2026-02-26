@@ -124,7 +124,8 @@ function simulateReplay(opts) {
     flags: {},
     bias: {},
     cooldowns: {},
-    seen: {}
+    seen: {},
+    queue: []
   };
 
   if (cfg.init && cfg.init.flags && typeof cfg.init.flags === "object") {
@@ -141,6 +142,28 @@ function simulateReplay(opts) {
   function markSeen(id, cooldown) {
     state.seen[id] = (state.seen[id] || 0) + 1;
     if (cooldown > 0) state.cooldowns[id] = cooldown;
+  }
+
+  function addBias(key, mul, ttl) {
+    const current = state.bias[key];
+    const safeMul = Number.isFinite(mul) ? mul : 1;
+    const safeTtl = Number.isFinite(ttl) ? Math.max(1, ttl) : 1;
+    if (!current) {
+      state.bias[key] = { mul: safeMul, ttl: safeTtl };
+      return;
+    }
+    current.mul *= safeMul;
+    current.ttl = Math.max(current.ttl, safeTtl);
+  }
+
+  function enqueueEvent(eventId, dueIn, priority, forced) {
+    if (typeof eventId !== "string" || !eventId) return;
+    state.queue.push({
+      eventId,
+      dueTurn: state.turn + Math.max(0, Number.isFinite(dueIn) ? dueIn : 0),
+      priority: Number.isFinite(priority) ? priority : 50,
+      forced: !!forced
+    });
   }
 
   function cooldownTick() {
@@ -239,6 +262,94 @@ function simulateReplay(opts) {
       if (typeof outcome.story.familyStage === "string") state.familyStage = outcome.story.familyStage;
       if (Number.isFinite(outcome.story.childCountAdd)) state.childCount = Math.max(0, state.childCount + outcome.story.childCountAdd);
     }
+    if (Array.isArray(outcome.bias)) {
+      outcome.bias.forEach((b) => {
+        if (!b || typeof b.key !== "string") return;
+        addBias(b.key, b.mul, b.ttl);
+      });
+    }
+    if (Array.isArray(outcome.enqueue)) {
+      outcome.enqueue.forEach((q) => {
+        if (!q || typeof q.eventId !== "string") return;
+        enqueueEvent(q.eventId, q.dueIn, q.priority, q.forced);
+      });
+    }
+  }
+
+  function biasMultiplier(eventId, tags) {
+    let mul = 1;
+    if (state.bias[`event:${eventId}`]) mul *= state.bias[`event:${eventId}`].mul;
+    const list = Array.isArray(tags) ? tags : [];
+    for (let i = 0; i < list.length; i += 1) {
+      const hit = state.bias[`tag:${list[i]}`];
+      if (hit) mul *= hit.mul;
+    }
+    return mul;
+  }
+
+  function runQueueEvent(item) {
+    if (!item || typeof item.eventId !== "string") return false;
+    if (item.eventId === "queue:jobhunt-feedback") {
+      if ((state.stats.int || 0) + (state.stats.agi || 0) + randInt(0, 8) >= 24) {
+        state.gold = Math.max(0, state.gold + randInt(18, 42));
+        state.city.morale += 4;
+        state.city.debt -= 6;
+      } else {
+        state.city.morale -= 3;
+        state.city.fatigue += 2;
+      }
+      return true;
+    }
+    if (item.eventId === "queue:exam-result") {
+      if ((state.stats.int || 0) + (state.stats.spi || 0) + randInt(0, 10) >= 28) {
+        state.city.morale += 6;
+        state.city.fatigue -= 2;
+      } else {
+        state.city.morale -= 5;
+        state.city.fatigue += 3;
+      }
+      return true;
+    }
+    if (item.eventId === "queue:mortgage-followup") {
+      state.gold = Math.max(0, state.gold - randInt(16, 42));
+      state.city.debt += 10;
+      state.city.morale -= 2;
+      state.city.heat += 2;
+      return true;
+    }
+    if (item.eventId === "queue:parenting-support") {
+      if (random() < 0.5) {
+        state.city.fatigue -= 8;
+        state.city.morale += 4;
+        state.city.debt -= 4;
+      } else {
+        state.city.fatigue += 6;
+        state.city.morale -= 3;
+        state.city.debt += 8;
+      }
+      return true;
+    }
+    if (item.eventId === "queue:legal-review") {
+      if ((state.seen["helping-fall-fraud"] || 0) > 0) {
+        state.flags["legal.review.ready"] = { value: true, ttl: 12 };
+        addBias("tag:legal", 1.22, 7);
+        addBias("tag:relief", 1.3, 8);
+        state.city.fatigue -= 1;
+        state.city.heat -= 1;
+      } else {
+        state.city.fatigue += 1;
+      }
+      return true;
+    }
+    if (item.eventId === "queue:abroad-feedback") {
+      state.flags["career.abroad.callback"] = { value: true, ttl: 10 };
+      addBias("tag:abroad", 1.25, 8);
+      addBias("tag:jobhunt", 1.08, 6);
+      state.city.fatigue += 1;
+      state.city.heat += 1;
+      return true;
+    }
+    return false;
   }
 
   function noveltyPenalty(id) {
@@ -264,6 +375,23 @@ function simulateReplay(opts) {
     if (state.turn % 8 === 0) state.day += 1;
     cooldownTick();
 
+    const due = state.queue
+      .filter((q) => q && q.dueTurn <= state.turn)
+      .sort((a, b) => Number(b.forced) - Number(a.forced) || b.priority - a.priority);
+    if (due.length) {
+      const chosenQueue = due[0];
+      state.queue = state.queue.filter((q) => q !== chosenQueue);
+      if (runQueueEvent(chosenQueue)) {
+        history.push({
+          day: state.day,
+          turn: state.turn,
+          id: chosenQueue.eventId,
+          branch: "queue"
+        });
+        continue;
+      }
+    }
+
     if (random() > (Number.isFinite(deck.rollChance) ? deck.rollChance : 0.2)) continue;
 
     const pool = [];
@@ -287,6 +415,7 @@ function simulateReplay(opts) {
       if (deckName === "housing" && state.city.debt >= 90) weight *= 1.25;
       if (state.city.heat >= 75 && tags.includes("heat")) weight *= 1.3;
       if (state.city.heat <= 12 && tags.includes("relief")) weight *= 1.2;
+      weight *= biasMultiplier(evt.id, tags);
       weight *= noveltyPenalty(evt.id);
       pool.push({ event: evt, weight: Math.max(0.05, weight) });
     }

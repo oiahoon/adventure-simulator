@@ -239,3 +239,26 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Runtime hotpack index loading + date-window activation + merge override/append.
   - Added hotpack content packs (`2026-q1`, `2026-q2`) and maintenance docs.
   - Checks/replay updated to be hotpack-aware.
+- Chain stress fix pass (based on latest pressure report) completed:
+  - Added new queue follow-up events in runtime and checker whitelist: `queue:legal-review`, `queue:abroad-feedback`.
+  - Strengthened causal closure in deck:
+    - `helping-fall-fraud` non-terminal branch now enqueues legal review.
+    - `camera-clear` weight/cooldown adjusted for faster closure after legal risk; keeps strict prereq on prior trigger.
+    - `abroad-offer-rmb-pressure` both branches now enqueue abroad feedback; pause branch sets dedicated flag for softer return path.
+    - `returnee-gap` now branch-resolves (`预期落差` / `回流求职`) and clears all abroad chain flags on completion.
+- Replay tool parity fix:
+  - `scripts/replay-lib.js` now simulates queue-first execution, `outcome.enqueue`, `outcome.bias`, and queue-event effects to avoid under-reporting closure chains.
+  - Added queue events into replay history output to preserve causal observability.
+- Validation status:
+  - `npm run check:events` passed (0 errors, 0 warnings).
+  - `npm run check:replay` passed (3/3) after updating deterministic golden hashes.
+  - Regenerated chain report at `tests/replay/chain-integrity-report.json`.
+- Chain metrics snapshot (closeGivenTrigger):
+  - `扶人风波->监控平反`:
+    - baseline: 0.341 (was ~0.137-0.212)
+    - mortgage-heavy: 0.168
+    - parenting-intent-two: 0.144
+  - `留学抉择->海归落差`:
+    - mortgage-heavy: 0.134 (was ~0.061-0.081)
+    - parenting-intent-two: 0.104
+    - parenting-blocked-two: 0.117
