@@ -1,132 +1,72 @@
-# 🚀 Vercel部署指南
+# Vercel 部署说明（当前架构）
 
-## 📋 部署前准备
+## 架构
 
-### 项目结构
-```
-adventure-simulator/
-├── backend/              # 后端API (Serverless Functions)
-│   └── src/server.js    # API入口
-├── src/                 # 前端游戏代码
-├── index.html          # 前端入口
-├── vercel.json         # Vercel配置
-└── package.json        # 项目配置
-```
+- 静态站点输出目录：`public`
+- Serverless API：`api/*.js`
+- Vercel 配置：`vercel.json`
 
-## 🔧 修复的问题
+当前 `vercel.json`：
 
-### ❌ 之前的错误
-```
-Conflicting functions and builds configuration
-```
-
-### ✅ 解决方案
-- 移除冲突的`builds`配置
-- 使用现代的`rewrites`配置
-- 简化Vercel配置文件
-
-## 🌐 部署步骤
-
-### 方法一：Vercel CLI部署
-
-```bash
-# 1. 安装Vercel CLI
-npm install -g vercel
-
-# 2. 登录Vercel
-vercel login
-
-# 3. 部署项目
-vercel --prod
-
-# 4. 设置环境变量
-vercel env add DEEPSEEK_TOKEN
-# 输入你的DeepSeek API密钥
-```
-
-### 方法二：GitHub集成部署
-
-1. **连接GitHub**
-   - 访问 [vercel.com](https://vercel.com)
-   - 导入GitHub仓库 `adventure-simulator`
-
-2. **配置环境变量**
-   - `DEEPSEEK_TOKEN`: 你的DeepSeek API密钥
-   - `NODE_ENV`: production
-
-3. **自动部署**
-   - 每次推送代码自动重新部署
-
-## ⚙️ Vercel配置说明
-
-### 当前配置 (vercel.json)
 ```json
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/backend/src/server.js"
-    }
-  ],
+  "outputDirectory": "public",
   "functions": {
-    "backend/src/server.js": {
+    "api/*.js": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "NODE_ENV": "production"
   }
 }
 ```
 
-### 路由规则
-- `/api/*` → 后端Serverless Function
-- `/*` → 前端静态文件（根目录）
+## 部署步骤
 
-## 🔧 部署后验证
+### 1. 登录
 
-### 1. 检查前端
-访问: `https://your-domain.vercel.app`
-
-### 2. 检查API
 ```bash
-curl https://your-domain.vercel.app/api/health
+vercel login
 ```
 
-### 3. 测试MUD功能
+### 2. 生产部署
+
 ```bash
-curl https://your-domain.vercel.app/api/mud/status
+vercel --prod
 ```
 
-## 🐛 常见问题解决
+### 3. 验证
 
-### 1. 函数超时
-**解决**: 已设置`maxDuration: 30`秒
+- 主页：`https://<your-domain>/`
+- 游戏：`https://<your-domain>/game/`
+- API（示例）：
 
-### 2. 环境变量未生效
-**解决**: 在Vercel Dashboard重新设置
+```bash
+curl -sS -X POST https://<your-domain>/api/mud/run \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"new","name":"测试员"}'
+```
 
-### 3. 静态文件404
-**解决**: 文件已移动到根目录
+## 常见问题
 
-### 4. API路由不工作
-**解决**: 使用`rewrites`而不是`routes`
+### 1) 页面可打开但游戏无事件
 
-## 🎯 部署检查清单
+先检查事件包是否存在：
 
-- [ ] vercel.json配置正确
-- [ ] 环境变量已设置 (DEEPSEEK_TOKEN)
-- [ ] 前端文件在根目录
-- [ ] 后端API正常响应
-- [ ] MUD功能可用
-- [ ] LLM服务连接正常
+- `/data/events/event-deck.json`
+- `/data/events/arc-events.json`
 
-## 🎉 部署完成
+### 2) 发布后行为异常
 
-部署成功后，你将获得：
-- 🌐 全球CDN加速的游戏界面
-- ⚡ Serverless后端API
-- 🤖 LLM剧情生成服务
-- 🏮 完整的MUD游戏体验
+在本地先运行：
 
-享受你的江湖奇缘游戏吧！🏮⚔️
+```bash
+npm run check:events
+npm run check:replay
+```
+
+### 3) CLI 远程模式失败
+
+确认线上 `/api/mud/run` 可访问；或使用本地模式：
+
+```bash
+mud-cli --mode local
+```

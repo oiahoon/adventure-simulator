@@ -3196,6 +3196,41 @@
     return trace.map((t) => t.title).join(" -> ");
   }
 
+  function buildNarrativeQualityMetrics() {
+    const logs = engineState().eventLog || [];
+    const total = logs.length;
+    const sourceCount = { queue: 0, arc: 0, deck: 0, legacy: 0, misc: 0 };
+    const byId = {};
+    const arcCompleted = {};
+
+    for (let i = 0; i < logs.length; i += 1) {
+      const item = logs[i];
+      const src = item.source || "misc";
+      if (!Object.prototype.hasOwnProperty.call(sourceCount, src)) sourceCount.misc += 1;
+      else sourceCount[src] += 1;
+      const id = item.id || "unknown";
+      byId[id] = (byId[id] || 0) + 1;
+      if (src === "arc" && item.branch && (item.branch.includes("complete") || item.branch.includes("结束") || item.branch.includes("上岸") || item.branch.includes("再就业"))) {
+        const arcName = id.split(":")[0];
+        arcCompleted[arcName] = true;
+      }
+    }
+
+    const repeated = Object.values(byId).filter((n) => n >= 3).length;
+    const unique = Object.keys(byId).length;
+    const activeArcCount = Object.keys(state.story.arcs || {}).length || 1;
+    const completedArcCount = Object.keys(arcCompleted).length;
+
+    return {
+      total_events: total,
+      unique_events: unique,
+      repeat_event_slots: repeated,
+      repeat_ratio: total > 0 ? Number((repeated / total).toFixed(3)) : 0,
+      source_mix: sourceCount,
+      arc_completion_ratio: Number((completedArcCount / activeArcCount).toFixed(3))
+    };
+  }
+
   function buildChallengeUrl() {
     const url = new URL("/game/", window.location.origin);
     url.searchParams.set("seed", state.seed);
@@ -3578,6 +3613,7 @@
         active_flags: Object.keys(engineState().flags).length,
         event_log_count: engineState().eventLog.length
       },
+      quality: buildNarrativeQualityMetrics(),
       content: {
         event_meta_count: Object.keys(eventMetaConfig()).length,
         arc_order: (arcConfig().order || []).slice(),

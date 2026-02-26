@@ -186,3 +186,13 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `node --check public/src/idle-mud.js` passed.
   - `npm run check:events` passed (0 errors, 1 title-length warning).
   - `npm run check:replay` passed (3/3).
+- Phase D/E progress (metrics + cleanup + docs refresh):
+  - Added standardized narrative quality metrics to `render_game_to_text` (`quality`: total/unique/repeat/source_mix/arc_completion_ratio).
+  - Removed obsolete legacy frontend source trees under `public/src/{components,data,events,game-engine,ui}` and stale test pages in `public/test-*.html`.
+  - Kept only active runtime script: `public/src/idle-mud.js`.
+  - Rewrote `README.md` and `DEPLOYMENT.md` to match current architecture and workflows.
+  - Converted old design docs to explicit archive notices (`docs/design/*.md`) to prevent future drift.
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - `npm run check:events` passed (warnings only).
+  - `npm run check:replay` passed (3/3).
