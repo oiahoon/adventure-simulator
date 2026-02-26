@@ -19,14 +19,14 @@
   ];
 
   const chapters = [
-    { id: 1, name: "入世", minLevel: 1, mission: "在新手村存活并完成初试" },
-    { id: 2, name: "立足", minLevel: 2, mission: "加入门派并建立个人声名" },
-    { id: 3, name: "暗潮", minLevel: 3, mission: "追查江湖暗线并累计三场胜战" },
-    { id: 4, name: "盟约", minLevel: 4, mission: "选择进阶天赋并确立流派" },
-    { id: 5, name: "远征", minLevel: 5, mission: "在荒野与集镇之间维持补给" },
-    { id: 6, name: "风云", minLevel: 6, mission: "在古战场寻找血煞教主踪迹" },
-    { id: 7, name: "前夜", minLevel: 7, mission: "完成终局前的资源准备" },
-    { id: 8, name: "终局", minLevel: 8, mission: "击败血煞教主或壮烈陨落" }
+    { id: 1, name: "地铁开局", minLevel: 1, mission: "在早高峰活下来并找到第一份委托" },
+    { id: 2, name: "社群立足", minLevel: 2, mission: "加入流派群聊并拿下首个口碑任务" },
+    { id: 3, name: "算法暗潮", minLevel: 3, mission: "追查热搜背后的异动并连胜三场" },
+    { id: 4, name: "技能转职", minLevel: 4, mission: "完成关键抉择，定下职业成长分支" },
+    { id: 5, name: "夜城远征", minLevel: 5, mission: "在商圈与边区维持补给和声望平衡" },
+    { id: 6, name: "高楼风云", minLevel: 6, mission: "锁定终局敌人并抢占制高点" },
+    { id: 7, name: "停电前夜", minLevel: 7, mission: "集齐终局物资，准备最终直播战" },
+    { id: 8, name: "全城终局", minLevel: 8, mission: "击败血煞教主或在聚光灯下陨落" }
   ];
 
   const locations = [
@@ -742,16 +742,16 @@
     const events = [
       {
         id: "hermit",
-        text: "山间隐士指点你运气走向。",
+        text: "地铁口算命阿姨用三句话点醒了你。",
         apply: function () {
           p.stats.int += 1;
           p.stats.spi += 1;
-          addMilestone("隐士传法，悟性提升");
+          addMilestone("被路边高人点醒");
         }
       },
       {
         id: "escort",
-        text: "你护送一名商旅脱险，收获谢礼。",
+        text: "你帮迷路外卖员找到写字楼，拿到感谢红包。",
         apply: function () {
           p.gold += 40;
           state.story.stance += 1;
@@ -759,7 +759,7 @@
       },
       {
         id: "black-market",
-        text: "黑市赌局让你失手，损失了部分盘缠。",
+        text: "你在二手群冲动下单，买到了“九成新空气”。",
         apply: function () {
           p.gold = Math.max(0, p.gold - 30);
           state.story.stance -= 1;
@@ -767,7 +767,7 @@
       },
       {
         id: "medicine-cache",
-        text: "荒野药箱仍有余温，你捡到了疗伤药。",
+        text: "共享柜里居然有一瓶没人取的能量饮料。",
         condition: function () {
           return area === "wild";
         },
@@ -777,7 +777,7 @@
       },
       {
         id: "town-tribute",
-        text: "乡绅听闻你的战绩，主动资助你的旅费。",
+        text: "街坊群里疯传你的战绩，众筹给你续了一周伙食。",
         condition: function () {
           return area === "town" && state.metrics.victories >= 3;
         },
@@ -787,7 +787,7 @@
       },
       {
         id: "blood-moon",
-        text: "血月照古场，你感到杀机逼近。",
+        text: "夜空突然刷出血色弹幕：'今晚只有一个主角'。",
         rare: true,
         condition: function () {
           return state.currentLocation === "ruins";
@@ -796,17 +796,51 @@
           state.metrics.rareEvents += 1;
           p.stats.str += 1;
           p.stats.luk += 1;
-          addMilestone("血月异象现世");
+          addMilestone("血月弹幕异象现世");
         }
       },
       {
         id: "old-friend",
-        text: "旧友来信，送来秘籍残页。",
+        text: "老同学深夜发来压缩包，解压后全是硬核攻略。",
         rare: true,
         apply: function () {
           state.metrics.rareEvents += 1;
           gainExp(35);
-          addMilestone("旧友赠书，修为突进");
+          addMilestone("旧友发来神秘攻略");
+        }
+      },
+      {
+        id: "group-chat",
+        text: "你在群里问了一个问题，收到了 47 条互相打架的建议。",
+        apply: function () {
+          const gain = randInt(20, 45);
+          p.gold += gain;
+          p.stats.int += 1;
+          state.story.stance += random() > 0.5 ? 1 : -1;
+        }
+      },
+      {
+        id: "interview",
+        text: "你去面试，HR 问你五年规划，你反问公司三天规划。",
+        rare: true,
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.stats.spi += 1;
+          p.stats.luk += 2;
+          addMilestone("反向面试名场面");
+        }
+      },
+      {
+        id: "midnight-live",
+        text: "凌晨直播间突然涨粉，你被迫现场教学如何边走边打怪。",
+        condition: function () {
+          return state.day >= 3;
+        },
+        apply: function () {
+          const gain = randInt(30, 80);
+          p.gold += gain;
+          gainExp(24);
+          addMilestone("深夜直播意外爆火");
         }
       }
     ];
@@ -879,25 +913,25 @@
 
   function composeTitle(isWin, score) {
     const p = state.player;
-    if (isWin && state.metrics.rareEvents >= 2) {
-      return "天命破局者";
+    if (isWin && state.metrics.rareEvents >= 3) {
+      return "热搜定局人";
     }
     if (isWin && p.hp > Math.floor(p.hpMax * 0.6)) {
-      return "镇关不败客";
+      return "地铁不败客";
     }
     if (isWin && p.perk && p.perk.id === "fortune") {
-      return "鸿运问鼎者";
+      return "欧皇通勤王";
     }
     if (!isWin && state.metrics.victories >= 8) {
-      return "虽败犹荣将";
+      return "虽败仍上分";
     }
     if (!isWin && state.story.chapterId >= 6) {
-      return "折戟古战场";
+      return "折戟高楼夜";
     }
     if (score >= 760) {
-      return "江湖传奇录";
+      return "全城传奇录";
     }
-    return isWin ? "乱世定风波" : "无名行路人";
+    return isWin ? "乱局清场者" : "路口无名客";
   }
 
   function composeEpitaph(isWin) {
@@ -905,9 +939,9 @@
     const sectName = p.sect ? p.sect.name : "无门无派";
     const perkName = p.perk ? p.perk.name : "未定流派";
     if (isWin) {
-      return `${p.name}出身${sectName}，以${perkName}定鼎终局，留下可被后人复刻的命运轨迹。`;
+      return `${p.name}混迹${sectName}，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。`;
     }
-    return `${p.name}携${perkName}闯荡至第${state.story.chapterId}章，在${locationById(state.currentLocation).name}饮恨，但其足迹仍可被后来者挑战。`;
+    return `${p.name}带着${perkName}推进到第${state.story.chapterId}章，在${locationById(state.currentLocation).name}被现实反杀，但留下了足够抽象的路线供后来者挑战。`;
   }
 
   function buildHighlight() {
@@ -945,13 +979,27 @@
     const challengeUrl = buildChallengeUrl();
     const highlight = buildHighlight();
 
-    const shareText = [
-      `我在 Adventure Simulator 打出了结局「${title}」`,
-      `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
-      `主线：第${finalChapter.id}章《${finalChapter.name}》｜稀有事件：${state.metrics.rareEvents}`,
-      `名场面：${highlight}`,
-      `同种子挑战：${challengeUrl}`
-    ].join("\n");
+    const shareTemplates = [
+      [
+        `我在 Adventure Simulator 打出了结局「${title}」`,
+        `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
+        `主线：第${finalChapter.id}章《${finalChapter.name}》｜稀有事件：${state.metrics.rareEvents}`,
+        `名场面：${highlight}`,
+        `同种子挑战：${challengeUrl}`
+      ],
+      [
+        `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
+        `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
+        `最离谱一幕：${highlight}`,
+        `来复刻我这条命运线：${challengeUrl}`
+      ],
+      [
+        `这局我不想炫，但系统硬要给我「${title}」`,
+        `评分 ${score}，稀有事件 ${state.metrics.rareEvents} 次，也就一般发挥`,
+        `如果你更强，欢迎同种子来超我：${challengeUrl}`
+      ]
+    ];
+    const shareText = pick(shareTemplates).join("\n");
 
     return {
       outcome: isWin ? "通关" : "陨落",

@@ -16,3 +16,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added deterministic seed support (`?seed=...`) so players can challenge the same run seed after seeing shared results.
 - Added richer random events (common + rare) that affect growth, resources, and narrative milestones.
 - Validation: `node --check public/src/idle-mud.js` passed.
+- Updated narrative tone to a modern city-jianghu style (metro, group chat, livestream, interview, hot-search crisis), while keeping existing systems deterministic and idle-friendly.
+- Expanded random events with modern absurd twists to improve share-worthy moments and social discussion hooks.
+- Added rotating share copy templates (normal/comedic/humble-brag) to increase repost intent.
