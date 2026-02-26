@@ -227,3 +227,15 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `node --check public/src/idle-mud.js` passed.
   - `npm run check:events` passed.
   - `npm run check:replay` passed (3/3) with hotpack-aware hashes.
+- Chain integrity stress test executed (role-event linkage validation):
+  - Added bulk analyzer `scripts/analyze-event-chains.js` and ran 4 scenarios x 240 runs each.
+  - Saved statistical report to `tests/replay/chain-integrity-report.json`.
+  - Key observed closure rates:
+    - 扶人风波->监控平反: closeGivenTrigger ~0.137~0.212
+    - 留学抉择->海归落差: closeGivenTrigger ~0.061~0.081 (weak chain)
+    - 新生儿->二胎讨论: baseline/mortgage-heavy ~0.47~0.56 when trigger exists; with second-child blocked/intended scenarios behaves as designed (0 trigger in blocked case).
+    - 房贷预警->跨城迁移: closeGivenTrigger ~0.56~0.72 (strong chain)
+- Annual hotpack mechanism delivered:
+  - Runtime hotpack index loading + date-window activation + merge override/append.
+  - Added hotpack content packs (`2026-q1`, `2026-q2`) and maintenance docs.
+  - Checks/replay updated to be hotpack-aware.

@@ -127,6 +127,13 @@ function simulateReplay(opts) {
     seen: {}
   };
 
+  if (cfg.init && cfg.init.flags && typeof cfg.init.flags === "object") {
+    Object.keys(cfg.init.flags).forEach((k) => {
+      const v = cfg.init.flags[k];
+      state.flags[k] = { value: v, ttl: 999 };
+    });
+  }
+
   function randInt(min, max) {
     return Math.floor(random() * (max - min + 1)) + min;
   }
