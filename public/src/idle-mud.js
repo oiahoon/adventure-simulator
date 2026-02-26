@@ -216,6 +216,45 @@
     };
   }
 
+  const defaultContentPacks = {
+    eventMeta: {
+      "graduate-wave": { deck: "society", tags: ["jobhunt", "youth"], cooldown: 3, bias: [{ key: "tag:jobhunt", mul: 1.1, ttl: 6 }] },
+      "civil-service-rush": { deck: "exam", tags: ["exam", "education"], cooldown: 3, enqueue: [{ eventId: "queue:exam-result", dueIn: 2, priority: 75 }] },
+      "social-security-pilot": { deck: "policy", tags: ["policy", "stability"], cooldown: 5 },
+      "ai-substitute": { deck: "career", tags: ["career", "layoff"], cooldown: 5, bias: [{ key: "tag:layoff", mul: 1.2, ttl: 8 }] },
+      "takeout-order-war": { deck: "work", tags: ["gig", "income"], cooldown: 2 },
+      "housing-rate-adjust": { deck: "housing", tags: ["mortgage", "debt"], cooldown: 4, enqueue: [{ eventId: "queue:mortgage-followup", dueIn: 2, priority: 70 }] },
+      "night-school-burst": { deck: "exam", tags: ["exam", "skill"], cooldown: 2 },
+      "rent-rise": { deck: "housing", tags: ["rent", "debt"], cooldown: 3 },
+      "medical-queue": { deck: "health", tags: ["health", "fatigue"], cooldown: 3 },
+      "livestream-burst": { deck: "social", tags: ["heat", "income"], cooldown: 4 },
+      "layoff-rumor": { deck: "career", tags: ["layoff", "jobhunt"], cooldown: 4, enqueue: [{ eventId: "queue:jobhunt-feedback", dueIn: 2, priority: 72 }] },
+      "blind-date": { deck: "family", tags: ["family", "relationship"], cooldown: 4 },
+      "mortgage-overdue": { deck: "housing", tags: ["mortgage", "debt"], cooldown: 4 },
+      "newborn": { deck: "family", tags: ["parenting", "family"], cooldown: 6, enqueue: [{ eventId: "queue:parenting-support", dueIn: 2, priority: 78 }] },
+      "second-child-discuss": { deck: "family", tags: ["parenting", "debt"], cooldown: 6 },
+      "child-sick-night": { deck: "family", tags: ["parenting", "health"], cooldown: 4 },
+      "helping-fall-fraud": { deck: "social", tags: ["legal", "heat"], cooldown: 6, setFlags: [{ key: "legal.risk", value: true, ttl: 10 }] },
+      "camera-clear": { deck: "social", tags: ["legal", "relief"], cooldown: 6 },
+      "divorce-asset-split": { deck: "family", tags: ["family", "debt"], cooldown: 8 },
+      "public-praise": { deck: "social", tags: ["heat", "morale"], cooldown: 4 },
+      "gold-price-spike": { deck: "finance", tags: ["finance", "heat"], cooldown: 5 }
+    },
+    arcConfig: {
+      order: ["unemployment", "exam", "mortgage", "parenting"],
+      activation: {
+        unemployment: { minDay: 3, minChapter: 3, baseChance: 0.34 },
+        exam: { minDay: 4, minChapter: 2, baseChance: 0.24, preferredProfessions: ["exam"], preferredChance: 0.5 },
+        mortgage: { minDay: 5, baseChance: 0.36, debtMin: 95, familyStages: ["已婚"] },
+        parenting: { minDay: 7, baseChance: 0.48, familyStages: ["育儿中"], minChildCount: 1 }
+      }
+    }
+  };
+
+  function deepClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
   const state = {
     mode: "menu",
     player: null,
@@ -272,6 +311,7 @@
       lineEventDay: {}
     },
     engine: createEngineState(),
+    content: deepClone(defaultContentPacks),
     log: []
   };
 
@@ -674,6 +714,43 @@
     return state.engine;
   }
 
+  function contentPacks() {
+    if (!state.content) {
+      state.content = deepClone(defaultContentPacks);
+    }
+    return state.content;
+  }
+
+  function eventMetaConfig() {
+    return contentPacks().eventMeta || {};
+  }
+
+  function arcConfig() {
+    return contentPacks().arcConfig || defaultContentPacks.arcConfig;
+  }
+
+  async function loadContentPacks() {
+    const base = deepClone(defaultContentPacks);
+    const targets = [
+      { key: "eventMeta", url: "/data/events/event-meta.json" },
+      { key: "arcConfig", url: "/data/events/arc-config.json" }
+    ];
+    for (let i = 0; i < targets.length; i += 1) {
+      const t = targets[i];
+      try {
+        const res = await fetch(t.url, { cache: "no-store" });
+        if (!res.ok) continue;
+        const json = await res.json();
+        if (json && typeof json === "object") {
+          base[t.key] = json;
+        }
+      } catch (_) {
+        // Use defaults when pack loading fails.
+      }
+    }
+    state.content = base;
+  }
+
   function setEngineFlag(key, value, ttl) {
     const e = engineState();
     e.flags[key] = { value, ttl: Number(ttl) > 0 ? Number(ttl) : 0 };
@@ -857,18 +934,38 @@
     const p = state.player;
     const arcs = state.story.arcs;
     if (!p || !arcs) return;
+    const cfg = arcConfig().activation || {};
 
-    if (!arcs.unemployment.active && !arcs.unemployment.completed && state.day >= 3 && state.story.chapterId >= 3) {
-      if (random() < 0.34) activateArc("unemployment");
+    const u = cfg.unemployment || {};
+    if (!arcs.unemployment.active && !arcs.unemployment.completed && state.day >= (u.minDay || 3) && state.story.chapterId >= (u.minChapter || 3)) {
+      if (random() < (u.baseChance || 0.34)) activateArc("unemployment");
     }
-    if (!arcs.exam.active && !arcs.exam.completed && state.day >= 4 && state.story.chapterId >= 2) {
-      if (p.profession.id === "exam" || random() < 0.24) activateArc("exam");
+
+    const ex = cfg.exam || {};
+    const examMinDay = ex.minDay || 4;
+    const examMinChapter = ex.minChapter || 2;
+    if (!arcs.exam.active && !arcs.exam.completed && state.day >= examMinDay && state.story.chapterId >= examMinChapter) {
+      const preferred = (ex.preferredProfessions || []).includes(p.profession.id);
+      const chance = preferred ? (ex.preferredChance || ex.baseChance || 0.24) : (ex.baseChance || 0.24);
+      if (random() < chance) activateArc("exam");
     }
-    if (!arcs.mortgage.active && !arcs.mortgage.completed && state.day >= 5 && (state.cityStatus.debt >= 95 || state.story.familyStage === "已婚")) {
-      if (random() < 0.36) activateArc("mortgage");
+
+    const m = cfg.mortgage || {};
+    const mMinDay = m.minDay || 5;
+    const mDebt = m.debtMin || 95;
+    const mFamilyStages = m.familyStages || ["已婚"];
+    const mFamilyMatch = mFamilyStages.includes(state.story.familyStage);
+    if (!arcs.mortgage.active && !arcs.mortgage.completed && state.day >= mMinDay && (state.cityStatus.debt >= mDebt || mFamilyMatch)) {
+      if (random() < (m.baseChance || 0.36)) activateArc("mortgage");
     }
-    if (!arcs.parenting.active && !arcs.parenting.completed && state.day >= 7 && (state.story.familyStage === "育儿中" || state.story.childCount > 0)) {
-      if (random() < 0.48) activateArc("parenting");
+
+    const pa = cfg.parenting || {};
+    const paMinDay = pa.minDay || 7;
+    const paFamilyStages = pa.familyStages || ["育儿中"];
+    const paMinChild = Number.isFinite(pa.minChildCount) ? pa.minChildCount : 1;
+    const paFamilyMatch = paFamilyStages.includes(state.story.familyStage);
+    if (!arcs.parenting.active && !arcs.parenting.completed && state.day >= paMinDay && (paFamilyMatch || state.story.childCount >= paMinChild)) {
+      if (random() < (pa.baseChance || 0.48)) activateArc("parenting");
     }
   }
 
@@ -1058,7 +1155,7 @@
   function maybeRunStoryArc() {
     if (state.mode !== "running") return false;
     maybeActivateArcs();
-    const order = ["unemployment", "exam", "mortgage", "parenting"];
+    const order = arcConfig().order || ["unemployment", "exam", "mortgage", "parenting"];
     for (let i = 0; i < order.length; i += 1) {
       const id = order[i];
       const arc = state.story.arcs[id];
@@ -2351,29 +2448,7 @@
       }
     ];
 
-    const metaById = {
-      "graduate-wave": { deck: "society", tags: ["jobhunt", "youth"], cooldown: 3, bias: [{ key: "tag:jobhunt", mul: 1.1, ttl: 6 }] },
-      "civil-service-rush": { deck: "exam", tags: ["exam", "education"], cooldown: 3, enqueue: [{ eventId: "queue:exam-result", dueIn: 2, priority: 75 }] },
-      "social-security-pilot": { deck: "policy", tags: ["policy", "stability"], cooldown: 5 },
-      "ai-substitute": { deck: "career", tags: ["career", "layoff"], cooldown: 5, bias: [{ key: "tag:layoff", mul: 1.2, ttl: 8 }] },
-      "takeout-order-war": { deck: "work", tags: ["gig", "income"], cooldown: 2 },
-      "housing-rate-adjust": { deck: "housing", tags: ["mortgage", "debt"], cooldown: 4, enqueue: [{ eventId: "queue:mortgage-followup", dueIn: 2, priority: 70 }] },
-      "night-school-burst": { deck: "exam", tags: ["exam", "skill"], cooldown: 2 },
-      "rent-rise": { deck: "housing", tags: ["rent", "debt"], cooldown: 3 },
-      "medical-queue": { deck: "health", tags: ["health", "fatigue"], cooldown: 3 },
-      "livestream-burst": { deck: "social", tags: ["heat", "income"], cooldown: 4 },
-      "layoff-rumor": { deck: "career", tags: ["layoff", "jobhunt"], cooldown: 4, enqueue: [{ eventId: "queue:jobhunt-feedback", dueIn: 2, priority: 72 }] },
-      "blind-date": { deck: "family", tags: ["family", "relationship"], cooldown: 4 },
-      "mortgage-overdue": { deck: "housing", tags: ["mortgage", "debt"], cooldown: 4 },
-      "newborn": { deck: "family", tags: ["parenting", "family"], cooldown: 6, enqueue: [{ eventId: "queue:parenting-support", dueIn: 2, priority: 78 }] },
-      "second-child-discuss": { deck: "family", tags: ["parenting", "debt"], cooldown: 6 },
-      "child-sick-night": { deck: "family", tags: ["parenting", "health"], cooldown: 4 },
-      "helping-fall-fraud": { deck: "social", tags: ["legal", "heat"], cooldown: 6, setFlags: [{ key: "legal.risk", value: true, ttl: 10 }] },
-      "camera-clear": { deck: "social", tags: ["legal", "relief"], cooldown: 6 },
-      "divorce-asset-split": { deck: "family", tags: ["family", "debt"], cooldown: 8 },
-      "public-praise": { deck: "social", tags: ["heat", "morale"], cooldown: 4 },
-      "gold-price-spike": { deck: "finance", tags: ["finance", "heat"], cooldown: 5 }
-    };
+    const metaById = eventMetaConfig();
 
     const pool = events
       .filter((item) => (item.condition ? item.condition() : true))
@@ -2971,6 +3046,10 @@
         active_bias: Object.keys(engineState().bias).length,
         active_flags: Object.keys(engineState().flags).length
       },
+      content: {
+        event_meta_count: Object.keys(eventMetaConfig()).length,
+        arc_order: (arcConfig().order || []).slice()
+      },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest
         ? {
@@ -3075,8 +3154,9 @@
     window.addEventListener("keydown", handleKey);
   }
 
-  function init() {
+  async function init() {
     state.initialSeedFromUrl = readSeedFromUrl();
+    await loadContentPacks();
     wireEvents();
     reroll();
     rafId = requestAnimationFrame(loop);
@@ -3090,5 +3170,11 @@
     }
   });
 
-  init();
+  init().catch(function () {
+    wireEvents();
+    reroll();
+    rafId = requestAnimationFrame(loop);
+    updateButtons();
+    render();
+  });
 })();

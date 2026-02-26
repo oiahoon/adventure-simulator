@@ -122,3 +122,12 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Exposed engine observability in sheet and `render_game_to_text` (`queue_size`, `active_bias`, `active_flags`).
 - Validation: `node --check public/src/idle-mud.js` passed.
 - Next suggested step: externalize events to JSON and replace `metaById` with schema-validated content packs (Queue -> Arcs -> Decks fully data-driven).
+- Engine v2 phase-2 (data-driven packs) started:
+  - Added content packs:
+    - `public/data/events/event-meta.json` (deck/tag/cooldown/bias/enqueue/flag metadata)
+    - `public/data/events/arc-config.json` (arc order + activation thresholds/probabilities)
+  - Added runtime content loader (`loadContentPacks`) with safe fallback to embedded defaults.
+  - Replaced hardcoded `metaById` and arc activation/order constants with loaded config via `eventMetaConfig()` / `arcConfig()`.
+  - Init flow now loads content packs before first reroll.
+  - Added content observability in `render_game_to_text` (`event_meta_count`, `arc_order`).
+- Validation: `node --check public/src/idle-mud.js` passed.
