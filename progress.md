@@ -19,3 +19,7 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Updated narrative tone to a modern city-jianghu style (metro, group chat, livestream, interview, hot-search crisis), while keeping existing systems deterministic and idle-friendly.
 - Expanded random events with modern absurd twists to improve share-worthy moments and social discussion hooks.
 - Added rotating share copy templates (normal/comedic/humble-brag) to increase repost intent.
+- Expanded mainline into chapter quest chains (`chapterQuestBook`), each chapter now has multiple objective nodes with automatic completion checks.
+- Added auto side-quest system (`sideQuestTemplates`) with acceptance, progress tracking, completion rewards, and integration into run metrics.
+- Greatly expanded random event pool with modern absurd city-life events and additional rare events.
+- Run summary now includes mainline completed count and side-quest completion count in ending panel/share card/share copy.

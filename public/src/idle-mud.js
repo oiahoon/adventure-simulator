@@ -29,6 +29,56 @@
     { id: 8, name: "全城终局", minLevel: 8, mission: "击败血煞教主或在聚光灯下陨落" }
   ];
 
+  const chapterQuestBook = {
+    1: [
+      { id: "c1-1", text: "完成 2 次城市移动", req: { travels: 2 } },
+      { id: "c1-2", text: "击败 1 名街头敌人", req: { victories: 1 } },
+      { id: "c1-3", text: "累计拾取 1 次补给", req: { loots: 1 } }
+    ],
+    2: [
+      { id: "c2-1", text: "完成门派抉择", req: { choices: 1 } },
+      { id: "c2-2", text: "累计 3 场战斗", req: { battles: 3 } },
+      { id: "c2-3", text: "触发 1 次城市随机事件", req: { randomEvents: 1 } }
+    ],
+    3: [
+      { id: "c3-1", text: "连胜推进到 4 场胜利", req: { victories: 4 } },
+      { id: "c3-2", text: "完成 1 次商店补给", req: { shops: 1 } },
+      { id: "c3-3", text: "累计触发 1 次稀有事件", req: { rareEvents: 1 } }
+    ],
+    4: [
+      { id: "c4-1", text: "完成进阶天赋抉择", req: { choices: 2 } },
+      { id: "c4-2", text: "达到 Lv.4", req: { level: 4 } },
+      { id: "c4-3", text: "累计 6 场胜利", req: { victories: 6 } }
+    ],
+    5: [
+      { id: "c5-1", text: "在城市边区间穿梭 8 次", req: { travels: 8 } },
+      { id: "c5-2", text: "完成 2 次支线任务", req: { sideQuestCompletions: 2 } },
+      { id: "c5-3", text: "累计 2 次稀有事件", req: { rareEvents: 2 } }
+    ],
+    6: [
+      { id: "c6-1", text: "推进至古战场并获胜 8 场", req: { victories: 8 } },
+      { id: "c6-2", text: "累计 10 场战斗", req: { battles: 10 } },
+      { id: "c6-3", text: "累计 3 次关键抉择/支线抉择", req: { choices: 2, sideQuestCompletions: 3 } }
+    ],
+    7: [
+      { id: "c7-1", text: "角色达到 Lv.7", req: { level: 7 } },
+      { id: "c7-2", text: "累计完成 4 次支线任务", req: { sideQuestCompletions: 4 } },
+      { id: "c7-3", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } }
+    ],
+    8: [{ id: "c8-1", text: "击败血煞教主完成全城终局", req: { bossDefeated: true } }]
+  };
+
+  const sideQuestTemplates = [
+    { id: "sq-rider", title: "外卖护送", text: "护送骑手穿过晚高峰。", req: { travels: 3 }, reward: { gold: 50, exp: 18 } },
+    { id: "sq-group", title: "群聊答疑", text: "在群里给出可执行方案。", req: { randomEvents: 2 }, reward: { exp: 26, int: 1 } },
+    { id: "sq-deadline", title: "临时加班", text: "在截止前打完两场硬仗。", req: { battles: 2, victories: 1 }, reward: { gold: 36, vit: 1 } },
+    { id: "sq-night", title: "夜路代驾", text: "凌晨完成夜城跑图。", req: { travels: 4 }, reward: { gold: 62, luk: 1 } },
+    { id: "sq-hotsearch", title: "热搜反击", text: "以胜场和事件覆盖负面话题。", req: { victories: 2, rareEvents: 1 }, reward: { exp: 40, spi: 1 } },
+    { id: "sq-campus", title: "社团返场", text: "回母校分享你的都市生存法。", req: { loots: 2, randomEvents: 1 }, reward: { gold: 30, exp: 22 } },
+    { id: "sq-interview", title: "反向面试二周目", text: "继续在面试战场存活。", req: { randomEvents: 3, battles: 1 }, reward: { int: 1, spi: 1, exp: 28 } },
+    { id: "sq-stream", title: "直播连麦", text: "完成一场不翻车的连麦挑战。", req: { victories: 2, randomEvents: 1 }, reward: { gold: 70, exp: 35 } }
+  ];
+
   const locations = [
     { id: "novice", name: "新手村", type: "town", x: 120, y: 280 },
     { id: "forest", name: "落叶林", type: "wild", x: 260, y: 230 },
@@ -63,7 +113,9 @@
       chapterId: 1,
       milestones: [],
       majorChoices: [],
-      stance: 0
+      stance: 0,
+      mainlineProgress: {},
+      activeSideQuest: null
     },
     metrics: {
       battles: 0,
@@ -71,8 +123,10 @@
       travels: 0,
       shops: 0,
       loots: 0,
+      randomEvents: 0,
       rareEvents: 0,
-      chapterAdvances: 0
+      chapterAdvances: 0,
+      sideQuestCompletions: 0
     },
     runResult: null,
     flags: {
@@ -226,21 +280,175 @@
     els.log.scrollTop = els.log.scrollHeight;
   }
 
-  function updateChapterProgress() {
+  function reqSatisfied(req) {
     const p = state.player;
-    let target = 1;
-    for (let i = 0; i < chapters.length; i += 1) {
-      if (p.level >= chapters[i].minLevel) {
-        target = chapters[i].id;
+    const checks = {
+      level: p.level,
+      battles: state.metrics.battles,
+      victories: state.metrics.victories,
+      travels: state.metrics.travels,
+      shops: state.metrics.shops,
+      loots: state.metrics.loots,
+      randomEvents: state.metrics.randomEvents,
+      rareEvents: state.metrics.rareEvents,
+      choices: state.story.majorChoices.length,
+      sideQuestCompletions: state.metrics.sideQuestCompletions
+    };
+
+    const keys = Object.keys(req || {});
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      if (key === "bossDefeated") {
+        if (!!req[key] !== !!state.flags.bossDefeated) {
+          return false;
+        }
+        continue;
+      }
+      if ((checks[key] || 0) < req[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function getCurrentMainlineTask() {
+    const chapterId = state.story.chapterId;
+    const list = chapterQuestBook[chapterId] || [];
+    const idx = state.story.mainlineProgress[chapterId] || 0;
+    return list[idx] || null;
+  }
+
+  function maybeProgressMainlineTask() {
+    const chapterId = state.story.chapterId;
+    const list = chapterQuestBook[chapterId] || [];
+    if (!list.length) {
+      return;
+    }
+
+    let idx = state.story.mainlineProgress[chapterId] || 0;
+    while (idx < list.length && reqSatisfied(list[idx].req)) {
+      addMilestone(`主线达成: ${list[idx].text}`);
+      addLog(`主线节点完成: ${list[idx].text}`);
+      idx += 1;
+      state.story.mainlineProgress[chapterId] = idx;
+    }
+  }
+
+  function getSideQuestProgressText(quest) {
+    if (!quest) {
+      return "无";
+    }
+    const parts = [];
+    const req = quest.req;
+    const baseline = quest.baseline;
+    const entries = Object.keys(req);
+    for (let i = 0; i < entries.length; i += 1) {
+      const key = entries[i];
+      const now = (state.metrics[key] || 0) - (baseline[key] || 0);
+      parts.push(`${key}:${Math.max(0, now)}/${req[key]}`);
+    }
+    return parts.join(" ");
+  }
+
+  function maybeAssignSideQuest() {
+    if (state.story.activeSideQuest || random() > 0.14) {
+      return;
+    }
+    if (state.story.chapterId < 2) {
+      return;
+    }
+    const tpl = pick(sideQuestTemplates);
+    const baseline = {
+      battles: state.metrics.battles,
+      victories: state.metrics.victories,
+      travels: state.metrics.travels,
+      shops: state.metrics.shops,
+      loots: state.metrics.loots,
+      randomEvents: state.metrics.randomEvents,
+      rareEvents: state.metrics.rareEvents
+    };
+    state.story.activeSideQuest = { ...tpl, baseline };
+    addLog(`支线接取: ${tpl.title} - ${tpl.text}`);
+  }
+
+  function grantSideQuestReward(reward) {
+    const p = state.player;
+    if (reward.gold) {
+      p.gold += reward.gold;
+    }
+    if (reward.exp) {
+      gainExp(reward.exp);
+    }
+    if (reward.str) {
+      p.stats.str += reward.str;
+    }
+    if (reward.agi) {
+      p.stats.agi += reward.agi;
+    }
+    if (reward.vit) {
+      p.stats.vit += reward.vit;
+    }
+    if (reward.int) {
+      p.stats.int += reward.int;
+    }
+    if (reward.spi) {
+      p.stats.spi += reward.spi;
+    }
+    if (reward.luk) {
+      p.stats.luk += reward.luk;
+    }
+  }
+
+  function maybeCompleteSideQuest() {
+    const quest = state.story.activeSideQuest;
+    if (!quest) {
+      return false;
+    }
+    const req = quest.req;
+    const baseline = quest.baseline;
+    const keys = Object.keys(req);
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      const delta = (state.metrics[key] || 0) - (baseline[key] || 0);
+      if (delta < req[key]) {
+        return false;
       }
     }
 
-    if (target > state.story.chapterId) {
-      state.story.chapterId = target;
+    state.metrics.sideQuestCompletions += 1;
+    grantSideQuestReward(quest.reward);
+    addMilestone(`支线完成: ${quest.title}`);
+    addLog(`支线完成: ${quest.title}，奖励已结算。`);
+    state.story.activeSideQuest = null;
+    return true;
+  }
+
+  function updateChapterProgress() {
+    const p = state.player;
+    let changed = false;
+    while (state.story.chapterId < chapters.length) {
+      const currentId = state.story.chapterId;
+      const currentList = chapterQuestBook[currentId] || [];
+      const currentDone = state.story.mainlineProgress[currentId] || 0;
+      const currentReady = currentList.length === 0 || currentDone >= currentList.length;
+      const next = chapterById(currentId + 1);
+      if (!next) {
+        break;
+      }
+      if (!currentReady || p.level < next.minLevel) {
+        break;
+      }
+      state.story.chapterId = next.id;
+      if (typeof state.story.mainlineProgress[next.id] !== "number") {
+        state.story.mainlineProgress[next.id] = 0;
+      }
       state.metrics.chapterAdvances += 1;
-      const chapter = chapterById(target);
-      addMilestone(`推进至第${chapter.id}章《${chapter.name}》`);
-      addLog(`主线推进: 第${chapter.id}章《${chapter.name}》 - ${chapter.mission}`);
+      addMilestone(`推进至第${next.id}章《${next.name}》`);
+      addLog(`主线推进: 第${next.id}章《${next.name}》 - ${next.mission}`);
+      changed = true;
+    }
+    if (changed) {
+      maybeProgressMainlineTask();
     }
   }
 
@@ -255,6 +463,8 @@
     const sectText = p.sect ? p.sect.name : "未选择";
     const perkText = p.perk ? p.perk.name : "未选择";
     const chapter = chapterById(state.story.chapterId);
+    const mainlineTask = getCurrentMainlineTask();
+    const sideQuest = state.story.activeSideQuest;
 
     return [
       `姓名: ${p.name}`,
@@ -266,6 +476,8 @@
       `地点: ${loc.name}`,
       `主线章节: 第${chapter.id}章《${chapter.name}》`,
       `当前主线: ${chapter.mission}`,
+      `主线节点: ${mainlineTask ? mainlineTask.text : "本章已全部完成"}`,
+      `当前支线: ${sideQuest ? `${sideQuest.title} (${getSideQuestProgressText(sideQuest)})` : "暂无"}`,
       "",
       "属性:",
       `力量 ${p.stats.str}  敏捷 ${p.stats.agi}  体魄 ${p.stats.vit}`,
@@ -294,6 +506,8 @@
       `通关状态: ${result.outcome}`,
       `最终章节: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
       `关键抉择: ${result.keyChoices || "无"}`,
+      `主线节点完成: ${result.mainlineCompleted}`,
+      `支线任务完成: ${result.sideQuestCompletions}`,
       `稀有遭遇: ${result.rareEvents} 次`,
       "",
       "里程碑:",
@@ -436,6 +650,8 @@
       `总评分: ${result.score}`,
       `等级/天数: Lv.${result.level} / 第 ${result.day} 天`,
       `主线进度: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
+      `主线节点完成: ${result.mainlineCompleted}`,
+      `支线完成数: ${result.sideQuestCompletions}`,
       `关键抉择: ${result.keyChoices || "无"}`,
       `胜场/战斗: ${result.victories}/${result.battles}`,
       `稀有事件: ${result.rareEvents}`,
@@ -494,6 +710,7 @@
       p.stats.luk += randInt(0, 1);
       addLog(`等级提升到 ${p.level}，全属性成长并恢复状态。`);
       addMilestone(`等级提升到 Lv.${p.level}`);
+      maybeProgressMainlineTask();
       updateChapterProgress();
     }
   }
@@ -521,6 +738,8 @@
             state.story.stance += sect.id === "qingshan" ? 1 : sect.id === "lingyin" ? 2 : 0;
             addMilestone(`拜入 ${sect.name}`);
             addLog(`你加入了 ${sect.name}。`);
+            maybeProgressMainlineTask();
+            updateChapterProgress();
           }
         }))
       });
@@ -540,6 +759,8 @@
             state.story.majorChoices.push(`天赋: ${perk.name}`);
             addMilestone(`领悟 ${perk.name}`);
             addLog(`你领悟了天赋: ${perk.name}。`);
+            maybeProgressMainlineTask();
+            updateChapterProgress();
           }
         }))
       });
@@ -842,6 +1063,111 @@
           gainExp(24);
           addMilestone("深夜直播意外爆火");
         }
+      },
+      {
+        id: "subway-delay",
+        text: "列车延误 27 分钟，你顺便在站台学会了新连招。",
+        apply: function () {
+          p.stats.agi += 1;
+          gainExp(16);
+        }
+      },
+      {
+        id: "forum-problem",
+        text: "论坛有人发离谱求助，你认真回答后意外涨粉。",
+        apply: function () {
+          p.gold += 35;
+          p.stats.int += 1;
+        }
+      },
+      {
+        id: "hotpot-debate",
+        text: "你卷入“火锅蘸料宇宙大战”，成功全身而退。",
+        apply: function () {
+          p.stats.spi += 1;
+          state.story.stance += 1;
+        }
+      },
+      {
+        id: "lost-phone",
+        text: "路边捡到失主手机，归还后对方转你一笔感谢金。",
+        condition: function () {
+          return area === "town";
+        },
+        apply: function () {
+          p.gold += 48;
+          state.story.stance += 1;
+        }
+      },
+      {
+        id: "screenshot-war",
+        text: "你把战报发进群，立刻引发三轮截图大战。",
+        condition: function () {
+          return state.metrics.victories >= 5;
+        },
+        apply: function () {
+          gainExp(22);
+          p.stats.luk += 1;
+          addMilestone("截图大战出圈");
+        }
+      },
+      {
+        id: "midnight-bug",
+        text: "半夜系统突然崩了一次，你重启后数据反而更顺。",
+        rare: true,
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.stats.vit += 1;
+          p.stats.int += 1;
+          addMilestone("午夜重启逆转");
+        }
+      },
+      {
+        id: "office-escape",
+        text: "你在临时会议中丝滑逃生，顺手完成一笔外快。",
+        condition: function () {
+          return state.day >= 2;
+        },
+        apply: function () {
+          p.gold += randInt(22, 68);
+          p.stats.agi += 1;
+        }
+      },
+      {
+        id: "rainy-taxi",
+        text: "暴雨夜你拦到一辆空车，司机还是你的老战友。",
+        rare: true,
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.potion += 1;
+          gainExp(30);
+          addMilestone("雨夜重逢战友");
+        }
+      },
+      {
+        id: "deadline-miracle",
+        text: "你卡点提交方案，甲方居然一次通过。",
+        condition: function () {
+          return state.metrics.battles >= 6;
+        },
+        apply: function () {
+          p.gold += 90;
+          p.stats.spi += 1;
+          state.story.stance += 1;
+        }
+      },
+      {
+        id: "elevator-legend",
+        text: "电梯里 30 秒演讲后，你拿到一张神秘邀请码。",
+        rare: true,
+        condition: function () {
+          return state.story.chapterId >= 4;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.stats.int += 2;
+          addMilestone("电梯演讲封神");
+        }
       }
     ];
 
@@ -852,6 +1178,7 @@
 
     const evt = pick(pool);
     evt.apply();
+    state.metrics.randomEvents += 1;
     addLog(`随机事件: ${evt.text}`);
     return true;
   }
@@ -872,6 +1199,8 @@
       return;
     }
 
+    maybeAssignSideQuest();
+
     if (maybeOpenChoice()) {
       return;
     }
@@ -882,11 +1211,17 @@
     }
 
     if (maybeRandomEvent()) {
+      maybeCompleteSideQuest();
+      maybeProgressMainlineTask();
+      updateChapterProgress();
       render();
       return;
     }
 
     if (doRestOrShop()) {
+      maybeCompleteSideQuest();
+      maybeProgressMainlineTask();
+      updateChapterProgress();
       render();
       return;
     }
@@ -907,6 +1242,9 @@
       return;
     }
 
+    maybeCompleteSideQuest();
+    maybeProgressMainlineTask();
+    updateChapterProgress();
     maybeOpenChoice();
     render();
   }
@@ -962,6 +1300,18 @@
     return url.toString();
   }
 
+  function countMainlineCompleted() {
+    let count = 0;
+    const keys = Object.keys(chapterQuestBook);
+    for (let i = 0; i < keys.length; i += 1) {
+      const chapterId = Number(keys[i]);
+      const maxCount = (chapterQuestBook[chapterId] || []).length;
+      const done = state.story.mainlineProgress[chapterId] || 0;
+      count += Math.min(maxCount, done);
+    }
+    return count;
+  }
+
   function buildRunResult(isWin) {
     const p = state.player;
     const score =
@@ -978,24 +1328,28 @@
     const keyChoices = state.story.majorChoices.join(" / ");
     const challengeUrl = buildChallengeUrl();
     const highlight = buildHighlight();
+    const mainlineCompleted = countMainlineCompleted();
+    const sideQuestCompletions = state.metrics.sideQuestCompletions;
 
     const shareTemplates = [
       [
         `我在 Adventure Simulator 打出了结局「${title}」`,
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
-        `主线：第${finalChapter.id}章《${finalChapter.name}》｜稀有事件：${state.metrics.rareEvents}`,
+        `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
+        `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}`,
         `名场面：${highlight}`,
         `同种子挑战：${challengeUrl}`
       ],
       [
         `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
         `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
+        `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个`,
         `最离谱一幕：${highlight}`,
         `来复刻我这条命运线：${challengeUrl}`
       ],
       [
         `这局我不想炫，但系统硬要给我「${title}」`,
-        `评分 ${score}，稀有事件 ${state.metrics.rareEvents} 次，也就一般发挥`,
+        `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，也就一般发挥`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
     ];
@@ -1013,6 +1367,8 @@
       battles: state.metrics.battles,
       victories: state.metrics.victories,
       rareEvents: state.metrics.rareEvents,
+      mainlineCompleted,
+      sideQuestCompletions,
       finalChapter,
       keyChoices,
       milestones: [...state.story.milestones],
@@ -1063,7 +1419,9 @@
       chapterId: 1,
       milestones: ["踏入江湖"],
       majorChoices: [],
-      stance: 0
+      stance: 0,
+      mainlineProgress: { 1: 0 },
+      activeSideQuest: null
     };
     state.metrics = {
       battles: 0,
@@ -1071,8 +1429,10 @@
       travels: 0,
       shops: 0,
       loots: 0,
+      randomEvents: 0,
       rareEvents: 0,
-      chapterAdvances: 0
+      chapterAdvances: 0,
+      sideQuestCompletions: 0
     };
     state.runResult = null;
     state.flags = {
@@ -1085,6 +1445,7 @@
     els.downloadShareLink.classList.add("hidden");
     addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 加入江湖。`);
     addLog(`本局命运种子: ${state.seed}`);
+    maybeProgressMainlineTask();
     if (state.initialSeedFromUrl) {
       addLog("挑战模式: 你正在游玩分享种子。\n");
     }
@@ -1226,6 +1587,14 @@
       turn: state.turn,
       chapter: chapterById(state.story.chapterId),
       metrics: { ...state.metrics },
+      mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
+      active_side_quest: state.story.activeSideQuest
+        ? {
+            title: state.story.activeSideQuest.title,
+            text: state.story.activeSideQuest.text,
+            progress: getSideQuestProgressText(state.story.activeSideQuest)
+          }
+        : null,
       world: {
         current_location: loc ? { id: loc.id, name: loc.name, x: loc.x, y: loc.y, type: loc.type } : null,
         locations: locations.map((item) => ({ id: item.id, x: item.x, y: item.y, type: item.type }))
