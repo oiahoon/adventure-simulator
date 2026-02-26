@@ -50,3 +50,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added real-world issue arcs requested by user: bride price pressure, mortgage onboarding/overdue risk, second-child planning/outcome, and helping-fall false-accusation + monitoring vindication chain.
 - Added matching side quests (`彩礼谈判`, `房贷重算`, `二胎准备`) and achievements (`二胎守夜人`, `房贷不断供`, `扶人不折心`).
 - Expanded family progression impact on debt/morale/fatigue and fixed one-time event gating for the vindication event.
+- Added high-impact black-swan events per user request: severe helping-fall fraud (can bankrupt/end run), malicious legal accusation after blind-date (can escalate to run-ending), and divorce asset split (cuts 50% gold).
+- Added milestones and achievements for legal-storm and divorce arcs.
+- Legal-risk events are configured as rare/high-consequence and integrated with city pressure systems.

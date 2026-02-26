@@ -128,7 +128,9 @@
     { id: "ach-parent-iron", tier: "hidden", title: "凌晨四点的灯", desc: "育儿阶段达成通关。", when: "win", check: () => state.story.familyStage === "育儿中" },
     { id: "ach-second-child", tier: "hidden", title: "二胎守夜人", desc: "结算时孩子数量 >= 2。", when: "any", check: () => state.story.childCount >= 2 },
     { id: "ach-mortgage", tier: "gold", title: "房贷不断供", desc: "触发房贷事件后仍然通关。", when: "win", check: () => state.story.milestones.some((m) => m.includes("房贷")) },
-    { id: "ach-good-samaritan", tier: "epic", title: "扶人不折心", desc: "经历扶人风波后完成结局。", when: "any", check: () => state.story.milestones.some((m) => m.includes("扶人")) }
+    { id: "ach-good-samaritan", tier: "epic", title: "扶人不折心", desc: "经历扶人风波后完成结局。", when: "any", check: () => state.story.milestones.some((m) => m.includes("扶人")) },
+    { id: "ach-legal-storm", tier: "hidden", title: "风波余生", desc: "经历严重法律纠纷后仍达成结局。", when: "any", check: () => state.story.milestones.some((m) => m.includes("法律风波")) },
+    { id: "ach-divorce", tier: "silver", title: "财产重分配", desc: "触发离婚财产分割事件。", when: "any", check: () => state.story.milestones.some((m) => m.includes("离婚财产分割")) }
   ];
 
   const locations = [
@@ -1447,6 +1449,28 @@
         }
       },
       {
+        id: "blind-date-accusation",
+        text: "相亲后发生恶性纠纷，你被恶意指控并卷入刑责流程。",
+        rare: true,
+        condition: function () {
+          return (state.story.familyStage === "单身" || state.story.familyStage === "恋爱中") && state.day >= 5;
+        },
+        apply: function () {
+          addMilestone("相亲法律风波");
+          addMilestone("法律风波");
+          updateCityStatus({ morale: -18, fatigue: 12, heat: 20, debt: 25 });
+          p.gold = Math.max(0, p.gold - randInt(60, 160));
+          if (random() > 0.62) {
+            p.gold = 0;
+            p.hp = 0;
+            addLog("法律风波升级，你失去自由，本局结束。");
+            endRun(false);
+          } else {
+            addLog("你暂时脱身，但已付出沉重代价。");
+          }
+        }
+      },
+      {
         id: "marriage-discuss",
         text: "双方家庭开始讨论婚礼与彩礼，预算表拉满。",
         condition: function () {
@@ -1561,6 +1585,16 @@
         },
         apply: function () {
           state.metrics.rareEvents += 1;
+          const severe = random() > 0.72;
+          if (severe) {
+            p.gold = 0;
+            updateCityStatus({ morale: -14, fatigue: 9, heat: 16, debt: 30 });
+            addMilestone("扶人风波破产");
+            addMilestone("法律风波");
+            addLog("风波失控导致赔付归零，你资金链断裂。");
+            endRun(false);
+            return;
+          }
           p.gold = Math.max(0, p.gold - randInt(10, 40));
           updateCityStatus({ morale: -8, fatigue: 6, heat: 8 });
           addMilestone("扶人风波");
@@ -1575,6 +1609,21 @@
         apply: function () {
           updateCityStatus({ morale: 6, heat: -6, debt: -4 });
           addMilestone("扶人风波平反");
+        }
+      },
+      {
+        id: "divorce-asset-split",
+        text: "长期高压下关系破裂，进入离婚财产分割流程。",
+        condition: function () {
+          return (state.story.familyStage === "已婚" || state.story.familyStage === "育儿中") && state.day >= 10;
+        },
+        apply: function () {
+          const lost = Math.floor(p.gold * 0.5);
+          p.gold -= lost;
+          updateCityStatus({ morale: -12, fatigue: 6, debt: 20, heat: 6 });
+          state.story.familyStage = state.story.childCount > 0 ? "离异育儿" : "离异";
+          addMilestone("离婚财产分割");
+          addLog(`财产分割损失 ${lost} 金币。`);
         }
       },
       {
