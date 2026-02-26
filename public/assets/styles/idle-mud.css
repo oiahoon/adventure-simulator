@@ -123,9 +123,38 @@ h2 {
 
 #character-sheet {
   margin: 0;
-  min-height: 390px;
+  min-height: 240px;
   white-space: pre-wrap;
   line-height: 1.45;
+}
+
+.ending-panel {
+  border-top: 1px dashed #b89f7a;
+  padding-top: 10px;
+}
+
+#ending-sheet {
+  margin: 0;
+  min-height: 180px;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  border: 1px solid #d9c9ad;
+  padding: 8px;
+  background: #fffdfa;
+}
+
+#share-canvas {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #987a5f;
+  display: block;
+  background: #f6ead3;
+}
+
+#download-share-link {
+  margin-top: 8px;
+  display: inline-block;
+  color: #1f2933;
 }
 
 .choice-modal {
@@ -177,6 +206,6 @@ h2 {
   }
 
   #character-sheet {
-    min-height: 220px;
+    min-height: 180px;
   }
 }

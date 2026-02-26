@@ -19,6 +19,9 @@
       <button id="start-btn" disabled>开始挂机</button>
       <button id="pause-btn" disabled>暂停</button>
       <button id="resume-btn" disabled>继续</button>
+      <button id="share-card-btn" disabled>生成战报图</button>
+      <button id="copy-share-btn" disabled>复制分享文案</button>
+      <button id="copy-link-btn" disabled>复制挑战链接</button>
       <label for="speed-select">速度</label>
       <select id="speed-select" disabled>
         <option value="0.75">0.75x</option>
@@ -45,6 +48,12 @@
       <aside class="panel right-col">
         <h2>角色状态</h2>
         <pre id="character-sheet">尚未生成角色</pre>
+        <section class="ending-panel">
+          <h2>结局与分享</h2>
+          <pre id="ending-sheet">本局尚未结束</pre>
+          <canvas id="share-canvas" width="1080" height="1920" aria-label="share report"></canvas>
+          <a id="download-share-link" class="hidden" download="jianghu-report.png">下载战报图</a>
+        </section>
       </aside>
     </section>
   </main>

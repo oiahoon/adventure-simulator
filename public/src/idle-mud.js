@@ -18,6 +18,17 @@
     { id: "fortune", name: "鸿运", desc: "拾取金币和道具时额外 +30%。" }
   ];
 
+  const chapters = [
+    { id: 1, name: "入世", minLevel: 1, mission: "在新手村存活并完成初试" },
+    { id: 2, name: "立足", minLevel: 2, mission: "加入门派并建立个人声名" },
+    { id: 3, name: "暗潮", minLevel: 3, mission: "追查江湖暗线并累计三场胜战" },
+    { id: 4, name: "盟约", minLevel: 4, mission: "选择进阶天赋并确立流派" },
+    { id: 5, name: "远征", minLevel: 5, mission: "在荒野与集镇之间维持补给" },
+    { id: 6, name: "风云", minLevel: 6, mission: "在古战场寻找血煞教主踪迹" },
+    { id: 7, name: "前夜", minLevel: 7, mission: "完成终局前的资源准备" },
+    { id: 8, name: "终局", minLevel: 8, mission: "击败血煞教主或壮烈陨落" }
+  ];
+
   const locations = [
     { id: "novice", name: "新手村", type: "town", x: 120, y: 280 },
     { id: "forest", name: "落叶林", type: "wild", x: 260, y: 230 },
@@ -45,6 +56,25 @@
     currentLocation: "novice",
     isPaused: false,
     pendingChoice: null,
+    seed: "",
+    rng: null,
+    initialSeedFromUrl: null,
+    story: {
+      chapterId: 1,
+      milestones: [],
+      majorChoices: [],
+      stance: 0
+    },
+    metrics: {
+      battles: 0,
+      victories: 0,
+      travels: 0,
+      shops: 0,
+      loots: 0,
+      rareEvents: 0,
+      chapterAdvances: 0
+    },
+    runResult: null,
     flags: {
       sectChosen: false,
       skillChosen: false,
@@ -62,10 +92,16 @@
     startBtn: document.getElementById("start-btn"),
     pauseBtn: document.getElementById("pause-btn"),
     resumeBtn: document.getElementById("resume-btn"),
+    shareCardBtn: document.getElementById("share-card-btn"),
+    copyShareBtn: document.getElementById("copy-share-btn"),
+    copyLinkBtn: document.getElementById("copy-link-btn"),
     speedSelect: document.getElementById("speed-select"),
     log: document.getElementById("log"),
     sheet: document.getElementById("character-sheet"),
+    endingSheet: document.getElementById("ending-sheet"),
     canvas: document.getElementById("world-canvas"),
+    shareCanvas: document.getElementById("share-canvas"),
+    downloadShareLink: document.getElementById("download-share-link"),
     choiceModal: document.getElementById("choice-modal"),
     choiceTitle: document.getElementById("choice-title"),
     choiceBody: document.getElementById("choice-body"),
@@ -73,9 +109,48 @@
   };
 
   const ctx = els.canvas.getContext("2d");
+  const shareCtx = els.shareCanvas.getContext("2d");
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function hashSeed(text) {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i += 1) {
+      h ^= text.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function makeSeedString() {
+    return `${Date.now().toString(36)}-${Math.floor(Math.random() * 1e8).toString(36)}`;
+  }
+
+  function readSeedFromUrl() {
+    const seed = new URLSearchParams(window.location.search).get("seed");
+    return seed && seed.trim() ? seed.trim() : null;
+  }
+
+  function resetRng(seedString) {
+    state.seed = seedString;
+    state.rng = mulberry32(hashSeed(seedString));
+  }
+
+  function random() {
+    return state.rng ? state.rng() : Math.random();
+  }
 
   function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(random() * (max - min + 1)) + min;
   }
 
   function pick(arr) {
@@ -91,6 +166,14 @@
     const second = ["青", "秋", "夜", "岚", "霜", "云", "舟", "尘", "明", "涯"];
     const third = ["行", "歌", "远", "川", "默", "鸣", "山", "岳", "宁", "渊"];
     return `${pick(first)}${pick(second)}${pick(third)}`;
+  }
+
+  function locationById(id) {
+    return locations.find((l) => l.id === id);
+  }
+
+  function chapterById(id) {
+    return chapters.find((c) => c.id === id) || chapters[0];
   }
 
   function createPlayer() {
@@ -126,22 +209,39 @@
     };
   }
 
-  function getTurnMs() {
-    return 1200 / state.speed;
-  }
-
-  function locationById(id) {
-    return locations.find((l) => l.id === id);
+  function addMilestone(text) {
+    state.story.milestones.push(text);
+    if (state.story.milestones.length > 14) {
+      state.story.milestones = state.story.milestones.slice(-14);
+    }
   }
 
   function addLog(message) {
     const stamp = `D${String(state.day).padStart(2, "0")} T${String(state.turn).padStart(3, "0")}`;
     state.log.push(`[${stamp}] ${message}`);
-    if (state.log.length > 180) {
-      state.log = state.log.slice(-180);
+    if (state.log.length > 240) {
+      state.log = state.log.slice(-240);
     }
-    els.log.textContent = state.log.slice(-60).join("\n");
+    els.log.textContent = state.log.slice(-70).join("\n");
     els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  function updateChapterProgress() {
+    const p = state.player;
+    let target = 1;
+    for (let i = 0; i < chapters.length; i += 1) {
+      if (p.level >= chapters[i].minLevel) {
+        target = chapters[i].id;
+      }
+    }
+
+    if (target > state.story.chapterId) {
+      state.story.chapterId = target;
+      state.metrics.chapterAdvances += 1;
+      const chapter = chapterById(target);
+      addMilestone(`推进至第${chapter.id}章《${chapter.name}》`);
+      addLog(`主线推进: 第${chapter.id}章《${chapter.name}》 - ${chapter.mission}`);
+    }
   }
 
   function formatSheet() {
@@ -154,6 +254,7 @@
     const modeText = state.mode === "ended" ? "已结束" : state.isPaused ? "暂停" : "运行中";
     const sectText = p.sect ? p.sect.name : "未选择";
     const perkText = p.perk ? p.perk.name : "未选择";
+    const chapter = chapterById(state.story.chapterId);
 
     return [
       `姓名: ${p.name}`,
@@ -163,6 +264,8 @@
       `内力: ${p.mp}/${p.mpMax}`,
       `金币: ${p.gold} 药剂: ${p.potion}`,
       `地点: ${loc.name}`,
+      `主线章节: 第${chapter.id}章《${chapter.name}》`,
+      `当前主线: ${chapter.mission}`,
       "",
       "属性:",
       `力量 ${p.stats.str}  敏捷 ${p.stats.agi}  体魄 ${p.stats.vit}`,
@@ -171,14 +274,36 @@
       `门派: ${sectText}`,
       `职业技能: ${p.skill}`,
       `进阶天赋: ${perkText}`,
+      `世界种子: ${state.seed}`,
       "",
       `状态: ${modeText}`,
       `当前天数: ${state.day}`
     ].join("\n");
   }
 
+  function formatEndingSheet() {
+    const result = state.runResult;
+    if (!result) {
+      return "本局尚未结束";
+    }
+
+    return [
+      `结局称号: ${result.title}`,
+      `江湖评语: ${result.epitaph}`,
+      `核心成绩: ${result.score} 分`,
+      `通关状态: ${result.outcome}`,
+      `最终章节: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
+      `关键抉择: ${result.keyChoices || "无"}`,
+      `稀有遭遇: ${result.rareEvents} 次`,
+      "",
+      "里程碑:",
+      ...result.milestones.slice(-5)
+    ].join("\n");
+  }
+
   function drawMap() {
-    const { width, height } = els.canvas;
+    const width = els.canvas.width;
+    const height = els.canvas.height;
     ctx.clearRect(0, 0, width, height);
 
     const bg = ctx.createLinearGradient(0, 0, width, height);
@@ -227,9 +352,126 @@
     ctx.fillText(`Day ${state.day} / Turn ${state.turn}`, 12, 24);
   }
 
+  function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    const parts = text.split("\n");
+    let cursorY = y;
+    for (let p = 0; p < parts.length; p += 1) {
+      const words = parts[p].split("");
+      let line = "";
+      for (let i = 0; i < words.length; i += 1) {
+        const testLine = line + words[i];
+        if (context.measureText(testLine).width > maxWidth && line) {
+          context.fillText(line, x, cursorY);
+          line = words[i];
+          cursorY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      context.fillText(line, x, cursorY);
+      cursorY += lineHeight;
+    }
+    return cursorY;
+  }
+
+  function clearShareCanvas() {
+    const w = els.shareCanvas.width;
+    const h = els.shareCanvas.height;
+    shareCtx.clearRect(0, 0, w, h);
+    const bg = shareCtx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, "#f0e1c8");
+    bg.addColorStop(1, "#dbc3a0");
+    shareCtx.fillStyle = bg;
+    shareCtx.fillRect(0, 0, w, h);
+    shareCtx.fillStyle = "#35251a";
+    shareCtx.font = "bold 60px serif";
+    shareCtx.fillText("江湖战报", 120, 180);
+    shareCtx.font = "42px serif";
+    shareCtx.fillText("本局结束后可生成分享卡", 120, 270);
+  }
+
+  function renderShareCard() {
+    const result = state.runResult;
+    if (!result) {
+      clearShareCanvas();
+      return;
+    }
+
+    const w = els.shareCanvas.width;
+    const h = els.shareCanvas.height;
+    shareCtx.clearRect(0, 0, w, h);
+
+    const bg = shareCtx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, "#f9ecd2");
+    bg.addColorStop(0.6, "#e9d4b0");
+    bg.addColorStop(1, "#cda57a");
+    shareCtx.fillStyle = bg;
+    shareCtx.fillRect(0, 0, w, h);
+
+    shareCtx.fillStyle = "rgba(76, 40, 18, 0.18)";
+    for (let i = 0; i < 8; i += 1) {
+      shareCtx.fillRect(70 + i * 120, 0, 26, h);
+    }
+
+    shareCtx.fillStyle = "#2f1d14";
+    shareCtx.font = "bold 72px serif";
+    shareCtx.fillText("江湖战报", 90, 120);
+    shareCtx.font = "42px serif";
+    shareCtx.fillText(`${result.name} · ${result.profession}`, 90, 190);
+
+    shareCtx.strokeStyle = "#7f5a3f";
+    shareCtx.lineWidth = 5;
+    shareCtx.strokeRect(72, 230, w - 144, h - 350);
+
+    shareCtx.fillStyle = "#3e291d";
+    shareCtx.font = "bold 52px serif";
+    shareCtx.fillText(result.title, 110, 330);
+
+    shareCtx.font = "36px serif";
+    let y = 410;
+    y = wrapText(shareCtx, `评语: ${result.epitaph}`, 110, y, w - 220, 56) + 10;
+
+    const rows = [
+      `结局: ${result.outcome}`,
+      `总评分: ${result.score}`,
+      `等级/天数: Lv.${result.level} / 第 ${result.day} 天`,
+      `主线进度: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
+      `关键抉择: ${result.keyChoices || "无"}`,
+      `胜场/战斗: ${result.victories}/${result.battles}`,
+      `稀有事件: ${result.rareEvents}`,
+      `Seed: ${state.seed}`
+    ];
+
+    rows.forEach((line) => {
+      shareCtx.fillText(line, 110, y);
+      y += 56;
+    });
+
+    y += 24;
+    shareCtx.font = "bold 38px serif";
+    shareCtx.fillText("名场面", 110, y);
+    y += 50;
+    shareCtx.font = "34px serif";
+    y = wrapText(shareCtx, `“${result.highlight}”`, 110, y, w - 220, 50) + 16;
+
+    shareCtx.font = "28px monospace";
+    wrapText(shareCtx, result.challengeUrl, 110, y, w - 220, 42);
+
+    shareCtx.font = "24px serif";
+    shareCtx.fillText("分享至微信/群聊，邀请好友挑战同种子命运", 110, h - 70);
+
+    els.downloadShareLink.href = els.shareCanvas.toDataURL("image/png");
+    els.downloadShareLink.classList.remove("hidden");
+  }
+
   function render() {
     els.sheet.textContent = formatSheet();
+    els.endingSheet.textContent = formatEndingSheet();
     drawMap();
+  }
+
+  function getTurnMs() {
+    return 1200 / state.speed;
   }
 
   function gainExp(amount) {
@@ -251,6 +493,8 @@
       p.stats.spi += randInt(0, 1);
       p.stats.luk += randInt(0, 1);
       addLog(`等级提升到 ${p.level}，全属性成长并恢复状态。`);
+      addMilestone(`等级提升到 Lv.${p.level}`);
+      updateChapterProgress();
     }
   }
 
@@ -273,6 +517,9 @@
             p.stats.spi += sect.bonus.spi || 0;
             p.stats.luk += sect.bonus.luk || 0;
             state.flags.sectChosen = true;
+            state.story.majorChoices.push(`门派: ${sect.name}`);
+            state.story.stance += sect.id === "qingshan" ? 1 : sect.id === "lingyin" ? 2 : 0;
+            addMilestone(`拜入 ${sect.name}`);
             addLog(`你加入了 ${sect.name}。`);
           }
         }))
@@ -290,6 +537,8 @@
           onPick: function () {
             p.perk = perk;
             state.flags.skillChosen = true;
+            state.story.majorChoices.push(`天赋: ${perk.name}`);
+            addMilestone(`领悟 ${perk.name}`);
             addLog(`你领悟了天赋: ${perk.name}。`);
           }
         }))
@@ -351,6 +600,7 @@
       .filter(([a, b]) => a === current || b === current)
       .map(([a, b]) => (a === current ? b : a));
     state.currentLocation = pick(neighbors);
+    state.metrics.travels += 1;
     const loc = locationById(state.currentLocation);
     addLog(`自动行走到 ${loc.name}。`);
   }
@@ -372,6 +622,7 @@
     if (p.gold >= 24 && p.potion < 3) {
       p.gold -= 24;
       p.potion += 1;
+      state.metrics.shops += 1;
       addLog("在药铺购入一瓶疗伤药。(-24 金币)");
       return true;
     }
@@ -391,6 +642,7 @@
   function doEncounter(isBoss) {
     const p = state.player;
     const perk = getPerkBonus();
+    state.metrics.battles += 1;
 
     let enemy = null;
     if (isBoss) {
@@ -436,6 +688,7 @@
     }
 
     if (enemy.hp <= 0) {
+      state.metrics.victories += 1;
       const fortune = perk.fortune;
       const expGain = Math.floor(enemy.rewardExp * fortune);
       const goldGain = Math.floor(enemy.rewardGold * fortune);
@@ -448,6 +701,7 @@
       }
       if (isBoss) {
         state.flags.bossDefeated = true;
+        addMilestone("击败血煞教主");
         addLog("你斩落血煞教主，江湖传名。");
         endRun(true);
       }
@@ -474,7 +728,98 @@
     const p = state.player;
     const gain = randInt(8, 24) + Math.floor(p.stats.luk / 3);
     p.gold += gain;
+    state.metrics.loots += 1;
     addLog(`路遇遗落包裹，获得 ${gain} 金币。`);
+  }
+
+  function maybeRandomEvent() {
+    if (random() > 0.2) {
+      return false;
+    }
+
+    const p = state.player;
+    const area = locationById(state.currentLocation).type;
+    const events = [
+      {
+        id: "hermit",
+        text: "山间隐士指点你运气走向。",
+        apply: function () {
+          p.stats.int += 1;
+          p.stats.spi += 1;
+          addMilestone("隐士传法，悟性提升");
+        }
+      },
+      {
+        id: "escort",
+        text: "你护送一名商旅脱险，收获谢礼。",
+        apply: function () {
+          p.gold += 40;
+          state.story.stance += 1;
+        }
+      },
+      {
+        id: "black-market",
+        text: "黑市赌局让你失手，损失了部分盘缠。",
+        apply: function () {
+          p.gold = Math.max(0, p.gold - 30);
+          state.story.stance -= 1;
+        }
+      },
+      {
+        id: "medicine-cache",
+        text: "荒野药箱仍有余温，你捡到了疗伤药。",
+        condition: function () {
+          return area === "wild";
+        },
+        apply: function () {
+          p.potion += 1;
+        }
+      },
+      {
+        id: "town-tribute",
+        text: "乡绅听闻你的战绩，主动资助你的旅费。",
+        condition: function () {
+          return area === "town" && state.metrics.victories >= 3;
+        },
+        apply: function () {
+          p.gold += 60;
+        }
+      },
+      {
+        id: "blood-moon",
+        text: "血月照古场，你感到杀机逼近。",
+        rare: true,
+        condition: function () {
+          return state.currentLocation === "ruins";
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.stats.str += 1;
+          p.stats.luk += 1;
+          addMilestone("血月异象现世");
+        }
+      },
+      {
+        id: "old-friend",
+        text: "旧友来信，送来秘籍残页。",
+        rare: true,
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          gainExp(35);
+          addMilestone("旧友赠书，修为突进");
+        }
+      }
+    ];
+
+    const pool = events.filter((item) => (item.condition ? item.condition() : true));
+    if (!pool.length) {
+      return false;
+    }
+
+    const evt = pick(pool);
+    evt.apply();
+    addLog(`随机事件: ${evt.text}`);
+    return true;
   }
 
   function takeTurn() {
@@ -502,12 +847,17 @@
       return;
     }
 
+    if (maybeRandomEvent()) {
+      render();
+      return;
+    }
+
     if (doRestOrShop()) {
       render();
       return;
     }
 
-    const roll = Math.random();
+    const roll = random();
     if (roll < 0.44) {
       doEncounter(false);
     } else if (roll < 0.74) {
@@ -527,25 +877,132 @@
     render();
   }
 
+  function composeTitle(isWin, score) {
+    const p = state.player;
+    if (isWin && state.metrics.rareEvents >= 2) {
+      return "天命破局者";
+    }
+    if (isWin && p.hp > Math.floor(p.hpMax * 0.6)) {
+      return "镇关不败客";
+    }
+    if (isWin && p.perk && p.perk.id === "fortune") {
+      return "鸿运问鼎者";
+    }
+    if (!isWin && state.metrics.victories >= 8) {
+      return "虽败犹荣将";
+    }
+    if (!isWin && state.story.chapterId >= 6) {
+      return "折戟古战场";
+    }
+    if (score >= 760) {
+      return "江湖传奇录";
+    }
+    return isWin ? "乱世定风波" : "无名行路人";
+  }
+
+  function composeEpitaph(isWin) {
+    const p = state.player;
+    const sectName = p.sect ? p.sect.name : "无门无派";
+    const perkName = p.perk ? p.perk.name : "未定流派";
+    if (isWin) {
+      return `${p.name}出身${sectName}，以${perkName}定鼎终局，留下可被后人复刻的命运轨迹。`;
+    }
+    return `${p.name}携${perkName}闯荡至第${state.story.chapterId}章，在${locationById(state.currentLocation).name}饮恨，但其足迹仍可被后来者挑战。`;
+  }
+
+  function buildHighlight() {
+    const candidates = state.log
+      .filter((line) => line.includes("主线推进") || line.includes("随机事件") || line.includes("击败") || line.includes("关键抉择"))
+      .slice(-12);
+    if (!candidates.length) {
+      return "这趟江湖路虽平凡，却足够真实。";
+    }
+    const picked = candidates[randInt(0, candidates.length - 1)];
+    return picked.replace(/^\[[^\]]+\]\s*/, "");
+  }
+
+  function buildChallengeUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("seed", state.seed);
+    url.searchParams.set("source", "share");
+    return url.toString();
+  }
+
+  function buildRunResult(isWin) {
+    const p = state.player;
+    const score =
+      p.level * 95 +
+      state.metrics.victories * 28 +
+      state.metrics.rareEvents * 80 +
+      (isWin ? 260 : 0) +
+      Math.floor(p.gold * 0.8) +
+      state.story.chapterId * 38;
+
+    const finalChapter = chapterById(state.story.chapterId);
+    const title = composeTitle(isWin, score);
+    const epitaph = composeEpitaph(isWin);
+    const keyChoices = state.story.majorChoices.join(" / ");
+    const challengeUrl = buildChallengeUrl();
+    const highlight = buildHighlight();
+
+    const shareText = [
+      `我在 Adventure Simulator 打出了结局「${title}」`,
+      `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
+      `主线：第${finalChapter.id}章《${finalChapter.name}》｜稀有事件：${state.metrics.rareEvents}`,
+      `名场面：${highlight}`,
+      `同种子挑战：${challengeUrl}`
+    ].join("\n");
+
+    return {
+      outcome: isWin ? "通关" : "陨落",
+      title,
+      epitaph,
+      score,
+      name: p.name,
+      profession: p.profession.name,
+      level: p.level,
+      day: state.day,
+      battles: state.metrics.battles,
+      victories: state.metrics.victories,
+      rareEvents: state.metrics.rareEvents,
+      finalChapter,
+      keyChoices,
+      milestones: [...state.story.milestones],
+      highlight,
+      challengeUrl,
+      shareText
+    };
+  }
+
   function endRun(isWin) {
     state.mode = "ended";
     state.isPaused = true;
-    updateButtons();
+    state.runResult = buildRunResult(isWin);
     addLog(isWin ? "结局: 你已通关，本轮挂机结束。" : "结局: 角色死亡，本轮挂机结束。");
+    addLog(`结局称号: ${state.runResult.title}`);
+    renderShareCard();
+    updateButtons();
     render();
   }
 
   function updateButtons() {
     const hasPlayer = !!state.player;
     const running = state.mode === "running";
+    const hasResult = !!state.runResult;
 
     els.startBtn.disabled = !hasPlayer || running || state.mode === "ended";
     els.pauseBtn.disabled = !running || state.isPaused || !!state.pendingChoice;
     els.resumeBtn.disabled = !running || (!state.isPaused && !state.pendingChoice);
     els.speedSelect.disabled = !running;
+    els.shareCardBtn.disabled = !hasResult;
+    els.copyShareBtn.disabled = !hasResult;
+    els.copyLinkBtn.disabled = !hasResult;
   }
 
   function reroll() {
+    const seedToUse = state.initialSeedFromUrl || makeSeedString();
+    resetRng(seedToUse);
+
     state.player = createPlayer();
     state.turn = 0;
     state.day = 1;
@@ -554,12 +1011,36 @@
     state.mode = "menu";
     state.isPaused = false;
     state.pendingChoice = null;
+    state.story = {
+      chapterId: 1,
+      milestones: ["踏入江湖"],
+      majorChoices: [],
+      stance: 0
+    };
+    state.metrics = {
+      battles: 0,
+      victories: 0,
+      travels: 0,
+      shops: 0,
+      loots: 0,
+      rareEvents: 0,
+      chapterAdvances: 0
+    };
+    state.runResult = null;
     state.flags = {
       sectChosen: false,
       skillChosen: false,
       bossDefeated: false
     };
+
+    clearShareCanvas();
+    els.downloadShareLink.classList.add("hidden");
     addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 加入江湖。`);
+    addLog(`本局命运种子: ${state.seed}`);
+    if (state.initialSeedFromUrl) {
+      addLog("挑战模式: 你正在游玩分享种子。\n");
+    }
+
     updateButtons();
     render();
   }
@@ -603,6 +1084,47 @@
   function onSpeedChange(e) {
     state.speed = Number(e.target.value) || 1;
     addLog(`挂机速度调整为 ${state.speed.toFixed(2)}x`);
+  }
+
+  async function copyText(text) {
+    if (!text) {
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+
+  function onShareCard() {
+    if (!state.runResult) {
+      return;
+    }
+    renderShareCard();
+    addLog("已生成分享战报图，可直接下载截图。\n");
+  }
+
+  async function onCopyShare() {
+    if (!state.runResult) {
+      return;
+    }
+    await copyText(state.runResult.shareText);
+    addLog("分享文案已复制。\n");
+  }
+
+  async function onCopyLink() {
+    if (!state.runResult) {
+      return;
+    }
+    await copyText(state.runResult.challengeUrl);
+    addLog("挑战链接已复制。\n");
   }
 
   function loop(ts) {
@@ -651,8 +1173,11 @@
       coordinate_system: "canvas origin=(0,0) at top-left; +x right, +y down",
       mode: state.mode,
       paused: state.isPaused,
+      seed: state.seed,
       day: state.day,
       turn: state.turn,
+      chapter: chapterById(state.story.chapterId),
+      metrics: { ...state.metrics },
       world: {
         current_location: loc ? { id: loc.id, name: loc.name, x: loc.x, y: loc.y, type: loc.type } : null,
         locations: locations.map((item) => ({ id: item.id, x: item.x, y: item.y, type: item.type }))
@@ -680,6 +1205,14 @@
         ? {
             title: state.pendingChoice.title,
             options: state.pendingChoice.options.map((o) => o.id)
+          }
+        : null,
+      run_result: state.runResult
+        ? {
+            outcome: state.runResult.outcome,
+            title: state.runResult.title,
+            score: state.runResult.score,
+            challenge_url: state.runResult.challengeUrl
           }
         : null,
       recent_log: state.log.slice(-8)
@@ -718,11 +1251,23 @@
     els.startBtn.addEventListener("click", startRun);
     els.pauseBtn.addEventListener("click", pauseRun);
     els.resumeBtn.addEventListener("click", resumeRun);
+    els.shareCardBtn.addEventListener("click", onShareCard);
+    els.copyShareBtn.addEventListener("click", function () {
+      onCopyShare().catch(function () {
+        addLog("复制分享文案失败。\n");
+      });
+    });
+    els.copyLinkBtn.addEventListener("click", function () {
+      onCopyLink().catch(function () {
+        addLog("复制挑战链接失败。\n");
+      });
+    });
     els.speedSelect.addEventListener("change", onSpeedChange);
     window.addEventListener("keydown", handleKey);
   }
 
   function init() {
+    state.initialSeedFromUrl = readSeedFromUrl();
     wireEvents();
     reroll();
     rafId = requestAnimationFrame(loop);

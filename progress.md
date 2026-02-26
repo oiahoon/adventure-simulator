@@ -11,3 +11,8 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Next: push to GitHub and deploy on Vercel with project-linked environment.
 - Git: committed and force-pushed to origin/main at `6964c62`.
 - Deploy blocker: `npx vercel --prod --yes` reached CLI but failed with `The specified token is not valid. Use vercel login to generate a new token.`
+- Added richer narrative progression: 8 main chapters with chapter mission display, milestone tracking, and chapter advancement logs.
+- Added social share loop: ending title + epitaph generation, shareable battle report canvas, downloadable image, copyable share text, and seed-based challenge URL.
+- Added deterministic seed support (`?seed=...`) so players can challenge the same run seed after seeing shared results.
+- Added richer random events (common + rare) that affect growth, resources, and narrative milestones.
+- Validation: `node --check public/src/idle-mud.js` passed.
