@@ -206,6 +206,16 @@
     };
   }
 
+  function createEngineState() {
+    return {
+      queue: [],
+      flags: {},
+      bias: {},
+      cooldowns: {},
+      seen: {}
+    };
+  }
+
   const state = {
     mode: "menu",
     player: null,
@@ -261,6 +271,7 @@
       bossDefeated: false,
       lineEventDay: {}
     },
+    engine: createEngineState(),
     log: []
   };
 
@@ -651,6 +662,175 @@
     if (line.debt <= 0) {
       addLog("生存线归零：债务线断裂。");
       endRun(false);
+      return true;
+    }
+    return false;
+  }
+
+  function engineState() {
+    if (!state.engine) {
+      state.engine = createEngineState();
+    }
+    return state.engine;
+  }
+
+  function setEngineFlag(key, value, ttl) {
+    const e = engineState();
+    e.flags[key] = { value, ttl: Number(ttl) > 0 ? Number(ttl) : 0 };
+  }
+
+  function getEngineFlag(key, fallback) {
+    const e = engineState();
+    return Object.prototype.hasOwnProperty.call(e.flags, key) ? e.flags[key].value : fallback;
+  }
+
+  function addBias(key, mul, ttl) {
+    const e = engineState();
+    const cur = e.bias[key];
+    if (!cur) {
+      e.bias[key] = { mul: mul || 1, ttl: Math.max(1, ttl || 1) };
+      return;
+    }
+    cur.mul *= mul || 1;
+    cur.ttl = Math.max(cur.ttl, Math.max(1, ttl || 1));
+  }
+
+  function enqueueEvent(eventId, dueIn, priority, forced) {
+    const e = engineState();
+    e.queue.push({
+      eventId,
+      dueTurn: state.turn + Math.max(0, dueIn || 0),
+      priority: Number.isFinite(priority) ? priority : 50,
+      forced: !!forced
+    });
+  }
+
+  function markEventSeen(eventId, cooldown) {
+    const e = engineState();
+    e.seen[eventId] = (e.seen[eventId] || 0) + 1;
+    if (cooldown > 0) {
+      e.cooldowns[eventId] = cooldown;
+    }
+  }
+
+  function isEventCooling(eventId) {
+    const e = engineState();
+    return (e.cooldowns[eventId] || 0) > 0;
+  }
+
+  function biasMultiplierFor(eventId, tags) {
+    const e = engineState();
+    let mul = 1;
+    if (e.bias[`event:${eventId}`]) {
+      mul *= e.bias[`event:${eventId}`].mul;
+    }
+    const list = tags || [];
+    for (let i = 0; i < list.length; i += 1) {
+      const key = `tag:${list[i]}`;
+      if (e.bias[key]) {
+        mul *= e.bias[key].mul;
+      }
+    }
+    return mul;
+  }
+
+  function noveltyPenalty(eventId) {
+    const e = engineState();
+    const seen = e.seen[eventId] || 0;
+    if (seen <= 0) return 1;
+    return 1 / (1 + seen * 0.35);
+  }
+
+  function decayEngineTurn() {
+    const e = engineState();
+    const cdKeys = Object.keys(e.cooldowns);
+    for (let i = 0; i < cdKeys.length; i += 1) {
+      const k = cdKeys[i];
+      e.cooldowns[k] -= 1;
+      if (e.cooldowns[k] <= 0) delete e.cooldowns[k];
+    }
+    const flagKeys = Object.keys(e.flags);
+    for (let i = 0; i < flagKeys.length; i += 1) {
+      const k = flagKeys[i];
+      const f = e.flags[k];
+      if (!f || !f.ttl) continue;
+      f.ttl -= 1;
+      if (f.ttl <= 0) delete e.flags[k];
+    }
+    const biasKeys = Object.keys(e.bias);
+    for (let i = 0; i < biasKeys.length; i += 1) {
+      const k = biasKeys[i];
+      e.bias[k].ttl -= 1;
+      if (e.bias[k].ttl <= 0) delete e.bias[k];
+    }
+  }
+
+  function weightedPick(pool) {
+    const total = pool.reduce((sum, item) => sum + Math.max(0, item.weight || 0), 0);
+    if (total <= 0) return null;
+    let roll = random() * total;
+    for (let i = 0; i < pool.length; i += 1) {
+      roll -= Math.max(0, pool[i].weight || 0);
+      if (roll <= 0) return pool[i].event;
+    }
+    return pool[pool.length - 1].event;
+  }
+
+  function runQueueEventItem(item) {
+    const p = state.player;
+    if (!p) return false;
+    if (item.eventId === "queue:jobhunt-feedback") {
+      if (p.stats.int + p.stats.agi + randInt(0, 8) >= 24) {
+        p.gold += randInt(18, 42);
+        updateCityStatus({ morale: 4, debt: -6 });
+        addLog("后续事件：投递简历获得回音，面试进入下一轮。");
+      } else {
+        updateCityStatus({ morale: -3, fatigue: 2 });
+        addLog("后续事件：投递石沉大海，求职焦虑升高。");
+      }
+      return true;
+    }
+    if (item.eventId === "queue:exam-result") {
+      if (state.player.stats.int + state.player.stats.spi + randInt(0, 10) >= 28) {
+        gainExp(26);
+        updateCityStatus({ morale: 6, fatigue: -2 });
+        addLog("后续事件：模考成绩回升，你看到了上岸窗口。");
+      } else {
+        updateCityStatus({ morale: -5, fatigue: 3 });
+        addLog("后续事件：模考失利，计划进入加练周期。");
+      }
+      return true;
+    }
+    if (item.eventId === "queue:mortgage-followup") {
+      const pay = randInt(16, 42);
+      p.gold = Math.max(0, p.gold - pay);
+      updateCityStatus({ debt: 10, morale: -2, heat: 2 });
+      addLog(`后续事件：银行催缴提醒，本期补缴 ${pay} 金币。`);
+      return true;
+    }
+    if (item.eventId === "queue:parenting-support") {
+      if (random() < 0.5) {
+        updateCityStatus({ fatigue: -8, morale: 4, debt: -4 });
+        addLog("后续事件：家人短期支援到位，育儿压力回落。");
+      } else {
+        updateCityStatus({ fatigue: 6, morale: -3, debt: 8 });
+        addLog("后续事件：托育排班冲突，家庭现金流继续承压。");
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function maybeRunQueuedEvent() {
+    const e = engineState();
+    const due = e.queue
+      .filter((item) => item && item.dueTurn <= state.turn)
+      .sort((a, b) => Number(b.forced) - Number(a.forced) || b.priority - a.priority);
+    if (!due.length) return false;
+    const chosen = due[0];
+    e.queue = e.queue.filter((item) => item !== chosen);
+    if (runQueueEventItem(chosen)) {
+      state.metrics.randomEvents += 1;
       return true;
     }
     return false;
@@ -1166,6 +1346,7 @@
     const chapter = chapterById(state.story.chapterId);
     const mainlineTask = getCurrentMainlineTask();
     const sideQuest = state.story.activeSideQuest;
+    const e = engineState();
     const activeArcs = Object.entries(state.story.arcs || {})
       .filter(([, arc]) => arc.active)
       .map(([id, arc]) => `${id}:阶段${arc.stage}`)
@@ -1187,6 +1368,7 @@
       `主线节点: ${mainlineTask ? mainlineTask.text : "本章已全部完成"}`,
       `当前支线: ${sideQuest ? `${sideQuest.title} (${getSideQuestProgressText(sideQuest)})` : "暂无"}`,
       `剧情链: ${activeArcs || "暂无活跃链"}`,
+      `引擎状态: 后续队列 ${e.queue.length} / 偏置 ${Object.keys(e.bias).length}`,
       `家庭阶段: ${state.story.familyStage} (${state.story.childCount} 个孩子)`,
       `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue}`,
       `债务 ${state.cityStatus.debt} / 热度 ${state.cityStatus.heat}`,
@@ -2169,15 +2351,73 @@
       }
     ];
 
-    const pool = events.filter((item) => (item.condition ? item.condition() : true));
+    const metaById = {
+      "graduate-wave": { deck: "society", tags: ["jobhunt", "youth"], cooldown: 3, bias: [{ key: "tag:jobhunt", mul: 1.1, ttl: 6 }] },
+      "civil-service-rush": { deck: "exam", tags: ["exam", "education"], cooldown: 3, enqueue: [{ eventId: "queue:exam-result", dueIn: 2, priority: 75 }] },
+      "social-security-pilot": { deck: "policy", tags: ["policy", "stability"], cooldown: 5 },
+      "ai-substitute": { deck: "career", tags: ["career", "layoff"], cooldown: 5, bias: [{ key: "tag:layoff", mul: 1.2, ttl: 8 }] },
+      "takeout-order-war": { deck: "work", tags: ["gig", "income"], cooldown: 2 },
+      "housing-rate-adjust": { deck: "housing", tags: ["mortgage", "debt"], cooldown: 4, enqueue: [{ eventId: "queue:mortgage-followup", dueIn: 2, priority: 70 }] },
+      "night-school-burst": { deck: "exam", tags: ["exam", "skill"], cooldown: 2 },
+      "rent-rise": { deck: "housing", tags: ["rent", "debt"], cooldown: 3 },
+      "medical-queue": { deck: "health", tags: ["health", "fatigue"], cooldown: 3 },
+      "livestream-burst": { deck: "social", tags: ["heat", "income"], cooldown: 4 },
+      "layoff-rumor": { deck: "career", tags: ["layoff", "jobhunt"], cooldown: 4, enqueue: [{ eventId: "queue:jobhunt-feedback", dueIn: 2, priority: 72 }] },
+      "blind-date": { deck: "family", tags: ["family", "relationship"], cooldown: 4 },
+      "mortgage-overdue": { deck: "housing", tags: ["mortgage", "debt"], cooldown: 4 },
+      "newborn": { deck: "family", tags: ["parenting", "family"], cooldown: 6, enqueue: [{ eventId: "queue:parenting-support", dueIn: 2, priority: 78 }] },
+      "second-child-discuss": { deck: "family", tags: ["parenting", "debt"], cooldown: 6 },
+      "child-sick-night": { deck: "family", tags: ["parenting", "health"], cooldown: 4 },
+      "helping-fall-fraud": { deck: "social", tags: ["legal", "heat"], cooldown: 6, setFlags: [{ key: "legal.risk", value: true, ttl: 10 }] },
+      "camera-clear": { deck: "social", tags: ["legal", "relief"], cooldown: 6 },
+      "divorce-asset-split": { deck: "family", tags: ["family", "debt"], cooldown: 8 },
+      "public-praise": { deck: "social", tags: ["heat", "morale"], cooldown: 4 },
+      "gold-price-spike": { deck: "finance", tags: ["finance", "heat"], cooldown: 5 }
+    };
+
+    const pool = events
+      .filter((item) => (item.condition ? item.condition() : true))
+      .filter((item) => !isEventCooling(item.id));
     if (!pool.length) {
       return false;
     }
 
-    const evt = pick(pool);
+    const weighted = pool.map((item) => {
+      const meta = metaById[item.id] || {};
+      let weight = item.rare ? 0.7 : 1.2;
+      if (meta.deck === "career" && state.story.chapterId >= 3) weight *= 1.25;
+      if (meta.deck === "family" && state.story.familyStage !== "单身") weight *= 1.2;
+      if (meta.deck === "housing" && state.cityStatus.debt >= 90) weight *= 1.25;
+      if (state.cityStatus.heat >= 75 && (meta.tags || []).includes("heat")) weight *= 1.3;
+      if (state.cityStatus.heat <= 12 && (meta.tags || []).includes("relief")) weight *= 1.2;
+      weight *= biasMultiplierFor(item.id, meta.tags || []);
+      weight *= noveltyPenalty(item.id);
+      return { event: item, weight };
+    });
+
+    const evt = weightedPick(weighted) || pick(pool);
+    const meta = metaById[evt.id] || {};
     evt.apply();
     if (!evt.rare) {
       updateCityStatus({ morale: random() > 0.45 ? 1 : -1, fatigue: random() > 0.6 ? -1 : 1 });
+    }
+    markEventSeen(evt.id, meta.cooldown || (evt.rare ? 5 : 2));
+    if (meta.bias) {
+      for (let i = 0; i < meta.bias.length; i += 1) {
+        addBias(meta.bias[i].key, meta.bias[i].mul, meta.bias[i].ttl);
+      }
+    }
+    if (meta.setFlags) {
+      for (let i = 0; i < meta.setFlags.length; i += 1) {
+        const f = meta.setFlags[i];
+        setEngineFlag(f.key, f.value, f.ttl);
+      }
+    }
+    if (meta.enqueue) {
+      for (let i = 0; i < meta.enqueue.length; i += 1) {
+        const q = meta.enqueue[i];
+        enqueueEvent(q.eventId, q.dueIn, q.priority, q.forced);
+      }
     }
     state.metrics.randomEvents += 1;
     addLog(`随机事件: ${evt.text}`);
@@ -2193,6 +2433,7 @@
     if (state.turn % 8 === 0) {
       state.day += 1;
     }
+    decayEngineTurn();
 
     const p = state.player;
     if (!p || p.hp <= 0) {
@@ -2214,6 +2455,16 @@
     if (checkTerminalLines()) return;
 
     maybeAssignSideQuest();
+    if (maybeRunQueuedEvent()) {
+      turnLabel = "后续回收";
+      maybeCompleteSideQuest();
+      maybeProgressMainlineTask();
+      updateChapterProgress();
+      if (checkTerminalLines()) return;
+      finalizeTurnFeedback(before, turnLabel);
+      render();
+      return;
+    }
     if (maybeRunStoryArc()) {
       turnLabel = "剧情链推进";
       maybeCompleteSideQuest();
@@ -2541,6 +2792,7 @@
       chapterAdvances: 0,
       sideQuestCompletions: 0
     };
+    state.engine = createEngineState();
     state.uiState = {
       turnSummary: "待开始",
       turnDelta: "-",
@@ -2714,6 +2966,11 @@
           { active: arc.active, completed: arc.completed, stage: arc.stage, ending: arc.ending || "" }
         ])
       ),
+      engine: {
+        queue_size: engineState().queue.length,
+        active_bias: Object.keys(engineState().bias).length,
+        active_flags: Object.keys(engineState().flags).length
+      },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest
         ? {

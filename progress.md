@@ -111,3 +111,14 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `育儿链` (托育排队 -> 资源分配 -> 协作稳定或持续硬扛)
 - Arc chains now progress in turn loop with day-gated stage continuity and branch logic driven by role stats/resources, creating coherent cause-effect stories.
 - Added active storyline chain display in character sheet and exported `story_arcs` in `render_game_to_text` payload for observability/testing.
+- Added architecture document into repo: `docs/architecture/deep-research-report.md`.
+- Started Engine v2 refactor aligned with the document:
+  - Introduced persistent engine state object (`queue`, `flags` with ttl, `bias`, `cooldowns`, `seen`) via `createEngineState()`.
+  - Added core engine utilities: queue enqueue/run, bias accumulate/decay, cooldown/seen tracking, novelty penalty, weighted pick.
+  - Integrated per-turn engine decay and queue-first execution (`后续回收`) before arc/deck random events.
+  - Upgraded random event selector from plain random pick to weighted selection using deck tags + bias + novelty + cooldown filtering.
+  - Added event metadata map (`metaById`) to define deck/tag/cooldown/bias/enqueue/flag side effects without rewriting every event body.
+  - Added follow-up queue events (`queue:jobhunt-feedback`, `queue:exam-result`, `queue:mortgage-followup`, `queue:parenting-support`) to create explicit cause-effect continuations.
+  - Exposed engine observability in sheet and `render_game_to_text` (`queue_size`, `active_bias`, `active_flags`).
+- Validation: `node --check public/src/idle-mud.js` passed.
+- Next suggested step: externalize events to JSON and replace `metaById` with schema-validated content packs (Queue -> Arcs -> Decks fully data-driven).
