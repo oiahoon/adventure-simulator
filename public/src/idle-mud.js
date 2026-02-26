@@ -1,15 +1,15 @@
 (function () {
   const professions = [
-    { id: "swordsman", name: "剑客", mod: { str: 2, agi: 1, vit: 1, int: 0, spi: 0, luk: 0 }, skill: "破军斩" },
-    { id: "monk", name: "武僧", mod: { str: 1, agi: 1, vit: 2, int: 0, spi: 1, luk: -1 }, skill: "金钟护体" },
-    { id: "scholar", name: "策士", mod: { str: -1, agi: 0, vit: 0, int: 3, spi: 1, luk: 0 }, skill: "奇门推演" },
-    { id: "ranger", name: "游侠", mod: { str: 0, agi: 2, vit: 0, int: 0, spi: 0, luk: 2 }, skill: "追风箭" }
+    { id: "rider", name: "外卖骑手", mod: { str: 1, agi: 2, vit: 1, int: 0, spi: 0, luk: 0 }, skill: "冲刺抢单" },
+    { id: "coder", name: "互联网打工人", mod: { str: -1, agi: 0, vit: 1, int: 3, spi: 1, luk: 0 }, skill: "工位续命" },
+    { id: "exam", name: "考公备考生", mod: { str: 0, agi: 0, vit: 1, int: 2, spi: 1, luk: 0 }, skill: "行测冲刺" },
+    { id: "freelancer", name: "县城返乡青年", mod: { str: 1, agi: 1, vit: 0, int: 1, spi: 0, luk: 2 }, skill: "人情网络" }
   ];
 
   const sects = [
-    { id: "qingshan", name: "青山剑宗", bonus: { str: 2, agi: 1 }, desc: "剑招稳定，伤害提升。" },
-    { id: "lingyin", name: "灵隐禅院", bonus: { vit: 2, spi: 2 }, desc: "生命与回复能力提升。" },
-    { id: "tianji", name: "天机阁", bonus: { int: 2, luk: 2 }, desc: "奇遇概率与收益提升。" }
+    { id: "public", name: "体制冲线", bonus: { vit: 2, spi: 2 }, desc: "抗压更稳，精神恢复更快。" },
+    { id: "corp", name: "大厂硬扛", bonus: { str: 2, agi: 1 }, desc: "推进更快，战斗收益更高。" },
+    { id: "solo", name: "灵活经营", bonus: { int: 2, luk: 2 }, desc: "随机机会更多，资源波动更大。" }
   ];
 
   const skills = [
@@ -19,14 +19,14 @@
   ];
 
   const chapters = [
-    { id: 1, name: "地铁开局", minLevel: 1, mission: "在早高峰活下来并找到第一份委托" },
-    { id: 2, name: "社群立足", minLevel: 2, mission: "加入流派群聊并拿下首个口碑任务" },
-    { id: 3, name: "算法暗潮", minLevel: 3, mission: "追查热搜背后的异动并连胜三场" },
-    { id: 4, name: "技能转职", minLevel: 4, mission: "完成关键抉择，定下职业成长分支" },
-    { id: 5, name: "夜城远征", minLevel: 5, mission: "在商圈与边区维持补给和声望平衡" },
-    { id: 6, name: "高楼风云", minLevel: 6, mission: "锁定终局敌人并抢占制高点" },
-    { id: 7, name: "停电前夜", minLevel: 7, mission: "集齐终局物资，准备最终直播战" },
-    { id: 8, name: "全城终局", minLevel: 8, mission: "击败血煞教主或在聚光灯下陨落" }
+    { id: 1, name: "城市入场", minLevel: 1, mission: "挺过早高峰并拿到第一笔稳定收入" },
+    { id: 2, name: "试用期炼狱", minLevel: 2, mission: "完成路线抉择并建立生存节奏" },
+    { id: 3, name: "就业寒潮", minLevel: 3, mission: "在裁员传闻和面试循环中守住现金流" },
+    { id: 4, name: "技能分化", minLevel: 4, mission: "确定能力加点路线并拉开差距" },
+    { id: 5, name: "成家与房贷", minLevel: 5, mission: "在家庭责任与账单压力中维持平衡" },
+    { id: 6, name: "舆情与法律", minLevel: 6, mission: "处理高风险公共事件，避免连锁失控" },
+    { id: 7, name: "现金流保卫", minLevel: 7, mission: "在终局前稳住身心状态与债务曲线" },
+    { id: 8, name: "中国版斩杀线", minLevel: 8, mission: "击败系统性暴雷并活着走出终盘" }
   ];
 
   const chapterQuestBook = {
@@ -37,7 +37,7 @@
       { id: "c1-4", text: "触发 1 次随机事件", req: { randomEvents: 1 } }
     ],
     2: [
-      { id: "c2-1", text: "完成门派抉择", req: { choices: 1 } },
+      { id: "c2-1", text: "完成生存路线抉择", req: { choices: 1 } },
       { id: "c2-2", text: "累计 3 场战斗", req: { battles: 3 } },
       { id: "c2-3", text: "触发 2 次城市随机事件", req: { randomEvents: 2 } },
       { id: "c2-4", text: "完成 1 次支线任务", req: { sideQuestCompletions: 1 } }
@@ -62,7 +62,7 @@
       { id: "c5-5", text: "完成 3 次支线任务（含家庭线）", req: { sideQuestCompletions: 3 } }
     ],
     6: [
-      { id: "c6-1", text: "推进至古战场并获胜 8 场", req: { victories: 8 } },
+      { id: "c6-1", text: "推进至政务大厅并获胜 8 场", req: { victories: 8 } },
       { id: "c6-2", text: "累计 10 场战斗", req: { battles: 10 } },
       { id: "c6-3", text: "累计 3 次关键抉择/支线抉择", req: { choices: 2, sideQuestCompletions: 3 } },
       { id: "c6-4", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } }
@@ -73,7 +73,7 @@
       { id: "c7-3", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } },
       { id: "c7-4", text: "累计 12 场战斗", req: { battles: 12 } }
     ],
-    8: [{ id: "c8-1", text: "击败血煞教主完成全城终局", req: { bossDefeated: true } }]
+    8: [{ id: "c8-1", text: "击败系统性暴雷完成中国版斩杀线", req: { bossDefeated: true } }]
   };
 
   const sideQuestTemplates = [
@@ -135,11 +135,11 @@
   ];
 
   const locations = [
-    { id: "novice", name: "新手村", type: "town", x: 120, y: 280 },
-    { id: "forest", name: "落叶林", type: "wild", x: 260, y: 230 },
-    { id: "market", name: "青石集", type: "town", x: 380, y: 280 },
-    { id: "river", name: "寒水渡", type: "wild", x: 470, y: 190 },
-    { id: "ruins", name: "古战场", type: "wild", x: 560, y: 105 }
+    { id: "novice", name: "城中村", type: "town", x: 120, y: 280 },
+    { id: "forest", name: "产业园", type: "wild", x: 260, y: 230 },
+    { id: "market", name: "老商圈", type: "town", x: 380, y: 280 },
+    { id: "river", name: "三甲医院", type: "wild", x: 470, y: 190 },
+    { id: "ruins", name: "政务大厅", type: "wild", x: 560, y: 105 }
   ];
 
   const links = [
@@ -150,7 +150,7 @@
     ["river", "ruins"]
   ];
 
-  const boss = { name: "血煞教主", hp: 130, atk: 20, rewardExp: 240, rewardGold: 180 };
+  const boss = { name: "系统性暴雷", hp: 142, atk: 21, rewardExp: 240, rewardGold: 180 };
 
   const state = {
     mode: "menu",
@@ -311,9 +311,9 @@
   }
 
   function makeName() {
-    const first = ["沈", "陆", "萧", "叶", "顾", "林", "苏", "季", "温", "程"];
-    const second = ["青", "秋", "夜", "岚", "霜", "云", "舟", "尘", "明", "涯"];
-    const third = ["行", "歌", "远", "川", "默", "鸣", "山", "岳", "宁", "渊"];
+    const first = ["张", "王", "李", "赵", "周", "吴", "徐", "孙", "马", "刘"];
+    const second = ["子", "嘉", "雨", "浩", "思", "若", "晨", "宇", "一", "梓"];
+    const third = ["轩", "宁", "然", "凡", "彤", "航", "涛", "妍", "杰", "婷"];
     return `${pick(first)}${pick(second)}${pick(third)}`;
   }
 
@@ -702,7 +702,7 @@
       `力量 ${p.stats.str}  敏捷 ${p.stats.agi}  体魄 ${p.stats.vit}`,
       `智识 ${p.stats.int}  神识 ${p.stats.spi}  气运 ${p.stats.luk}`,
       "",
-      `门派: ${sectText}`,
+      `路线: ${sectText}`,
       `职业技能: ${p.skill}`,
       `进阶天赋: ${perkText}`,
       `世界种子: ${state.seed}`,
@@ -720,7 +720,7 @@
 
     return [
       `结局称号: ${result.title}`,
-      `江湖评语: ${result.epitaph}`,
+      `结局评语: ${result.epitaph}`,
       `核心成绩: ${result.score} 分`,
       `通关状态: ${result.outcome}`,
       `最终章节: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
@@ -828,7 +828,7 @@
     shareCtx.fillRect(0, 0, w, h);
     shareCtx.fillStyle = "#35251a";
     shareCtx.font = "bold 60px serif";
-    shareCtx.fillText("江湖战报", 120, 180);
+    shareCtx.fillText("斩杀线战报", 120, 180);
     shareCtx.font = "42px serif";
     shareCtx.fillText("本局结束后可生成分享卡", 120, 270);
   }
@@ -858,7 +858,7 @@
 
     shareCtx.fillStyle = "#2f1d14";
     shareCtx.font = "bold 72px serif";
-    shareCtx.fillText("江湖战报", 90, 120);
+    shareCtx.fillText("斩杀线战报", 90, 120);
     shareCtx.font = "42px serif";
     shareCtx.fillText(`${result.name} · ${result.profession}`, 90, 190);
 
@@ -957,8 +957,8 @@
 
     if (!state.flags.sectChosen && p.level >= 2) {
       openChoice({
-        title: "关键抉择: 选择门派",
-        body: "江湖路宽，你必须投身一个门派修行。",
+        title: "关键抉择: 选择路线",
+        body: "城市生存窗口很短，你必须定下一条路线。",
         options: sects.map((sect) => ({
           id: sect.id,
           label: `${sect.name} - ${sect.desc}`,
@@ -971,11 +971,11 @@
             p.stats.spi += sect.bonus.spi || 0;
             p.stats.luk += sect.bonus.luk || 0;
             state.flags.sectChosen = true;
-            state.story.majorChoices.push(`门派: ${sect.name}`);
-            state.story.stance += sect.id === "qingshan" ? 1 : sect.id === "lingyin" ? 2 : 0;
+            state.story.majorChoices.push(`路线: ${sect.name}`);
+            state.story.stance += sect.id === "corp" ? 1 : sect.id === "public" ? 2 : 0;
             updateCityStatus({ morale: 4, fatigue: -2, debt: -4 });
-            addMilestone(`拜入 ${sect.name}`);
-            addLog(`你加入了 ${sect.name}。`);
+            addMilestone(`加入 ${sect.name}`);
+            addLog(`你选择了 ${sect.name}。`);
             maybeProgressMainlineTask();
             updateChapterProgress();
           }
@@ -987,7 +987,7 @@
     if (!state.flags.skillChosen && p.level >= 4) {
       openChoice({
         title: "关键抉择: 选择进阶天赋",
-        body: "你的修行已成气候，选择一条战斗风格。",
+        body: "你的技能树开始分化，选择一条战斗风格。",
         options: skills.map((perk) => ({
           id: perk.id,
           label: `${perk.name} - ${perk.desc}`,
@@ -1049,7 +1049,7 @@
       state.metrics.potionUsed += 1;
       const heal = 42 + p.stats.spi;
       p.hp = Math.min(p.hpMax, p.hp + heal);
-      addLog(`自动使用疗伤药，恢复 ${heal} 生命。`);
+      addLog(`自动使用能量饮料，恢复 ${heal} 生命。`);
       return true;
     }
     return false;
@@ -1078,7 +1078,7 @@
       const heal = 18 + Math.floor(p.stats.vit / 2);
       p.hp = Math.min(p.hpMax, p.hp + heal);
       updateCityStatus({ fatigue: -8, morale: 3 });
-      addLog(`在客栈打坐调息，恢复 ${heal} 生命。`);
+      addLog(`在出租屋短休回血，恢复 ${heal} 生命。`);
       return true;
     }
 
@@ -1087,7 +1087,7 @@
       p.potion += 1;
       state.metrics.shops += 1;
       updateCityStatus({ debt: -4, morale: 1 });
-      addLog("在药铺购入一瓶疗伤药。(-24 金币)");
+      addLog("在便利店补给了一瓶能量饮料。(-24 金币)");
       return true;
     }
 
@@ -1114,7 +1114,7 @@
     } else {
       const levelBase = Math.max(1, p.level + randInt(-1, 1));
       enemy = {
-        name: pick(["山匪", "狼妖", "机关傀儡", "毒雾异虫"]),
+        name: pick(["压价甲方", "突发裁员邮件", "超时罚单", "网暴跟帖团"]),
         hp: 22 + levelBase * 11 + randInt(0, 16),
         atk: 6 + levelBase * 3 + randInt(0, 6),
         rewardExp: 24 + levelBase * 16,
@@ -1149,7 +1149,7 @@
       p.hp = 0;
       state.metrics.winStreak = 0;
       updateCityStatus({ morale: -12 });
-      addLog("你在战斗中陨落。江湖之路至此终结。");
+      addLog("你在战斗中陨落。生存线到此终结。");
       endRun(false);
       return;
     }
@@ -1168,12 +1168,12 @@
       addLog(`击败 ${enemy.name}，获得 ${expGain} 经验与 ${goldGain} 金币。`);
       if (!isBoss && randInt(1, 100) <= 18 + Math.floor(p.stats.luk / 2)) {
         p.potion += 1;
-        addLog("战利品中找到一瓶疗伤药。");
+        addLog("战利品中找到一瓶能量饮料。");
       }
       if (isBoss) {
         state.flags.bossDefeated = true;
-        addMilestone("击败血煞教主");
-        addLog("你斩落血煞教主，江湖传名。");
+        addMilestone("击败系统性暴雷");
+        addLog("你熬穿系统性暴雷，斩杀线成功抬升。");
         endRun(true);
       }
     } else {
@@ -1215,313 +1215,169 @@
     const area = locationById(state.currentLocation).type;
     const events = [
       {
-        id: "hermit",
-        text: "地铁口算命阿姨用三句话点醒了你。",
+        id: "graduate-wave",
+        text: "今年毕业生规模继续走高，招聘会里人山人海。",
         apply: function () {
-          p.stats.int += 1;
-          p.stats.spi += 1;
-          addMilestone("被路边高人点醒");
-        }
-      },
-      {
-        id: "escort",
-        text: "你帮迷路外卖员找到写字楼，拿到感谢红包。",
-        apply: function () {
-          p.gold += 40;
-          state.story.stance += 1;
-        }
-      },
-      {
-        id: "black-market",
-        text: "你在二手群冲动下单，买到了“九成新空气”。",
-        apply: function () {
-          p.gold = Math.max(0, p.gold - 30);
-          state.story.stance -= 1;
-        }
-      },
-      {
-        id: "medicine-cache",
-        text: "共享柜里居然有一瓶没人取的能量饮料。",
-        condition: function () {
-          return area === "wild";
-        },
-        apply: function () {
-          p.potion += 1;
-        }
-      },
-      {
-        id: "town-tribute",
-        text: "街坊群里疯传你的战绩，众筹给你续了一周伙食。",
-        condition: function () {
-          return area === "town" && state.metrics.victories >= 3;
-        },
-        apply: function () {
-          p.gold += 60;
-        }
-      },
-      {
-        id: "blood-moon",
-        text: "夜空突然刷出血色弹幕：'今晚只有一个主角'。",
-        rare: true,
-        condition: function () {
-          return state.currentLocation === "ruins";
-        },
-        apply: function () {
-          state.metrics.rareEvents += 1;
-          p.stats.str += 1;
-          p.stats.luk += 1;
-          addMilestone("血月弹幕异象现世");
-        }
-      },
-      {
-        id: "old-friend",
-        text: "老同学深夜发来压缩包，解压后全是硬核攻略。",
-        rare: true,
-        apply: function () {
-          state.metrics.rareEvents += 1;
-          gainExp(35);
-          addMilestone("旧友发来神秘攻略");
-        }
-      },
-      {
-        id: "group-chat",
-        text: "你在群里问了一个问题，收到了 47 条互相打架的建议。",
-        apply: function () {
-          const gain = randInt(20, 45);
-          p.gold += gain;
-          p.stats.int += 1;
-          state.story.stance += random() > 0.5 ? 1 : -1;
-        }
-      },
-      {
-        id: "interview",
-        text: "你去面试，HR 问你五年规划，你反问公司三天规划。",
-        rare: true,
-        apply: function () {
-          state.metrics.rareEvents += 1;
-          p.stats.spi += 1;
-          p.stats.luk += 2;
-          addMilestone("反向面试名场面");
-        }
-      },
-      {
-        id: "midnight-live",
-        text: "凌晨直播间突然涨粉，你被迫现场教学如何边走边打怪。",
-        condition: function () {
-          return state.day >= 3;
-        },
-        apply: function () {
-          const gain = randInt(30, 80);
-          p.gold += gain;
-          gainExp(24);
-          addMilestone("深夜直播意外爆火");
-        }
-      },
-      {
-        id: "subway-delay",
-        text: "列车延误 27 分钟，你顺便在站台学会了新连招。",
-        apply: function () {
-          p.stats.agi += 1;
           gainExp(16);
+          updateCityStatus({ morale: -2, heat: 1 });
+          addMilestone("毕业季竞争加剧");
         }
       },
       {
-        id: "forum-problem",
-        text: "论坛有人发离谱求助，你认真回答后意外涨粉。",
+        id: "civil-service-rush",
+        text: "国考报名再创新高，备考群从清晨刷到深夜。",
         apply: function () {
-          p.gold += 35;
           p.stats.int += 1;
-        }
-      },
-      {
-        id: "hotpot-debate",
-        text: "你卷入“火锅蘸料宇宙大战”，成功全身而退。",
-        apply: function () {
           p.stats.spi += 1;
-          state.story.stance += 1;
+          updateCityStatus({ fatigue: 3, morale: -1 });
         }
       },
       {
-        id: "lost-phone",
-        text: "路边捡到失主手机，归还后对方转你一笔感谢金。",
-        condition: function () {
-          return area === "town";
-        },
-        apply: function () {
-          p.gold += 48;
-          state.story.stance += 1;
-        }
-      },
-      {
-        id: "screenshot-war",
-        text: "你把战报发进群，立刻引发三轮截图大战。",
-        condition: function () {
-          return state.metrics.victories >= 5;
-        },
-        apply: function () {
-          gainExp(22);
-          p.stats.luk += 1;
-          addMilestone("截图大战出圈");
-        }
-      },
-      {
-        id: "midnight-bug",
-        text: "半夜系统突然崩了一次，你重启后数据反而更顺。",
-        rare: true,
-        apply: function () {
-          state.metrics.rareEvents += 1;
-          p.stats.vit += 1;
-          p.stats.int += 1;
-          addMilestone("午夜重启逆转");
-        }
-      },
-      {
-        id: "office-escape",
-        text: "你在临时会议中丝滑逃生，顺手完成一笔外快。",
-        condition: function () {
-          return state.day >= 2;
-        },
-        apply: function () {
-          p.gold += randInt(22, 68);
-          p.stats.agi += 1;
-        }
-      },
-      {
-        id: "rainy-taxi",
-        text: "暴雨夜你拦到一辆空车，司机还是你的老战友。",
-        rare: true,
-        apply: function () {
-          state.metrics.rareEvents += 1;
-          p.potion += 1;
-          gainExp(30);
-          addMilestone("雨夜重逢战友");
-        }
-      },
-      {
-        id: "deadline-miracle",
-        text: "你卡点提交方案，甲方居然一次通过。",
-        condition: function () {
-          return state.metrics.battles >= 6;
-        },
-        apply: function () {
-          p.gold += 90;
-          p.stats.spi += 1;
-          state.story.stance += 1;
-        }
-      },
-      {
-        id: "elevator-legend",
-        text: "电梯里 30 秒演讲后，你拿到一张神秘邀请码。",
+        id: "social-security-pilot",
+        text: "灵活就业社保政策试点扩围，你终于看到了希望。",
         rare: true,
         condition: function () {
           return state.story.chapterId >= 4;
         },
         apply: function () {
           state.metrics.rareEvents += 1;
-          p.stats.int += 2;
-          addMilestone("电梯演讲封神");
+          updateCityStatus({ morale: 7, debt: -10, fatigue: -3 });
+          addMilestone("社保试点红利");
         }
       },
       {
-        id: "rent-notice",
-        text: "房东发来新消息：下月房租微调，你的钱包先行阵亡。",
-        condition: function () {
-          return area === "town" && state.day >= 2;
-        },
-        apply: function () {
-          p.gold = Math.max(0, p.gold - randInt(18, 45));
-          p.stats.spi += 1;
-          addMilestone("房租压力警报");
-        }
-      },
-      {
-        id: "overtime-loop",
-        text: "今天你在工位和地铁之间无限循环，脑子快烧了。",
-        apply: function () {
-          p.stats.vit += 1;
-          p.stats.int = Math.max(1, p.stats.int - 1);
-          gainExp(20);
-        }
-      },
-      {
-        id: "hospital-queue",
-        text: "医院队伍绕了三圈，你熬到凌晨终于挂上号。",
+        id: "ai-substitute",
+        text: "AI 工具上线后，团队直接砍了半条流程。",
+        rare: true,
         condition: function () {
           return state.day >= 3;
         },
         apply: function () {
-          p.gold = Math.max(0, p.gold - 24);
-          p.stats.spi += 2;
-          addMilestone("深夜排号生存成功");
+          state.metrics.rareEvents += 1;
+          p.stats.int += 1;
+          updateCityStatus({ morale: -4, heat: 4, fatigue: 2 });
+          addMilestone("AI 替岗冲击");
+        }
+      },
+      {
+        id: "takeout-order-war",
+        text: "平台补贴大战开打，单量暴涨但投诉也翻倍。",
+        condition: function () {
+          return area === "wild";
+        },
+        apply: function () {
+          p.gold += randInt(28, 72);
+          updateCityStatus({ fatigue: 6, heat: 3 });
+        }
+      },
+      {
+        id: "housing-rate-adjust",
+        text: "存量房贷利率调整消息落地，朋友圈刷屏一整天。",
+        condition: function () {
+          return state.cityStatus.debt >= 100;
+        },
+        apply: function () {
+          updateCityStatus({ debt: -14, morale: 4 });
+          addMilestone("房贷利率下调窗口");
+        }
+      },
+      {
+        id: "old-for-new",
+        text: "家电以旧换新补贴来了，你总算把旧冰箱换掉。",
+        condition: function () {
+          return area === "town" && state.day >= 4;
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(10, 26));
+          updateCityStatus({ morale: 5, fatigue: -2 });
+        }
+      },
+      {
+        id: "night-school-burst",
+        text: "夜校挤满了进修的人，你只抢到最后一排。",
+        apply: function () {
+          p.stats.int += 1;
+          gainExp(20);
+          updateCityStatus({ fatigue: 2 });
+        }
+      },
+      {
+        id: "rent-rise",
+        text: "房东通知续租上涨，工资还在原地踏步。",
+        condition: function () {
+          return area === "town";
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(20, 55));
+          updateCityStatus({ debt: 10, morale: -3 });
+          addMilestone("租金再上调");
+        }
+      },
+      {
+        id: "medical-queue",
+        text: "挂号队伍排到天亮，你在医院走廊补了 20 分钟觉。",
+        condition: function () {
+          return state.day >= 3;
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(18, 42));
+          updateCityStatus({ fatigue: 4, morale: -1 });
+          p.stats.spi += 1;
+        }
+      },
+      {
+        id: "livestream-burst",
+        text: "你发的生存战报短视频突然爆了，评论区全在求种子。",
+        rare: true,
+        condition: function () {
+          return state.metrics.victories >= 4;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.gold += randInt(65, 130);
+          updateCityStatus({ heat: 10, morale: 5 });
+          addMilestone("战报出圈");
         }
       },
       {
         id: "layoff-rumor",
-        text: "工位间传来裁员传闻，所有人都在假装镇定。",
+        text: "工位间又传出裁员名单，大家边笑边刷新邮箱。",
         rare: true,
         condition: function () {
           return state.story.chapterId >= 3;
         },
         apply: function () {
           state.metrics.rareEvents += 1;
+          updateCityStatus({ morale: -6, heat: 6, fatigue: 2 });
           p.stats.vit += 1;
-          p.stats.luk += 1;
           addMilestone("裁员风暴中稳住节奏");
         }
       },
       {
-        id: "delivery-rush",
-        text: "暴雨晚高峰，单子像洪水一样涌来。",
+        id: "public-service-hot",
+        text: "政务大厅推出午间延时服务，你终于办完关键证明。",
         condition: function () {
-          return area === "wild";
+          return state.currentLocation === "ruins";
         },
         apply: function () {
-          p.gold += randInt(35, 70);
-          p.stats.agi += 1;
-          state.story.stance += 1;
+          updateCityStatus({ morale: 4, debt: -6, fatigue: -2 });
         }
       },
       {
-        id: "family-call",
-        text: "家里来电只说一句“别太累”，你沉默了很久。",
-        apply: function () {
-          p.stats.spi += 1;
-          p.stats.vit += 1;
-          addMilestone("电话那头的牵挂");
-        }
-      },
-      {
-        id: "class-shift",
-        text: "你在楼下夜校听完一整节课，转身继续赶路。",
-        condition: function () {
-          return state.day >= 2;
-        },
+        id: "forum-absurd-help",
+        text: "贴吧里一个离谱求助帖冲上首页，你认真回复后被群嘲又被点赞。",
         apply: function () {
           p.stats.int += 1;
-          gainExp(24);
-          addMilestone("夜校充电完成");
+          updateCityStatus({ morale: random() > 0.5 ? 2 : -2, heat: 2 });
         }
       },
       {
-        id: "social-insurance",
-        text: "你终于把社保流程跑通，整个人松了一口气。",
-        rare: true,
-        condition: function () {
-          return state.story.chapterId >= 5;
-        },
+        id: "subway-delay",
+        text: "地铁故障晚点，你在站台完成了今日第一轮复盘。",
         apply: function () {
-          state.metrics.rareEvents += 1;
-          p.stats.spi += 2;
-          p.stats.vit += 1;
-          addMilestone("社保流程打通");
-        }
-      },
-      {
-        id: "street-mutual-help",
-        text: "街口大爷递给你一瓶水：年轻人慢点跑。",
-        apply: function () {
-          p.potion += 1;
-          state.story.stance += 1;
+          p.stats.agi += 1;
+          gainExp(14);
+          updateCityStatus({ fatigue: 1 });
         }
       },
       {
@@ -1625,6 +1481,19 @@
         }
       },
       {
+        id: "childcare-subsidy",
+        text: "地方发布托育补贴细则，群里有人欢呼有人算账。",
+        rare: true,
+        condition: function () {
+          return state.story.familyStage === "育儿中";
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          updateCityStatus({ debt: -16, morale: 6, fatigue: -3 });
+          addMilestone("托育补贴到账");
+        }
+      },
+      {
         id: "second-child-discuss",
         text: "家里开始讨论二胎，预算表和精力表一起爆红。",
         condition: function () {
@@ -1662,6 +1531,17 @@
         apply: function () {
           updateCityStatus({ fatigue: -10, morale: 4, debt: -6 });
           p.hp = Math.min(p.hpMax, p.hp + randInt(5, 12));
+        }
+      },
+      {
+        id: "road-rage-claim",
+        text: "通勤路上小剐蹭，处理流程拖了你一整天。",
+        condition: function () {
+          return state.day >= 6;
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(20, 60));
+          updateCityStatus({ fatigue: 5, morale: -3, heat: 3 });
         }
       },
       {
@@ -1726,6 +1606,18 @@
         }
       },
       {
+        id: "county-job-fair",
+        text: "返乡招聘会开场，岗位多但工资条让人沉默。",
+        condition: function () {
+          return state.story.chapterId >= 2;
+        },
+        apply: function () {
+          gainExp(16);
+          updateCityStatus({ morale: -2, debt: -4 });
+          addMilestone("县城招聘会观察");
+        }
+      },
+      {
         id: "metro-reading",
         text: "你在地铁上刷完一门公开课，思路突然清晰。",
         apply: function () {
@@ -1751,6 +1643,31 @@
           state.metrics.rareEvents += 1;
           updateCityStatus({ morale: 8, heat: 2, fatigue: -4 });
           addMilestone("城市善意回声");
+        }
+      },
+      {
+        id: "gold-price-spike",
+        text: "金价再冲高点，群里全在讨论该不该上车。",
+        rare: true,
+        condition: function () {
+          return state.day >= 8;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.gold += randInt(-40, 90);
+          updateCityStatus({ heat: 3, morale: 1 });
+          addMilestone("金价讨论夜");
+        }
+      },
+      {
+        id: "city-concert-boom",
+        text: "周末演唱会与文旅爆火，你兼职加班连轴转。",
+        condition: function () {
+          return area === "town" && state.day >= 5;
+        },
+        apply: function () {
+          p.gold += randInt(24, 66);
+          updateCityStatus({ fatigue: 4, heat: 2 });
         }
       }
     ];
@@ -1898,12 +1815,12 @@
 
   function composeEpitaph(isWin) {
     const p = state.player;
-    const sectName = p.sect ? p.sect.name : "无门无派";
-    const perkName = p.perk ? p.perk.name : "未定流派";
+    const sectName = p.sect ? p.sect.name : "未选路线";
+    const perkName = p.perk ? p.perk.name : "未定打法";
     const familyTail = `（${state.story.familyStage}，孩子${state.story.childCount}）`;
     const cityTail = `（精神${state.cityStatus.morale}/疲劳${state.cityStatus.fatigue}/债务${state.cityStatus.debt}）`;
     if (isWin) {
-      return `${p.name}混迹${sectName}，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。${familyTail}${cityTail}`;
+      return `${p.name}选择${sectName}路线，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。${familyTail}${cityTail}`;
     }
     return `${p.name}带着${perkName}推进到第${state.story.chapterId}章，在${locationById(state.currentLocation).name}被现实反杀，但留下了足够抽象的路线供后来者挑战。${familyTail}${cityTail}`;
   }
@@ -1913,7 +1830,7 @@
       .filter((line) => line.includes("主线推进") || line.includes("随机事件") || line.includes("击败") || line.includes("关键抉择"))
       .slice(-12);
     if (!candidates.length) {
-      return "这趟江湖路虽平凡，却足够真实。";
+      return "这条生存线虽平凡，却足够真实。";
     }
     const picked = candidates[randInt(0, candidates.length - 1)];
     return picked.replace(/^\[[^\]]+\]\s*/, "");
@@ -1982,7 +1899,7 @@
 
     const shareTemplates = [
       [
-        `我在 Adventure Simulator 打出了结局「${title}」`,
+        `我在《中国版斩杀线》打出了结局「${title}」`,
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
         `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
@@ -2084,7 +2001,7 @@
     state.pendingChoice = null;
     state.story = {
       chapterId: 1,
-      milestones: ["踏入江湖"],
+      milestones: ["踏入城市生存线"],
       majorChoices: [],
       stance: 0,
       mainlineProgress: { 1: 0 },
@@ -2126,7 +2043,7 @@
 
     clearShareCanvas();
     els.downloadShareLink.classList.add("hidden");
-    addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 加入江湖。`);
+    addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 进入城市生存线。`);
     addLog(`本局命运种子: ${state.seed}`);
     maybeProgressMainlineTask();
     if (state.initialSeedFromUrl) {

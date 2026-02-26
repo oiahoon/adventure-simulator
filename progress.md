@@ -58,3 +58,11 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added dynamic turn feedback generation based on real per-turn state deltas (hp/gold/morale/fatigue/debt/heat).
 - Added additional high-impact social issue arcs: bride price shock, mortgage apply/overdue, second-child decision, and helping-fall fraud + vindication chain.
 - Validation: JS syntax checks passed; Playwright run still blocked by missing Chromium runtime in environment.
+- Refocused narrative to a "中国版斩杀线" core: removed remaining wuxia wording from chapters/choices/map/ending/share flows and replaced with modern city-survival framing.
+- Replaced role archetypes with modern occupations (`外卖骑手/互联网打工人/考公备考生/县城返乡青年`) and route choices (`体制冲线/大厂硬扛/灵活经营`).
+- Reworked chapter arc to modern pressure chain: 城市入场 -> 试用期炼狱 -> 就业寒潮 -> 技能分化 -> 成家与房贷 -> 舆情与法律 -> 现金流保卫 -> 中国版斩杀线.
+- Replaced fantasy enemies and boss framing with现实版对抗（`压价甲方/裁员邮件/超时罚单/网暴跟帖团` + 终局 `系统性暴雷`）。
+- Fully rewrote random-event pool around recent-year hot social topics with tieba-style absurd pressure: 毕业季竞争、国考内卷、灵活就业社保试点、AI替岗冲击、平台补贴大战、房贷利率调整、以旧换新、医疗排队、战报短视频出圈、租金上调、县城招聘会、金价讨论等；保留并强化高冲击家庭/法律线（彩礼、房贷、扶人风波、离婚分割等）。
+- Updated share/report wording from `江湖战报` to `斩杀线战报`, and download filename to `killline-report.png`.
+- Validation: `node --check public/src/idle-mud.js` and `node --check api/index.js` passed.
+- Playwright loop status: blocked in current environment due missing `chromium_headless_shell` runtime expected by skill client; attempted install and dependency setup, but runtime binary still unavailable.
