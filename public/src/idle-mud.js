@@ -58,7 +58,8 @@
       { id: "c5-1", text: "在城市边区间穿梭 8 次", req: { travels: 8 } },
       { id: "c5-2", text: "完成 2 次支线任务", req: { sideQuestCompletions: 2 } },
       { id: "c5-3", text: "累计 2 次稀有事件", req: { rareEvents: 2 } },
-      { id: "c5-4", text: "累计 8 场胜利", req: { victories: 8 } }
+      { id: "c5-4", text: "累计 8 场胜利", req: { victories: 8 } },
+      { id: "c5-5", text: "完成 3 次支线任务（含家庭线）", req: { sideQuestCompletions: 3 } }
     ],
     6: [
       { id: "c6-1", text: "推进至古战场并获胜 8 场", req: { victories: 8 } },
@@ -90,7 +91,10 @@
     { id: "sq-training", title: "技能证书", text: "白天打工晚上备考，争取一张证书。", req: { battles: 2, randomEvents: 2 }, reward: { int: 1, exp: 38 } },
     { id: "sq-neighbor", title: "邻里互助", text: "帮邻居搬家后继续上夜班。", req: { travels: 3, victories: 1 }, reward: { gold: 40, vit: 1 } },
     { id: "sq-delivery-peak", title: "高峰单王", text: "在晚高峰连续扛住两轮压力。", req: { battles: 3, loots: 1 }, reward: { gold: 78, agi: 1 } },
-    { id: "sq-night-school", title: "夜校复读", text: "下班后再去夜校上一节硬课。", req: { randomEvents: 3 }, reward: { int: 1, spi: 1, exp: 30 } }
+    { id: "sq-night-school", title: "夜校复读", text: "下班后再去夜校上一节硬课。", req: { randomEvents: 3 }, reward: { int: 1, spi: 1, exp: 30 } },
+    { id: "sq-marriage-plan", title: "婚礼预算", text: "在现实压力里凑齐婚礼预算。", req: { shops: 2, loots: 2 }, reward: { gold: 60, spi: 1, exp: 38 } },
+    { id: "sq-parent-meet", title: "双方见面", text: "协调两边家庭安排并维持工作节奏。", req: { randomEvents: 3, travels: 2 }, reward: { spi: 1, gold: 32, exp: 32 } },
+    { id: "sq-newborn-night", title: "新生儿夜班", text: "夜里照顾孩子，白天继续上工。", req: { battles: 2, randomEvents: 2 }, reward: { vit: 1, spi: 1, exp: 44 } }
   ];
 
   const achievementBook = [
@@ -115,7 +119,10 @@
     { id: "ach-city-steady", tier: "epic", title: "城市稳态", desc: "结算时精神 >= 70 且疲劳 <= 35。", when: "any", check: () => state.cityStatus.morale >= 70 && state.cityStatus.fatigue <= 35 },
     { id: "ach-debt-clean", tier: "gold", title: "债务清算", desc: "结算时债务 <= 30。", when: "any", check: () => state.cityStatus.debt <= 30 },
     { id: "ach-heat-wave", tier: "epic", title: "热度风暴", desc: "结算时热度 >= 75 且仍然存活。", when: "win", check: () => state.cityStatus.heat >= 75 },
-    { id: "ach-hard-life", tier: "hidden", title: "硬扛到底", desc: "债务 >= 180 且通关。", when: "win", check: () => state.cityStatus.debt >= 180 }
+    { id: "ach-hard-life", tier: "hidden", title: "硬扛到底", desc: "债务 >= 180 且通关。", when: "win", check: () => state.cityStatus.debt >= 180 },
+    { id: "ach-family-setup", tier: "gold", title: "成家立业", desc: "结算时进入已婚或育儿阶段。", when: "any", check: () => state.story.familyStage === "已婚" || state.story.familyStage === "育儿中" },
+    { id: "ach-newborn", tier: "epic", title: "奶粉与远方", desc: "结算时处于育儿阶段。", when: "any", check: () => state.story.familyStage === "育儿中" },
+    { id: "ach-parent-iron", tier: "hidden", title: "凌晨四点的灯", desc: "育儿阶段达成通关。", when: "win", check: () => state.story.familyStage === "育儿中" }
   ];
 
   const locations = [
@@ -154,7 +161,9 @@
       majorChoices: [],
       stance: 0,
       mainlineProgress: {},
-      activeSideQuest: null
+      activeSideQuest: null,
+      familyStage: "单身",
+      childCount: 0
     },
     cityStatus: {
       morale: 58,
@@ -592,6 +601,7 @@
       `当前主线: ${chapter.mission}`,
       `主线节点: ${mainlineTask ? mainlineTask.text : "本章已全部完成"}`,
       `当前支线: ${sideQuest ? `${sideQuest.title} (${getSideQuestProgressText(sideQuest)})` : "暂无"}`,
+      `家庭阶段: ${state.story.familyStage} (${state.story.childCount} 个孩子)`,
       `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue}`,
       `债务 ${state.cityStatus.debt} / 热度 ${state.cityStatus.heat}`,
       "",
@@ -627,6 +637,7 @@
       `稀有遭遇: ${result.rareEvents} 次`,
       `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
       `代表成就: ${result.topAchievement}`,
+      `家庭阶段: ${result.familyStage} (${result.childCount} 个孩子)`,
       `城市状态: 精神 ${result.cityStatus.morale} / 疲劳 ${result.cityStatus.fatigue}`,
       `城市状态: 债务 ${result.cityStatus.debt} / 热度 ${result.cityStatus.heat}`,
       "",
@@ -778,6 +789,7 @@
       `支线完成数: ${result.sideQuestCompletions}`,
       `达成成就: ${result.achievements.length} 个 / ${result.achievementPoints} 分`,
       `代表成就: ${result.topAchievement}`,
+      `家庭阶段: ${result.familyStage} (${result.childCount}孩)`,
       `精神/疲劳: ${result.cityStatus.morale}/${result.cityStatus.fatigue}`,
       `债务/热度: ${result.cityStatus.debt}/${result.cityStatus.heat}`,
       `关键抉择: ${result.keyChoices || "无"}`,
@@ -1411,6 +1423,72 @@
         }
       },
       {
+        id: "blind-date",
+        text: "朋友给你安排了相亲，尴尬但意外聊得来。",
+        condition: function () {
+          return state.story.familyStage === "单身" && state.day >= 3;
+        },
+        apply: function () {
+          updateCityStatus({ morale: 5, fatigue: -2, debt: 4 });
+          state.story.familyStage = "恋爱中";
+          addMilestone("进入恋爱阶段");
+        }
+      },
+      {
+        id: "marriage-discuss",
+        text: "双方家庭开始讨论婚礼与彩礼，预算表拉满。",
+        condition: function () {
+          return state.story.familyStage === "恋爱中" && state.day >= 5;
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(30, 80));
+          updateCityStatus({ debt: 22, morale: -1, fatigue: 4 });
+          if (random() > 0.55) {
+            state.story.familyStage = "已婚";
+            addMilestone("完成婚礼，进入已婚阶段");
+          }
+        }
+      },
+      {
+        id: "newborn",
+        text: "家里迎来新生命，喜悦和压力同时翻倍。",
+        rare: true,
+        condition: function () {
+          return state.story.familyStage === "已婚" && state.day >= 7;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          state.story.familyStage = "育儿中";
+          state.story.childCount += 1;
+          updateCityStatus({ morale: 8, fatigue: 12, debt: 35, heat: -2 });
+          addMilestone("迎来新生儿，进入育儿阶段");
+        }
+      },
+      {
+        id: "child-sick-night",
+        text: "孩子半夜发烧，你抱着去急诊又赶早班。",
+        condition: function () {
+          return state.story.familyStage === "育儿中";
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(20, 55));
+          updateCityStatus({ fatigue: 10, morale: -4, debt: 12 });
+          p.hp = Math.max(1, p.hp - randInt(3, 8));
+          addMilestone("深夜急诊与早班并行");
+        }
+      },
+      {
+        id: "family-support",
+        text: "长辈来帮忙带娃几天，你终于补了觉。",
+        condition: function () {
+          return state.story.familyStage === "育儿中";
+        },
+        apply: function () {
+          updateCityStatus({ fatigue: -10, morale: 4, debt: -6 });
+          p.hp = Math.min(p.hpMax, p.hp + randInt(5, 12));
+        }
+      },
+      {
         id: "community-kitchen",
         text: "社区食堂临时开餐，你省下一顿饭钱。",
         condition: function () {
@@ -1536,6 +1614,12 @@
 
   function composeTitle(isWin, score) {
     const p = state.player;
+    if (isWin && state.story.familyStage === "育儿中") {
+      return "凌晨奶粉战神";
+    }
+    if (!isWin && state.story.familyStage === "育儿中") {
+      return "摇篮未眠者";
+    }
     if (isWin && state.cityStatus.morale >= 76 && state.cityStatus.fatigue <= 30) {
       return "城市稳态师";
     }
@@ -1570,11 +1654,12 @@
     const p = state.player;
     const sectName = p.sect ? p.sect.name : "无门无派";
     const perkName = p.perk ? p.perk.name : "未定流派";
+    const familyTail = `（${state.story.familyStage}，孩子${state.story.childCount}）`;
     const cityTail = `（精神${state.cityStatus.morale}/疲劳${state.cityStatus.fatigue}/债务${state.cityStatus.debt}）`;
     if (isWin) {
-      return `${p.name}混迹${sectName}，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。${cityTail}`;
+      return `${p.name}混迹${sectName}，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。${familyTail}${cityTail}`;
     }
-    return `${p.name}带着${perkName}推进到第${state.story.chapterId}章，在${locationById(state.currentLocation).name}被现实反杀，但留下了足够抽象的路线供后来者挑战。${cityTail}`;
+    return `${p.name}带着${perkName}推进到第${state.story.chapterId}章，在${locationById(state.currentLocation).name}被现实反杀，但留下了足够抽象的路线供后来者挑战。${familyTail}${cityTail}`;
   }
 
   function buildHighlight() {
@@ -1655,6 +1740,7 @@
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
         `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
+        `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}`,
         `代表成就：${topAchievement}`,
         `名场面：${highlight}`,
@@ -1664,6 +1750,7 @@
         `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
         `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
         `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个(${achievementPoints}分)`,
+        `目前家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}，这都没倒`,
         `代表成就：${topAchievement}`,
         `最离谱一幕：${highlight}`,
@@ -1672,6 +1759,7 @@
       [
         `这局我不想炫，但系统硬要给我「${title}」`,
         `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}(${achievementPoints}分)，也就一般发挥`,
+        `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 热度 ${state.cityStatus.heat}`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
@@ -1696,6 +1784,8 @@
       achievementPoints,
       topAchievement,
       cityStatus: { ...state.cityStatus },
+      familyStage: state.story.familyStage,
+      childCount: state.story.childCount,
       finalChapter,
       keyChoices,
       milestones: [...state.story.milestones],
@@ -1748,7 +1838,9 @@
       majorChoices: [],
       stance: 0,
       mainlineProgress: { 1: 0 },
-      activeSideQuest: null
+      activeSideQuest: null,
+      familyStage: "单身",
+      childCount: 0
     };
     state.cityStatus = {
       morale: randInt(52, 68),
@@ -1922,6 +2014,10 @@
       chapter: chapterById(state.story.chapterId),
       metrics: { ...state.metrics },
       city_status: { ...state.cityStatus },
+      family: {
+        stage: state.story.familyStage,
+        child_count: state.story.childCount
+      },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest
         ? {
@@ -1968,6 +2064,8 @@
             achievement_points: state.runResult.achievementPoints,
             top_achievement: state.runResult.topAchievement,
             city_status: state.runResult.cityStatus,
+            family_stage: state.runResult.familyStage,
+            child_count: state.runResult.childCount,
             challenge_url: state.runResult.challengeUrl
           }
         : null,

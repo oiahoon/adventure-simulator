@@ -44,3 +44,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Achievements now include city-survival outcomes (steady state, debt cleanup, heat storm, hard-life clear).
 - Validation: JS syntax checks passed.
 - Playwright status: attempted run via skill client, blocked due missing Chromium runtime in environment.
+- Added marriage/childbirth storyline track: family stage state (`单身/恋爱中/已婚/育儿中`) + child count.
+- Added family-related random events (dating, marriage budget pressure, newborn, child ER night, family support) with city-pressure impacts.
+- Added family-focused side quests and achievements; family progression now appears in sheet, ending report, share copy, and render_game_to_text payload.
