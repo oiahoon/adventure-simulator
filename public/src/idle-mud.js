@@ -212,7 +212,8 @@
       flags: {},
       bias: {},
       cooldowns: {},
-      seen: {}
+      seen: {},
+      trace: []
     };
   }
 
@@ -249,7 +250,8 @@
         parenting: { minDay: 7, baseChance: 0.48, familyStages: ["育儿中"], minChildCount: 1 }
       }
     },
-    arcEvents: {}
+    arcEvents: {},
+    eventDeck: { rollChance: 0.2, events: [] }
   };
 
   function deepClone(obj) {
@@ -330,6 +332,7 @@
     copyLinkBtn: document.getElementById("copy-link-btn"),
     speedSelect: document.getElementById("speed-select"),
     log: document.getElementById("log"),
+    trace: document.getElementById("event-trace"),
     sheet: document.getElementById("character-sheet"),
     endingSheet: document.getElementById("ending-sheet"),
     seedPill: document.getElementById("seed-pill"),
@@ -734,12 +737,17 @@
     return contentPacks().arcEvents || {};
   }
 
+  function eventDeckConfig() {
+    return contentPacks().eventDeck || defaultContentPacks.eventDeck;
+  }
+
   async function loadContentPacks() {
     const base = deepClone(defaultContentPacks);
     const targets = [
       { key: "eventMeta", url: "/data/events/event-meta.json" },
       { key: "arcConfig", url: "/data/events/arc-config.json" },
-      { key: "arcEvents", url: "/data/events/arc-events.json" }
+      { key: "arcEvents", url: "/data/events/arc-events.json" },
+      { key: "eventDeck", url: "/data/events/event-deck.json" }
     ];
     for (let i = 0; i < targets.length; i += 1) {
       const t = targets[i];
@@ -793,6 +801,23 @@
     e.seen[eventId] = (e.seen[eventId] || 0) + 1;
     if (cooldown > 0) {
       e.cooldowns[eventId] = cooldown;
+    }
+  }
+
+  function recordEventTrace(item) {
+    const e = engineState();
+    const entry = item || {};
+    e.trace.push({
+      day: state.day,
+      turn: state.turn,
+      source: entry.source || "misc",
+      id: entry.id || "unknown",
+      title: entry.title || entry.id || "未命名事件",
+      summary: entry.summary || "",
+      cause: entry.cause || ""
+    });
+    if (e.trace.length > 60) {
+      e.trace = e.trace.slice(-60);
     }
   }
 
@@ -914,6 +939,13 @@
     e.queue = e.queue.filter((item) => item !== chosen);
     if (runQueueEventItem(chosen)) {
       state.metrics.randomEvents += 1;
+      recordEventTrace({
+        source: "queue",
+        id: chosen.eventId,
+        title: `后续事件 ${chosen.eventId}`,
+        summary: "队列回收执行",
+        cause: `priority:${chosen.priority}`
+      });
       return true;
     }
     return false;
@@ -958,8 +990,24 @@
     if (typeof cond.moraleLte === "number" && state.cityStatus.morale > cond.moraleLte) return false;
     if (typeof cond.fatigueGte === "number" && state.cityStatus.fatigue < cond.fatigueGte) return false;
     if (Array.isArray(cond.professionIn) && !cond.professionIn.includes(p.profession.id)) return false;
+    if (Array.isArray(cond.locationIn) && !cond.locationIn.includes(state.currentLocation)) return false;
+    if (Array.isArray(cond.locationTypeIn)) {
+      const loc = locationById(state.currentLocation);
+      if (!loc || !cond.locationTypeIn.includes(loc.type)) return false;
+    }
     if (Array.isArray(cond.familyStageIn) && !cond.familyStageIn.includes(state.story.familyStage)) return false;
+    if (Array.isArray(cond.familyStageNotIn) && cond.familyStageNotIn.includes(state.story.familyStage)) return false;
     if (typeof cond.childCountGte === "number" && state.story.childCount < cond.childCountGte) return false;
+    if (typeof cond.childCountEq === "number" && state.story.childCount !== cond.childCountEq) return false;
+    if (typeof cond.engineFlagTrue === "string" && !getEngineFlag(cond.engineFlagTrue, false)) return false;
+    if (typeof cond.engineFlagFalse === "string" && getEngineFlag(cond.engineFlagFalse, false)) return false;
+    if (typeof cond.milestoneIncludes === "string" && !state.story.milestones.some((m) => m.includes(cond.milestoneIncludes))) return false;
+    if (typeof cond.milestoneNotIncludes === "string" && state.story.milestones.some((m) => m.includes(cond.milestoneNotIncludes))) return false;
+    if (cond.seenEventGte && typeof cond.seenEventGte === "object") {
+      const id = cond.seenEventGte.id;
+      const value = cond.seenEventGte.value || 0;
+      if ((engineState().seen[id] || 0) < value) return false;
+    }
     if (cond.statSumGte) {
       const cfg = cond.statSumGte;
       if (sumStats(cfg.keys || []) < (cfg.value || 0)) return false;
@@ -1047,9 +1095,155 @@
     }
   }
 
+  function applyDeckOutcomeSpec(outcome, eventId) {
+    if (!outcome || !state.player) return;
+    applyOutcomeSpec(outcome, "", null);
+
+    if (Array.isArray(outcome.milestones)) {
+      for (let i = 0; i < outcome.milestones.length; i += 1) {
+        addMilestone(outcome.milestones[i]);
+      }
+    }
+
+    if (Array.isArray(outcome.clearFlags)) {
+      const e = engineState();
+      for (let i = 0; i < outcome.clearFlags.length; i += 1) {
+        delete e.flags[outcome.clearFlags[i]];
+      }
+    }
+
+    if (outcome.story && typeof outcome.story === "object") {
+      if (typeof outcome.story.familyStage === "string") {
+        state.story.familyStage = outcome.story.familyStage;
+      }
+      if (typeof outcome.story.childCountAdd === "number") {
+        state.story.childCount = Math.max(0, state.story.childCount + outcome.story.childCountAdd);
+      }
+    }
+
+    if (outcome.force && typeof outcome.force === "object") {
+      if (typeof outcome.force.goldSet === "number") {
+        state.player.gold = Math.max(0, Math.floor(outcome.force.goldSet));
+      }
+      if (typeof outcome.force.hpSet === "number") {
+        state.player.hp = clamp(Math.floor(outcome.force.hpSet), 0, state.player.hpMax);
+      }
+    }
+
+    if (outcome.endRun === "lose") {
+      endRun(false);
+    } else if (outcome.endRun === "win") {
+      endRun(true);
+    }
+
+    if (eventId && outcome.tagAsSeen) {
+      markEventSeen(outcome.tagAsSeen, 0);
+    }
+  }
+
+  function validateDeckPrereq(evt) {
+    if (!evt || !evt.id) return { ok: false, cause: "invalid" };
+    if (isEventCooling(evt.id)) return { ok: false, cause: "cooldown" };
+    if (evt.oncePerRun && (engineState().seen[evt.id] || 0) > 0) return { ok: false, cause: "once" };
+
+    if (Array.isArray(evt.requireFlags)) {
+      for (let i = 0; i < evt.requireFlags.length; i += 1) {
+        if (!getEngineFlag(evt.requireFlags[i], false)) return { ok: false, cause: "require_flag" };
+      }
+    }
+    if (Array.isArray(evt.blockFlags)) {
+      for (let i = 0; i < evt.blockFlags.length; i += 1) {
+        if (getEngineFlag(evt.blockFlags[i], false)) return { ok: false, cause: "block_flag" };
+      }
+    }
+    if (Array.isArray(evt.prereqEventsAll)) {
+      for (let i = 0; i < evt.prereqEventsAll.length; i += 1) {
+        if ((engineState().seen[evt.prereqEventsAll[i]] || 0) <= 0) return { ok: false, cause: "prereq_all" };
+      }
+    }
+    if (Array.isArray(evt.prereqEventsAny) && evt.prereqEventsAny.length) {
+      let found = false;
+      for (let i = 0; i < evt.prereqEventsAny.length; i += 1) {
+        if ((engineState().seen[evt.prereqEventsAny[i]] || 0) > 0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return { ok: false, cause: "prereq_any" };
+    }
+    if (evt.when && !evaluateEngineCondition(evt.when)) return { ok: false, cause: "condition" };
+    return { ok: true, cause: "ready" };
+  }
+
+  function computeDeckEventWeight(evt) {
+    const meta = eventMetaConfig()[evt.id] || {};
+    const tags = evt.tags || meta.tags || [];
+    const deck = evt.deck || meta.deck || "";
+    let weight = Number.isFinite(evt.baseWeight) ? evt.baseWeight : evt.rare ? 0.7 : 1.2;
+    if (deck === "career" && state.story.chapterId >= 3) weight *= 1.25;
+    if (deck === "family" && state.story.familyStage !== "单身") weight *= 1.2;
+    if (deck === "housing" && state.cityStatus.debt >= 90) weight *= 1.25;
+    if (state.cityStatus.heat >= 75 && tags.includes("heat")) weight *= 1.3;
+    if (state.cityStatus.heat <= 12 && tags.includes("relief")) weight *= 1.2;
+    weight *= biasMultiplierFor(evt.id, tags);
+    weight *= noveltyPenalty(evt.id);
+    return Math.max(0.05, weight);
+  }
+
+  function maybeRandomEventFromDeck() {
+    const deckCfg = eventDeckConfig();
+    const triggerChance = Number.isFinite(deckCfg.rollChance) ? deckCfg.rollChance : 0.2;
+    if (random() > triggerChance) return false;
+
+    const events = Array.isArray(deckCfg.events) ? deckCfg.events : [];
+    const pool = [];
+    for (let i = 0; i < events.length; i += 1) {
+      const evt = events[i];
+      if (!validateDeckPrereq(evt).ok) continue;
+      pool.push({ event: evt, weight: computeDeckEventWeight(evt) });
+    }
+    if (!pool.length) return false;
+
+    const chosen = weightedPick(pool) || pick(pool).event;
+    const branches = Array.isArray(chosen.branches) ? chosen.branches : [];
+    let branch = null;
+    for (let i = 0; i < branches.length; i += 1) {
+      if (!branches[i].when || evaluateEngineCondition(branches[i].when)) {
+        branch = branches[i];
+        break;
+      }
+    }
+    const outcomes = branch ? branch.outcomes || [] : chosen.outcomes || [];
+
+    if (chosen.rare) state.metrics.rareEvents += 1;
+    for (let i = 0; i < outcomes.length; i += 1) {
+      applyDeckOutcomeSpec(outcomes[i], chosen.id);
+      if (state.mode === "ended") break;
+    }
+    if (state.mode === "ended") return true;
+
+    if (!chosen.rare) {
+      updateCityStatus({ morale: random() > 0.45 ? 1 : -1, fatigue: random() > 0.6 ? -1 : 1 });
+    }
+
+    const meta = eventMetaConfig()[chosen.id] || {};
+    markEventSeen(chosen.id, chosen.cooldown || meta.cooldown || (chosen.rare ? 5 : 2));
+    state.metrics.randomEvents += 1;
+    addLog(`随机事件: ${chosen.text || chosen.title || chosen.id}`);
+    recordEventTrace({
+      source: "deck",
+      id: chosen.id,
+      title: chosen.title || chosen.id,
+      summary: chosen.text || "",
+      cause: branch && branch.name ? branch.name : "normal"
+    });
+    return true;
+  }
+
   function runArcNodeFromPack(arcId, arcState) {
     const pack = arcEventsConfig()[arcId];
     if (!pack) return false;
+    const stageBefore = arcState.stage;
     const node = pack[String(arcState.stage)];
     if (!node) return false;
     if (node.when && !evaluateEngineCondition(node.when)) return false;
@@ -1074,6 +1268,13 @@
 
     if (chosen.complete || node.complete) {
       completeArc(arcId, chosen.ending || node.ending || "");
+      recordEventTrace({
+        source: "arc",
+        id: `${arcId}:s${stageBefore}`,
+        title: `${arcId} 剧情链`,
+        summary: chosen.ending || node.ending || "阶段结束",
+        cause: "complete"
+      });
       return true;
     }
 
@@ -1081,6 +1282,13 @@
     arcState.stage = nextStage;
     const nextOffset = Number.isFinite(chosen.nextDayOffset) ? chosen.nextDayOffset : Number.isFinite(node.nextDayOffset) ? node.nextDayOffset : 1;
     arcState.nextDay = state.day + nextOffset;
+    recordEventTrace({
+      source: "arc",
+      id: `${arcId}:s${stageBefore}`,
+      title: `${arcId} 剧情链`,
+      summary: `推进至阶段 ${nextStage}`,
+      cause: "progress"
+    });
     return true;
   }
 
@@ -1660,6 +1868,7 @@
       `最高连胜: ${result.maxWinStreak}`,
       `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
       `代表成就: ${result.topAchievement}`,
+      `剧情轨迹: ${result.traceSummary}`,
       `家庭阶段: ${result.familyStage} (${result.childCount} 个孩子)`,
       `城市状态: 精神 ${result.cityStatus.morale} / 疲劳 ${result.cityStatus.fatigue}`,
       `城市状态: 债务 ${result.cityStatus.debt} / 热度 ${result.cityStatus.heat}`,
@@ -1815,6 +2024,7 @@
       `支线完成数: ${result.sideQuestCompletions}`,
       `达成成就: ${result.achievements.length} 个 / ${result.achievementPoints} 分`,
       `代表成就: ${result.topAchievement}`,
+      `剧情轨迹: ${result.traceSummary}`,
       `最高连胜: ${result.maxWinStreak}`,
       `家庭阶段: ${result.familyStage} (${result.childCount}孩)`,
       `精神/疲劳: ${result.cityStatus.morale}/${result.cityStatus.fatigue}`,
@@ -1847,11 +2057,30 @@
     els.downloadShareLink.classList.remove("hidden");
   }
 
+  function renderEventTrace() {
+    if (!els.trace) return;
+    const trace = (engineState().trace || []).slice(-18);
+    if (!trace.length) {
+      els.trace.textContent = "尚无事件轨迹";
+      return;
+    }
+    els.trace.textContent = trace
+      .map((item) => {
+        const stamp = `D${String(item.day).padStart(2, "0")} T${String(item.turn).padStart(3, "0")}`;
+        const cause = item.cause ? ` | 因: ${item.cause}` : "";
+        const summary = item.summary ? ` | ${item.summary}` : "";
+        return `[${stamp}] [${item.source}] ${item.title}${cause}${summary}`;
+      })
+      .join("\n");
+    els.trace.scrollTop = els.trace.scrollHeight;
+  }
+
   function render() {
     els.sheet.textContent = formatSheet();
     els.endingSheet.textContent = formatEndingSheet();
     updateKpiStrip();
     updateKilllinePanel();
+    renderEventTrace();
     drawMap();
   }
 
@@ -2139,6 +2368,13 @@
   }
 
   function maybeRandomEvent() {
+    if (maybeRandomEventFromDeck()) {
+      return true;
+    }
+    return maybeRandomEventLegacy();
+  }
+
+  function maybeRandomEventLegacy() {
     if (random() > 0.2) {
       return false;
     }
@@ -2652,6 +2888,13 @@
     }
     state.metrics.randomEvents += 1;
     addLog(`随机事件: ${evt.text}`);
+    recordEventTrace({
+      source: "legacy",
+      id: evt.id,
+      title: evt.id,
+      summary: evt.text || "",
+      cause: "fallback"
+    });
     return true;
   }
 
@@ -2826,6 +3069,12 @@
     return picked.replace(/^\[[^\]]+\]\s*/, "");
   }
 
+  function buildTraceSummary() {
+    const trace = (engineState().trace || []).slice(-4);
+    if (!trace.length) return "无";
+    return trace.map((t) => t.title).join(" -> ");
+  }
+
   function buildChallengeUrl() {
     const url = new URL("/game/", window.location.origin);
     url.searchParams.set("seed", state.seed);
@@ -2881,6 +3130,7 @@
     const keyChoices = state.story.majorChoices.join(" / ");
     const challengeUrl = buildChallengeUrl();
     const highlight = buildHighlight();
+    const traceSummary = buildTraceSummary();
     const mainlineCompleted = countMainlineCompleted();
     const sideQuestCompletions = state.metrics.sideQuestCompletions;
     const achievements = evaluateAchievements(isWin);
@@ -2898,6 +3148,7 @@
         `最高连胜：${state.metrics.maxWinStreak}`,
         `代表成就：${topAchievement}`,
         `名场面：${highlight}`,
+        `剧情轨迹：${traceSummary}`,
         `同种子挑战：${challengeUrl}`
       ],
       [
@@ -2909,6 +3160,7 @@
         `最高连胜：${state.metrics.maxWinStreak}`,
         `代表成就：${topAchievement}`,
         `最离谱一幕：${highlight}`,
+        `剧情轨迹：${traceSummary}`,
         `来复刻我这条命运线：${challengeUrl}`
       ],
       [
@@ -2917,6 +3169,7 @@
         `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 热度 ${state.cityStatus.heat}`,
         `最高连胜：${state.metrics.maxWinStreak}`,
+        `剧情轨迹：${traceSummary}`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
     ];
@@ -2947,6 +3200,7 @@
       keyChoices,
       milestones: [...state.story.milestones],
       highlight,
+      traceSummary,
       challengeUrl,
       shareText
     };
@@ -3205,7 +3459,8 @@
       content: {
         event_meta_count: Object.keys(eventMetaConfig()).length,
         arc_order: (arcConfig().order || []).slice(),
-        arc_event_count: Object.keys(arcEventsConfig()).length
+        arc_event_count: Object.keys(arcEventsConfig()).length,
+        deck_event_count: ((eventDeckConfig().events || []).length || 0)
       },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest
@@ -3254,13 +3509,15 @@
             achievement_points: state.runResult.achievementPoints,
             top_achievement: state.runResult.topAchievement,
             max_win_streak: state.runResult.maxWinStreak,
+            trace_summary: state.runResult.traceSummary,
             city_status: state.runResult.cityStatus,
             family_stage: state.runResult.familyStage,
             child_count: state.runResult.childCount,
             challenge_url: state.runResult.challengeUrl
           }
         : null,
-      recent_log: state.log.slice(-8)
+      recent_log: state.log.slice(-8),
+      recent_trace: (engineState().trace || []).slice(-8)
     };
 
     return JSON.stringify(payload);

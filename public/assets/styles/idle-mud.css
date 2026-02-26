@@ -259,6 +259,25 @@ body {
   font-size: 0.86rem;
 }
 
+.trace-panel {
+  min-height: 170px;
+}
+
+#event-trace {
+  margin: 10px;
+  padding: 11px;
+  min-height: 150px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #d4deeb;
+  border-radius: 11px;
+  background: #f7fbff;
+  color: #1f2b38;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  font-size: 0.8rem;
+}
+
 #character-sheet,
 #ending-sheet {
   margin: 10px;
@@ -506,6 +525,13 @@ body {
   #log {
     height: 220px;
     font-size: 0.82rem;
+  }
+
+  #event-trace {
+    margin: 8px;
+    width: calc(100% - 16px);
+    min-height: 132px;
+    font-size: 0.76rem;
   }
 
   #character-sheet,

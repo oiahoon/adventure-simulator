@@ -1,0 +1,497 @@
+{
+  "rollChance": 0.2,
+  "events": [
+    {
+      "id": "graduate-wave",
+      "title": "毕业季洪峰",
+      "text": "今年毕业生规模继续走高，招聘会里人山人海。",
+      "deck": "society",
+      "tags": ["jobhunt", "youth"],
+      "baseWeight": 1.2,
+      "cooldown": 3,
+      "outcomes": [
+        {
+          "player": { "exp": 16 },
+          "city": { "morale": -2, "heat": 1 },
+          "milestone": "毕业季竞争加剧"
+        }
+      ]
+    },
+    {
+      "id": "civil-service-rush",
+      "title": "考编内卷",
+      "text": "报名群从清晨刷到深夜，连打印店都开始卖押题。",
+      "deck": "exam",
+      "tags": ["exam", "education"],
+      "baseWeight": 1.1,
+      "cooldown": 3,
+      "outcomes": [
+        {
+          "player": { "stats": { "int": 1, "spi": 1 } },
+          "city": { "fatigue": 3, "morale": -1 }
+        }
+      ]
+    },
+    {
+      "id": "social-security-pilot",
+      "title": "社保试点",
+      "text": "灵活就业社保试点扩围，你终于看到了可持续的希望。",
+      "deck": "policy",
+      "tags": ["policy", "relief"],
+      "rare": true,
+      "baseWeight": 0.78,
+      "cooldown": 5,
+      "when": { "chapterMin": 4 },
+      "outcomes": [
+        {
+          "city": { "morale": 7, "debt": -10, "fatigue": -3 },
+          "milestone": "社保试点红利"
+        }
+      ]
+    },
+    {
+      "id": "ai-substitute",
+      "title": "AI 替岗冲击",
+      "text": "自动化工具上线后，团队直接砍掉了半条流程。",
+      "deck": "career",
+      "tags": ["career", "layoff"],
+      "rare": true,
+      "baseWeight": 0.85,
+      "cooldown": 5,
+      "when": { "dayMin": 3 },
+      "outcomes": [
+        {
+          "player": { "stats": { "int": 1 } },
+          "city": { "morale": -4, "heat": 4, "fatigue": 2 },
+          "milestone": "AI 替岗冲击"
+        }
+      ]
+    },
+    {
+      "id": "takeout-order-war",
+      "title": "平台补贴大战",
+      "text": "单量暴涨但投诉也翻倍，你只能边跑边解释。",
+      "deck": "work",
+      "tags": ["gig", "income"],
+      "baseWeight": 1.2,
+      "cooldown": 2,
+      "when": { "locationTypeIn": ["wild"] },
+      "outcomes": [
+        {
+          "player": { "gold": { "mode": "addRand", "min": 28, "max": 72 } },
+          "city": { "fatigue": 6, "heat": 3 }
+        }
+      ]
+    },
+    {
+      "id": "rent-rise",
+      "title": "续租涨价",
+      "text": "房东通知续租上涨，工资却还在原地踏步。",
+      "deck": "housing",
+      "tags": ["rent", "debt"],
+      "baseWeight": 1.2,
+      "cooldown": 3,
+      "when": { "locationTypeIn": ["town"] },
+      "outcomes": [
+        {
+          "player": { "gold": { "mode": "subRand", "min": 20, "max": 55 } },
+          "city": { "debt": 10, "morale": -3 },
+          "milestone": "租金再上调"
+        }
+      ]
+    },
+    {
+      "id": "medical-queue",
+      "title": "深夜陪诊",
+      "text": "挂号队伍排到天亮，你在走廊补了 20 分钟觉。",
+      "deck": "health",
+      "tags": ["health", "fatigue"],
+      "baseWeight": 1.1,
+      "cooldown": 3,
+      "when": { "dayMin": 3 },
+      "outcomes": [
+        {
+          "player": {
+            "gold": { "mode": "subRand", "min": 18, "max": 42 },
+            "stats": { "spi": 1 }
+          },
+          "city": { "fatigue": 4, "morale": -1 }
+        }
+      ]
+    },
+    {
+      "id": "livestream-burst",
+      "title": "战报短视频出圈",
+      "text": "你发的生存战报突然爆了，评论区全在求种子。",
+      "deck": "social",
+      "tags": ["heat", "income"],
+      "rare": true,
+      "baseWeight": 0.72,
+      "cooldown": 4,
+      "when": { "dayMin": 4 },
+      "outcomes": [
+        {
+          "player": { "gold": { "mode": "addRand", "min": 65, "max": 130 } },
+          "city": { "heat": 10, "morale": 5 },
+          "milestone": "战报出圈"
+        }
+      ]
+    },
+    {
+      "id": "layoff-rumor",
+      "title": "裁员风声",
+      "text": "工位间又传出裁员名单，大家边笑边刷新邮箱。",
+      "deck": "career",
+      "tags": ["layoff", "jobhunt"],
+      "rare": true,
+      "baseWeight": 0.8,
+      "cooldown": 4,
+      "when": { "chapterMin": 3 },
+      "outcomes": [
+        {
+          "player": { "stats": { "vit": 1 } },
+          "city": { "morale": -6, "heat": 6, "fatigue": 2 },
+          "milestone": "裁员风暴中稳住节奏",
+          "enqueue": [{ "eventId": "queue:jobhunt-feedback", "dueIn": 2, "priority": 72 }],
+          "setFlags": [{ "key": "arc.unemployment.active", "value": true, "ttl": 6 }]
+        }
+      ]
+    },
+    {
+      "id": "blind-date",
+      "title": "相亲局",
+      "text": "朋友给你安排了相亲，尴尬但意外能聊。",
+      "deck": "family",
+      "tags": ["family", "relationship"],
+      "baseWeight": 1,
+      "cooldown": 4,
+      "when": { "familyStageIn": ["单身"], "dayMin": 3 },
+      "outcomes": [
+        {
+          "city": { "morale": 5, "fatigue": -2, "debt": 4 },
+          "story": { "familyStage": "恋爱中" },
+          "milestone": "进入恋爱阶段"
+        }
+      ]
+    },
+    {
+      "id": "blind-date-accusation",
+      "title": "相亲法律风波",
+      "text": "相亲后发生恶性纠纷，你被恶意指控并卷入刑责流程。",
+      "deck": "social",
+      "tags": ["legal", "heat"],
+      "rare": true,
+      "baseWeight": 0.52,
+      "cooldown": 8,
+      "when": { "familyStageIn": ["单身", "恋爱中"], "dayMin": 5 },
+      "branches": [
+        {
+          "name": "风波升级",
+          "when": { "randomLt": 0.38 },
+          "outcomes": [
+            {
+              "city": { "morale": -18, "fatigue": 12, "heat": 20, "debt": 25 },
+              "player": { "gold": { "mode": "subRand", "min": 60, "max": 160 } },
+              "milestones": ["相亲法律风波", "法律风波"],
+              "log": "法律风波升级，你失去自由，本局结束。",
+              "force": { "goldSet": 0, "hpSet": 0 },
+              "endRun": "lose"
+            }
+          ]
+        },
+        {
+          "name": "暂时脱身",
+          "outcomes": [
+            {
+              "city": { "morale": -12, "fatigue": 9, "heat": 16, "debt": 20 },
+              "player": { "gold": { "mode": "subRand", "min": 40, "max": 120 } },
+              "milestones": ["相亲法律风波", "法律风波"],
+              "log": "你暂时脱身，但已付出沉重代价。",
+              "setFlags": [{ "key": "legal.risk", "value": true, "ttl": 8 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marriage-discuss",
+      "title": "婚礼预算拉锯",
+      "text": "双方家庭开始讨论婚礼与彩礼，预算表拉满。",
+      "deck": "family",
+      "tags": ["family", "debt"],
+      "baseWeight": 0.95,
+      "cooldown": 4,
+      "when": { "familyStageIn": ["恋爱中"], "dayMin": 5 },
+      "branches": [
+        {
+          "name": "顺利推进",
+          "when": { "randomLt": 0.45 },
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 30, "max": 80 } },
+              "city": { "debt": 22, "morale": -1, "fatigue": 4 },
+              "story": { "familyStage": "已婚" },
+              "milestone": "完成婚礼，进入已婚阶段"
+            }
+          ]
+        },
+        {
+          "name": "继续协商",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 16, "max": 44 } },
+              "city": { "debt": 12, "morale": -2, "fatigue": 2 },
+              "milestone": "婚礼预算继续拉锯"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mortgage-apply",
+      "title": "房贷上肩",
+      "text": "你签下 30 年房贷，合同厚到像一本字典。",
+      "deck": "housing",
+      "tags": ["mortgage", "debt"],
+      "baseWeight": 0.9,
+      "cooldown": 7,
+      "oncePerRun": true,
+      "when": { "familyStageIn": ["已婚"], "dayMin": 6 },
+      "outcomes": [
+        {
+          "city": { "debt": 55, "morale": 2, "fatigue": 4 },
+          "milestone": "房贷上肩"
+        }
+      ]
+    },
+    {
+      "id": "mortgage-overdue",
+      "title": "月供预警",
+      "text": "月供扣款失败，银行提示你尽快补齐。",
+      "deck": "housing",
+      "tags": ["mortgage", "debt"],
+      "baseWeight": 1.2,
+      "cooldown": 4,
+      "when": { "debtGte": 120 },
+      "outcomes": [
+        {
+          "player": { "gold": { "mode": "subRand", "min": 25, "max": 65 } },
+          "city": { "morale": -6, "heat": 4, "debt": 18 },
+          "milestone": "房贷预警触发",
+          "enqueue": [{ "eventId": "queue:mortgage-followup", "dueIn": 2, "priority": 72 }]
+        }
+      ]
+    },
+    {
+      "id": "newborn",
+      "title": "迎来新生儿",
+      "text": "家里迎来新生命，喜悦和压力同时翻倍。",
+      "deck": "family",
+      "tags": ["parenting", "family"],
+      "rare": true,
+      "baseWeight": 0.65,
+      "cooldown": 8,
+      "when": { "familyStageIn": ["已婚"], "dayMin": 7 },
+      "outcomes": [
+        {
+          "story": { "familyStage": "育儿中", "childCountAdd": 1 },
+          "city": { "morale": 8, "fatigue": 12, "debt": 35, "heat": -2 },
+          "milestone": "迎来新生儿，进入育儿阶段",
+          "enqueue": [{ "eventId": "queue:parenting-support", "dueIn": 2, "priority": 78 }]
+        }
+      ]
+    },
+    {
+      "id": "second-child-discuss",
+      "title": "二胎讨论",
+      "text": "家里开始讨论二胎，预算表和精力表一起爆红。",
+      "deck": "family",
+      "tags": ["parenting", "debt"],
+      "baseWeight": 0.85,
+      "cooldown": 6,
+      "when": { "familyStageIn": ["育儿中"], "childCountEq": 1, "dayMin": 10 },
+      "branches": [
+        {
+          "name": "二胎落地",
+          "when": { "randomLt": 0.38 },
+          "outcomes": [
+            {
+              "story": { "childCountAdd": 1 },
+              "city": { "morale": 2, "fatigue": 8, "debt": 28 },
+              "milestone": "二胎落地，家庭升级"
+            }
+          ]
+        },
+        {
+          "name": "计划暂缓",
+          "outcomes": [
+            {
+              "city": { "morale": 1, "fatigue": 5, "debt": 18 },
+              "milestone": "二胎计划暂缓"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "child-sick-night",
+      "title": "夜间急诊",
+      "text": "孩子半夜发烧，你抱着去急诊又赶早班。",
+      "deck": "family",
+      "tags": ["parenting", "health"],
+      "baseWeight": 1,
+      "cooldown": 4,
+      "when": { "familyStageIn": ["育儿中"] },
+      "outcomes": [
+        {
+          "player": {
+            "gold": { "mode": "subRand", "min": 20, "max": 55 },
+            "hp": { "mode": "subRand", "min": 3, "max": 8 }
+          },
+          "city": { "fatigue": 10, "morale": -4, "debt": 12 },
+          "milestone": "深夜急诊与早班并行"
+        }
+      ]
+    },
+    {
+      "id": "helping-fall-fraud",
+      "title": "扶人风波",
+      "text": "你路上扶人反被质疑，围观和解释拖垮了整天节奏。",
+      "deck": "social",
+      "tags": ["legal", "heat"],
+      "rare": true,
+      "baseWeight": 0.64,
+      "cooldown": 7,
+      "when": { "dayMin": 4 },
+      "branches": [
+        {
+          "name": "赔付失控",
+          "when": { "randomLt": 0.28 },
+          "outcomes": [
+            {
+              "force": { "goldSet": 0 },
+              "city": { "morale": -14, "fatigue": 9, "heat": 16, "debt": 30 },
+              "milestones": ["扶人风波破产", "法律风波"],
+              "log": "风波失控导致赔付归零，你资金链断裂。",
+              "setFlags": [{ "key": "legal.risk", "value": true, "ttl": 10 }],
+              "endRun": "lose"
+            }
+          ]
+        },
+        {
+          "name": "舆情缠身",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 10, "max": 40 } },
+              "city": { "morale": -8, "fatigue": 6, "heat": 8 },
+              "milestone": "扶人风波",
+              "setFlags": [{ "key": "legal.risk", "value": true, "ttl": 8 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "camera-clear",
+      "title": "监控平反",
+      "text": "调取监控后真相还原，旁观者向你道歉。",
+      "deck": "social",
+      "tags": ["legal", "relief"],
+      "baseWeight": 0.94,
+      "cooldown": 6,
+      "requireFlags": ["legal.risk"],
+      "prereqEventsAny": ["helping-fall-fraud"],
+      "outcomes": [
+        {
+          "city": { "morale": 6, "heat": -6, "debt": -4 },
+          "milestone": "扶人风波平反",
+          "clearFlags": ["legal.risk"]
+        }
+      ]
+    },
+    {
+      "id": "divorce-asset-split",
+      "title": "离婚财产分割",
+      "text": "长期高压下关系破裂，进入离婚财产分割流程。",
+      "deck": "family",
+      "tags": ["family", "debt"],
+      "rare": true,
+      "baseWeight": 0.48,
+      "cooldown": 8,
+      "when": { "familyStageIn": ["已婚", "育儿中"], "dayMin": 10 },
+      "branches": [
+        {
+          "name": "离异育儿",
+          "when": { "childCountGte": 1 },
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRate", "rate": 0.5 } },
+              "city": { "morale": -12, "fatigue": 6, "debt": 20, "heat": 6 },
+              "story": { "familyStage": "离异育儿" },
+              "milestone": "离婚财产分割"
+            }
+          ]
+        },
+        {
+          "name": "离异",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRate", "rate": 0.5 } },
+              "city": { "morale": -12, "fatigue": 6, "debt": 20, "heat": 6 },
+              "story": { "familyStage": "离异" },
+              "milestone": "离婚财产分割"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "public-praise",
+      "title": "善意回声",
+      "text": "你做的一件小事被公开表扬，整天都轻快了。",
+      "deck": "social",
+      "tags": ["heat", "morale"],
+      "rare": true,
+      "baseWeight": 0.8,
+      "cooldown": 4,
+      "outcomes": [
+        {
+          "city": { "morale": 8, "heat": 2, "fatigue": -4 },
+          "milestone": "城市善意回声"
+        }
+      ]
+    },
+    {
+      "id": "gold-price-spike",
+      "title": "金价讨论夜",
+      "text": "金价再冲高点，群里全在讨论该不该上车。",
+      "deck": "finance",
+      "tags": ["finance", "heat"],
+      "rare": true,
+      "baseWeight": 0.76,
+      "cooldown": 5,
+      "when": { "dayMin": 8 },
+      "branches": [
+        {
+          "name": "追高回撤",
+          "when": { "randomLt": 0.4 },
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 10, "max": 40 } },
+              "city": { "heat": 3, "morale": -1 }
+            }
+          ]
+        },
+        {
+          "name": "短期浮盈",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "addRand", "min": 20, "max": 90 } },
+              "city": { "heat": 3, "morale": 1 }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

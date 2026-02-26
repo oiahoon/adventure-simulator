@@ -141,3 +141,14 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Validation:
   - `node --check public/src/idle-mud.js` passed.
   - Tried Playwright loop using `$WEB_GAME_CLIENT` with local static server; blocked in sandbox by Chromium launch permission (`MachPortRendezvousServer ... Permission denied (1100)`).
+- Engine v2 phase-4 (按蓝图 1/2/3 顺序推进) completed:
+  - [1] 随机事件牌库 JSON 化：新增 `public/data/events/event-deck.json`，把随机事件主池迁移为数据驱动 DSL（`rollChance + events + when + branches + outcomes`）。
+  - [2] 前置校验器：在引擎中新增 `validateDeckPrereq`，统一校验冷却、oncePerRun、require/block flags、前因事件依赖（prereq any/all）和条件表达式，降低“无前因乱跳”问题。
+  - [3] 事件轨迹系统：新增 `engine.trace` + `recordEventTrace`，并将 Queue/Arc/Deck 触发写入轨迹；UI 新增“事件轨迹”面板，`render_game_to_text` 导出 `recent_trace`，结局与分享文案增加 `剧情轨迹` 摘要。
+- BluePrint 回顾:
+  - 与文档“三层选择架构 Queue -> Arcs -> Decks”对齐：保留 queue-first、arc-second，并将 deck 升级为 pack-first 数据驱动。
+  - 与文档“可复盘”对齐：新增 trace 轨迹用于回放与分享摘要（下一步可扩展到完整 EventLog hash）。
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - `event-deck.json` JSON parse passed.
+  - Playwright 端到端回放仍受当前沙箱 Chromium 权限限制，未完成截图回归。
