@@ -190,7 +190,7 @@
     },
     {
       "id": "blind-date",
-      "title": "相亲局",
+      "title": "相亲饭局",
       "text": "朋友给你安排了相亲，尴尬但意外能聊。",
       "deck": "family",
       "tags": ["family", "relationship"],
@@ -340,11 +340,35 @@
       "tags": ["parenting", "debt"],
       "baseWeight": 0.85,
       "cooldown": 6,
-      "when": { "familyStageIn": ["育儿中"], "childCountEq": 1, "dayMin": 10 },
+      "when": {
+        "all": [
+          { "familyStageIn": ["育儿中"] },
+          { "childCountEq": 1 },
+          { "dayMin": 10 },
+          { "engineFlagFalse": "family.secondChild.blocked" }
+        ]
+      },
       "branches": [
         {
+          "name": "意向推进",
+          "when": {
+            "all": [
+              { "engineFlagTrue": "family.secondChild.intent" },
+              { "randomLt": 0.7 }
+            ]
+          },
+          "outcomes": [
+            {
+              "story": { "childCountAdd": 1 },
+              "city": { "morale": 3, "fatigue": 9, "debt": 30 },
+              "milestone": "二胎落地，家庭升级",
+              "clearFlags": ["family.secondChild.intent"]
+            }
+          ]
+        },
+        {
           "name": "二胎落地",
-          "when": { "randomLt": 0.38 },
+          "when": { "randomLt": 0.25 },
           "outcomes": [
             {
               "story": { "childCountAdd": 1 },
@@ -381,6 +405,142 @@
           },
           "city": { "fatigue": 10, "morale": -4, "debt": 12 },
           "milestone": "深夜急诊与早班并行"
+        }
+      ]
+    },
+    {
+      "id": "exam-second-battle",
+      "title": "考研二战",
+      "text": "你在工作和备考之间切换，周末几乎全部交给了图书馆。",
+      "deck": "exam",
+      "tags": ["exam", "education", "career"],
+      "baseWeight": 0.92,
+      "cooldown": 5,
+      "when": { "dayMin": 10, "chapterMin": 4 },
+      "branches": [
+        {
+          "name": "稳步推进",
+          "when": { "statSumGte": { "keys": ["int", "spi"], "value": 25 } },
+          "outcomes": [
+            {
+              "player": { "exp": 26, "stats": { "int": 1 } },
+              "city": { "fatigue": 5, "morale": 3 },
+              "milestone": "考研二战稳步推进"
+            }
+          ]
+        },
+        {
+          "name": "精力透支",
+          "outcomes": [
+            {
+              "city": { "fatigue": 9, "morale": -5, "debt": 6 },
+              "milestone": "备考透支期"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "abroad-offer-rmb-pressure",
+      "title": "留学抉择",
+      "text": "你拿到海外项目 offer，但汇率与学费让家庭预算瞬间紧绷。",
+      "deck": "career",
+      "tags": ["abroad", "debt", "family"],
+      "rare": true,
+      "baseWeight": 0.56,
+      "cooldown": 10,
+      "when": { "chapterMin": 5, "dayMin": 12 },
+      "branches": [
+        {
+          "name": "选择出发",
+          "when": { "randomLt": 0.35 },
+          "outcomes": [
+            {
+              "player": { "stats": { "int": 1, "spi": 1 }, "gold": { "mode": "subRand", "min": 35, "max": 90 } },
+              "city": { "debt": 18, "morale": 4, "fatigue": 2 },
+              "milestone": "海外项目启动",
+              "setFlags": [{ "key": "career.abroad.active", "value": true, "ttl": 16 }]
+            }
+          ]
+        },
+        {
+          "name": "暂缓计划",
+          "outcomes": [
+            {
+              "city": { "morale": -2, "debt": 4 },
+              "milestone": "留学计划暂缓"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "returnee-gap",
+      "title": "海归落差",
+      "text": "你带着新经历回到求职市场，却发现岗位匹配并不顺滑。",
+      "deck": "career",
+      "tags": ["abroad", "jobhunt", "career"],
+      "baseWeight": 0.62,
+      "cooldown": 9,
+      "requireFlags": ["career.abroad.active"],
+      "prereqEventsAny": ["abroad-offer-rmb-pressure"],
+      "outcomes": [
+        {
+          "player": { "exp": 20 },
+          "city": { "morale": -3, "heat": 3 },
+          "milestone": "海归求职落差",
+          "clearFlags": ["career.abroad.active"]
+        }
+      ]
+    },
+    {
+      "id": "city-relocate-plan",
+      "title": "跨城迁移",
+      "text": "你开始认真比较不同城市的岗位、房租和育儿成本，准备换城重开。",
+      "deck": "society",
+      "tags": ["migration", "rent", "jobhunt"],
+      "baseWeight": 0.84,
+      "cooldown": 7,
+      "when": { "dayMin": 9, "debtGte": 90 },
+      "branches": [
+        {
+          "name": "低成本城市",
+          "when": { "randomLt": 0.5 },
+          "outcomes": [
+            {
+              "city": { "debt": -12, "morale": 2, "fatigue": -2 },
+              "player": { "gold": { "mode": "subRand", "min": 12, "max": 35 } },
+              "milestone": "跨城迁移：低成本策略"
+            }
+          ]
+        },
+        {
+          "name": "机会城市",
+          "outcomes": [
+            {
+              "city": { "heat": 6, "morale": -1, "fatigue": 3 },
+              "player": { "gold": { "mode": "addRand", "min": 18, "max": 60 } },
+              "milestone": "跨城迁移：机会优先策略"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "coder-outsourcing-wave",
+      "title": "外包潮冲击",
+      "text": "业务被拆给外包团队，核心岗位预算再次被压缩。",
+      "deck": "career",
+      "tags": ["programmer", "layoff", "jobhunt"],
+      "baseWeight": 0.88,
+      "cooldown": 6,
+      "when": { "chapterMin": 4, "professionIn": ["coder", "exam"] },
+      "outcomes": [
+        {
+          "city": { "morale": -5, "fatigue": 4, "heat": 3 },
+          "player": { "stats": { "int": 1 } },
+          "milestone": "外包潮冲击",
+          "enqueue": [{ "eventId": "queue:jobhunt-feedback", "dueIn": 2, "priority": 76 }]
         }
       ]
     },

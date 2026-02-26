@@ -196,3 +196,20 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `node --check public/src/idle-mud.js` passed.
   - `npm run check:events` passed (warnings only).
   - `npm run check:replay` passed (3/3).
+- Story diversity and decision-depth expansion:
+  - Expanded major-decision system beyond fixed route/perk:
+    - 职业转向、债务处置、婚育节奏、育儿二胎策略、法律风波应对（均为条件触发且写入 majorChoices/milestones）。
+    - Each decision now writes causal effects via city/player deltas + engine bias/flags/queue follow-up.
+  - Expanded deck content (+5 themes) toward broader tieba-like social topics:
+    - 考研二战、留学抉择与汇率压力、海归落差、跨城迁移、程序员外包潮。
+  - Strengthened causality on family line:
+    - `second-child-discuss` now respects `family.secondChild.blocked/intent` flags set by strategic choices.
+  - Event diversity metrics updated:
+    - Deck events: 29 (from 24)
+    - Branch events: 9 (from 6)
+    - Rare events: 11 (from 10)
+    - Tag coverage: 26 (from 23)
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - `npm run check:events` passed (0 errors, 0 warnings).
+  - `npm run check:replay` passed (3/3, hashes updated after content evolution).

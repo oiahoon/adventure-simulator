@@ -311,6 +311,11 @@
     flags: {
       sectChosen: false,
       skillChosen: false,
+      careerPivotChosen: false,
+      debtStrategyChosen: false,
+      marriageStrategyChosen: false,
+      parentingStrategyChosen: false,
+      legalResponseChosen: false,
       bossDefeated: false,
       lineEventDay: {}
     },
@@ -2264,6 +2269,255 @@
       return true;
     }
 
+    if (!state.flags.careerPivotChosen && state.day >= 6 && p.level >= 5) {
+      openChoice({
+        title: "关键抉择: 职业转向",
+        body: "岗位不再稳定，你要决定下一阶段的生存方式。",
+        options: [
+          {
+            id: "pivot-cert",
+            label: "技能再训练（短期更累，长期更稳）",
+            onPick: function () {
+              p.stats.int += 2;
+              p.stats.spi += 1;
+              p.gold = Math.max(0, p.gold - randInt(18, 48));
+              updateCityStatus({ fatigue: 6, morale: -1, debt: 6 });
+              addBias("tag:exam", 1.35, 12);
+              addBias("tag:jobhunt", 1.2, 10);
+              enqueueEvent("queue:exam-result", 2, 76, false);
+              state.flags.careerPivotChosen = true;
+              state.story.majorChoices.push("职业转向: 技能再训练");
+              addMilestone("职业转向：技能再训练");
+              addLog("你选择了技能再训练路线，短期压力上升但路径更可控。");
+            }
+          },
+          {
+            id: "pivot-sidegig",
+            label: "副业冲刺（现金流优先）",
+            onPick: function () {
+              p.gold += randInt(24, 62);
+              p.stats.agi += 1;
+              updateCityStatus({ fatigue: 7, heat: 6, morale: -2, debt: -4 });
+              addBias("tag:income", 1.35, 10);
+              addBias("tag:heat", 1.2, 8);
+              state.flags.careerPivotChosen = true;
+              state.story.majorChoices.push("职业转向: 副业冲刺");
+              addMilestone("职业转向：副业冲刺");
+              addLog("你选择了副业冲刺，收入改善但舆情和疲劳压力上升。");
+            }
+          },
+          {
+            id: "pivot-stable",
+            label: "稳岗保守（减少波动）",
+            onPick: function () {
+              p.stats.vit += 1;
+              updateCityStatus({ morale: 4, fatigue: -3, heat: -3, debt: 2 });
+              addBias("tag:relief", 1.25, 10);
+              state.flags.careerPivotChosen = true;
+              state.story.majorChoices.push("职业转向: 稳岗保守");
+              addMilestone("职业转向：稳岗保守");
+              addLog("你选择了稳岗保守，节奏放缓但增长速度变慢。");
+            }
+          }
+        ]
+      });
+      return true;
+    }
+
+    if (!state.flags.debtStrategyChosen && state.day >= 8 && state.cityStatus.debt >= 120) {
+      openChoice({
+        title: "关键抉择: 债务处置",
+        body: "债务线逼近危险区，必须立刻选择处置方案。",
+        options: [
+          {
+            id: "debt-negotiate",
+            label: "协商展期（降低爆雷风险）",
+            onPick: function () {
+              p.gold = Math.max(0, p.gold - randInt(12, 35));
+              updateCityStatus({ debt: -20, morale: 2, fatigue: 2, heat: 1 });
+              enqueueEvent("queue:mortgage-followup", 2, 82, false);
+              setEngineFlag("debt.plan.renegotiated", true, 12);
+              state.flags.debtStrategyChosen = true;
+              state.story.majorChoices.push("债务处置: 协商展期");
+              addMilestone("债务处置：协商展期");
+              addLog("你完成展期协商，债务压力短期缓和。");
+            }
+          },
+          {
+            id: "debt-overtime",
+            label: "加班硬扛（高压换现金）",
+            onPick: function () {
+              p.gold += randInt(35, 88);
+              updateCityStatus({ debt: -10, fatigue: 10, morale: -5, heat: 5 });
+              addBias("tag:income", 1.3, 8);
+              addBias("tag:health", 1.25, 8);
+              state.flags.debtStrategyChosen = true;
+              state.story.majorChoices.push("债务处置: 加班硬扛");
+              addMilestone("债务处置：加班硬扛");
+              addLog("你选择了加班硬扛，现金流改善但身心透支。");
+            }
+          },
+          {
+            id: "debt-asset-sale",
+            label: "卖资产止血（一次性降压）",
+            onPick: function () {
+              p.gold = Math.max(0, Math.floor(p.gold * 0.7));
+              updateCityStatus({ debt: -35, morale: -4, heat: 2, fatigue: -1 });
+              setEngineFlag("debt.asset.sold", true, 18);
+              state.flags.debtStrategyChosen = true;
+              state.story.majorChoices.push("债务处置: 卖资产止血");
+              addMilestone("债务处置：卖资产止血");
+              addLog("你通过资产处置换到缓冲空间，但生活质量被动下调。");
+            }
+          }
+        ]
+      });
+      return true;
+    }
+
+    if (!state.flags.marriageStrategyChosen && state.day >= 9 && (state.story.familyStage === "恋爱中" || state.story.familyStage === "已婚")) {
+      openChoice({
+        title: "关键抉择: 婚育节奏",
+        body: "家庭与现金流互相牵制，你要给出一个明确策略。",
+        options: [
+          {
+            id: "marriage-delay",
+            label: "延后大额开销（先保现金流）",
+            onPick: function () {
+              updateCityStatus({ debt: -8, morale: -2, fatigue: -1 });
+              addBias("tag:debt", 0.88, 8);
+              state.flags.marriageStrategyChosen = true;
+              state.story.majorChoices.push("婚育节奏: 延后开销");
+              addMilestone("婚育策略：延后大额开销");
+              addLog("你选择先保现金流，家庭矛盾短期增加。");
+            }
+          },
+          {
+            id: "marriage-commit",
+            label: "加速推进（关系稳定优先）",
+            onPick: function () {
+              p.gold = Math.max(0, p.gold - randInt(20, 60));
+              updateCityStatus({ morale: 5, debt: 10, fatigue: 3 });
+              if (state.story.familyStage === "恋爱中") state.story.familyStage = "已婚";
+              state.flags.marriageStrategyChosen = true;
+              state.story.majorChoices.push("婚育节奏: 加速推进");
+              addMilestone("婚育策略：关系稳定优先");
+              addLog("你选择加速推进关系，心理稳定但债务压力上升。");
+            }
+          },
+          {
+            id: "marriage-independent",
+            label: "财务分账（风险隔离）",
+            onPick: function () {
+              updateCityStatus({ debt: -5, morale: 1, heat: -2 });
+              addBias("tag:legal", 0.9, 8);
+              state.flags.marriageStrategyChosen = true;
+              state.story.majorChoices.push("婚育节奏: 财务分账");
+              addMilestone("婚育策略：财务分账");
+              addLog("你选择了财务分账，关系风险和法律风险更可控。");
+            }
+          }
+        ]
+      });
+      return true;
+    }
+
+    if (!state.flags.parentingStrategyChosen && state.day >= 12 && state.story.familyStage === "育儿中" && state.story.childCount >= 1) {
+      openChoice({
+        title: "关键抉择: 育儿与二胎",
+        body: "托育、精力和债务都在拉扯，必须给出中期方案。",
+        options: [
+          {
+            id: "parenting-one",
+            label: "保持一孩策略（先稳住）",
+            onPick: function () {
+              updateCityStatus({ fatigue: -4, debt: -6, morale: 2 });
+              setEngineFlag("family.secondChild.blocked", true, 16);
+              state.flags.parentingStrategyChosen = true;
+              state.story.majorChoices.push("育儿策略: 一孩稳态");
+              addMilestone("育儿策略：一孩稳态");
+              addLog("你决定先稳住一孩节奏，家庭负担有所回落。");
+            }
+          },
+          {
+            id: "parenting-two-prep",
+            label: "二胎准备（高风险高压力）",
+            onPick: function () {
+              updateCityStatus({ fatigue: 6, debt: 14, morale: 1 });
+              addBias("tag:parenting", 1.4, 12);
+              setEngineFlag("family.secondChild.intent", true, 18);
+              state.flags.parentingStrategyChosen = true;
+              state.story.majorChoices.push("育儿策略: 二胎准备");
+              addMilestone("育儿策略：二胎准备");
+              addLog("你进入二胎准备阶段，后续育儿事件密度将提升。");
+            }
+          },
+          {
+            id: "parenting-support",
+            label: "外包托育（花钱换精力）",
+            onPick: function () {
+              p.gold = Math.max(0, p.gold - randInt(25, 70));
+              updateCityStatus({ fatigue: -9, debt: 8, morale: 4 });
+              enqueueEvent("queue:parenting-support", 1, 85, true);
+              state.flags.parentingStrategyChosen = true;
+              state.story.majorChoices.push("育儿策略: 外包托育");
+              addMilestone("育儿策略：外包托育");
+              addLog("你通过托育服务换回部分精力，但现金流继续承压。");
+            }
+          }
+        ]
+      });
+      return true;
+    }
+
+    if (!state.flags.legalResponseChosen && getEngineFlag("legal.risk", false)) {
+      openChoice({
+        title: "关键抉择: 法律风波应对",
+        body: "你已处在法律风险窗口，处理方式会改变后续剧情走向。",
+        options: [
+          {
+            id: "legal-evidence",
+            label: "证据优先（低热度慢处理）",
+            onPick: function () {
+              p.gold = Math.max(0, p.gold - randInt(8, 28));
+              updateCityStatus({ heat: -6, morale: 2, fatigue: 2 });
+              addBias("tag:relief", 1.35, 8);
+              state.flags.legalResponseChosen = true;
+              state.story.majorChoices.push("法律应对: 证据优先");
+              addMilestone("法律应对：证据优先");
+              addLog("你选择证据优先，处理节奏变慢但风险下降。");
+            }
+          },
+          {
+            id: "legal-pr",
+            label: "舆论对冲（高热度快反馈）",
+            onPick: function () {
+              p.gold = Math.max(0, p.gold - randInt(15, 45));
+              updateCityStatus({ heat: 8, morale: -2, fatigue: 3, debt: 4 });
+              addBias("tag:heat", 1.35, 7);
+              state.flags.legalResponseChosen = true;
+              state.story.majorChoices.push("法律应对: 舆论对冲");
+              addMilestone("法律应对：舆论对冲");
+              addLog("你选择舆论对冲，反馈更快但热度和反噬风险同步上升。");
+            }
+          },
+          {
+            id: "legal-withdraw",
+            label: "低调止损（现金优先）",
+            onPick: function () {
+              updateCityStatus({ morale: -4, heat: -3, debt: -3 });
+              setEngineFlag("legal.risk", false, 1);
+              state.flags.legalResponseChosen = true;
+              state.story.majorChoices.push("法律应对: 低调止损");
+              addMilestone("法律应对：低调止损");
+              addLog("你选择低调止损，避免继续升级但口碑损耗上升。");
+            }
+          }
+        ]
+      });
+      return true;
+    }
+
     return false;
   }
 
@@ -3443,6 +3697,11 @@
     state.flags = {
       sectChosen: false,
       skillChosen: false,
+      careerPivotChosen: false,
+      debtStrategyChosen: false,
+      marriageStrategyChosen: false,
+      parentingStrategyChosen: false,
+      legalResponseChosen: false,
       bossDefeated: false,
       lineEventDay: {}
     };
