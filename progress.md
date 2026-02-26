@@ -37,3 +37,10 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added installable CLI app: `mud-cli` (`bin/mud-cli.js`) with interactive menu-based UI.
 - CLI supports `remote` mode (calls `/api/mud/run`) and `local` mode (offline playable fallback).
 - Added npm bin wiring and scripts in root package.json; updated README with install/run commands.
+- UI/UX pass: rebuilt frontend to mobile-first modern card layout, compact KPI strip, sticky bottom controls, and cleaner typography/spacing.
+- Added live KPI surface (HP/morale/fatigue/debt/heat/chapter + seed pill) and connected render flow to new UI elements.
+- Gameplay depth pass: introduced city survival systems (`morale`, `fatigue`, `debt`, `heat`) with per-turn pressure, resource bills, and direct combat/event effects.
+- Expanded content: new city-life events, stronger consequences, and city-state-aware share copy/result scoring.
+- Achievements now include city-survival outcomes (steady state, debt cleanup, heat storm, hard-life clear).
+- Validation: JS syntax checks passed.
+- Playwright status: attempted run via skill client, blocked due missing Chromium runtime in environment.

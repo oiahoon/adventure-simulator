@@ -111,7 +111,11 @@
     { id: "ach-iron", tier: "epic", title: "铁人模式", desc: "通关且未使用药剂。", when: "win", check: () => state.metrics.potionUsed === 0 },
     { id: "ach-hidden-1", tier: "hidden", title: "雨夜同路", desc: "触发雨夜重逢并完成结算。", when: "any", check: () => state.story.milestones.some((m) => m.includes("雨夜重逢")) },
     { id: "ach-hidden-2", tier: "hidden", title: "社保通关", desc: "触发社保流程打通并达成结局。", when: "any", check: () => state.story.milestones.some((m) => m.includes("社保流程")) },
-    { id: "ach-hidden-3", tier: "hidden", title: "凌晨回电", desc: "触发电话牵挂后继续存活至第 10 天。", when: "any", check: () => state.story.milestones.some((m) => m.includes("电话那头")) && state.day >= 10 }
+    { id: "ach-hidden-3", tier: "hidden", title: "凌晨回电", desc: "触发电话牵挂后继续存活至第 10 天。", when: "any", check: () => state.story.milestones.some((m) => m.includes("电话那头")) && state.day >= 10 },
+    { id: "ach-city-steady", tier: "epic", title: "城市稳态", desc: "结算时精神 >= 70 且疲劳 <= 35。", when: "any", check: () => state.cityStatus.morale >= 70 && state.cityStatus.fatigue <= 35 },
+    { id: "ach-debt-clean", tier: "gold", title: "债务清算", desc: "结算时债务 <= 30。", when: "any", check: () => state.cityStatus.debt <= 30 },
+    { id: "ach-heat-wave", tier: "epic", title: "热度风暴", desc: "结算时热度 >= 75 且仍然存活。", when: "win", check: () => state.cityStatus.heat >= 75 },
+    { id: "ach-hard-life", tier: "hidden", title: "硬扛到底", desc: "债务 >= 180 且通关。", when: "win", check: () => state.cityStatus.debt >= 180 }
   ];
 
   const locations = [
@@ -152,6 +156,12 @@
       mainlineProgress: {},
       activeSideQuest: null
     },
+    cityStatus: {
+      morale: 58,
+      fatigue: 24,
+      debt: 70,
+      heat: 12
+    },
     metrics: {
       battles: 0,
       victories: 0,
@@ -189,6 +199,13 @@
     log: document.getElementById("log"),
     sheet: document.getElementById("character-sheet"),
     endingSheet: document.getElementById("ending-sheet"),
+    seedPill: document.getElementById("seed-pill"),
+    kpiHp: document.getElementById("kpi-hp"),
+    kpiMorale: document.getElementById("kpi-morale"),
+    kpiFatigue: document.getElementById("kpi-fatigue"),
+    kpiDebt: document.getElementById("kpi-debt"),
+    kpiHeat: document.getElementById("kpi-heat"),
+    kpiChapter: document.getElementById("kpi-chapter"),
     canvas: document.getElementById("world-canvas"),
     shareCanvas: document.getElementById("share-canvas"),
     downloadShareLink: document.getElementById("download-share-link"),
@@ -241,6 +258,10 @@
 
   function randInt(min, max) {
     return Math.floor(random() * (max - min + 1)) + min;
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
   }
 
   function pick(arr) {
@@ -314,6 +335,62 @@
     }
     els.log.textContent = state.log.slice(-70).join("\n");
     els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  function updateCityStatus(delta) {
+    state.cityStatus.morale = clamp(state.cityStatus.morale + (delta.morale || 0), 0, 100);
+    state.cityStatus.fatigue = clamp(state.cityStatus.fatigue + (delta.fatigue || 0), 0, 100);
+    state.cityStatus.debt = clamp(state.cityStatus.debt + (delta.debt || 0), 0, 9999);
+    state.cityStatus.heat = clamp(state.cityStatus.heat + (delta.heat || 0), 0, 100);
+  }
+
+  function applyCityPressure() {
+    const p = state.player;
+    updateCityStatus({
+      fatigue: 2,
+      morale: -1,
+      heat: state.metrics.victories > 0 && state.turn % 4 === 0 ? 1 : 0
+    });
+
+    if (state.turn > 0 && state.turn % 10 === 0) {
+      const bill = 26 + Math.floor(state.day * 1.5);
+      p.gold = Math.max(0, p.gold - bill);
+      updateCityStatus({ debt: 12, morale: -2 });
+      addLog(`房租与账单结算：-${bill} 金币。`);
+    }
+
+    if (state.cityStatus.fatigue >= 82) {
+      const loss = randInt(5, 10);
+      p.hp = Math.max(0, p.hp - loss);
+      addLog(`疲劳过载，你额外损失 ${loss} 生命。`);
+    }
+
+    if (state.cityStatus.morale <= 18) {
+      p.stats.int = Math.max(2, p.stats.int - 1);
+      updateCityStatus({ heat: 1 });
+      addLog("精神压力拉满，临时判断力下降。");
+    }
+  }
+
+  function updateKpiStrip() {
+    if (!state.player) {
+      els.seedPill.textContent = "Seed: -";
+      els.kpiHp.textContent = "-";
+      els.kpiMorale.textContent = "-";
+      els.kpiFatigue.textContent = "-";
+      els.kpiDebt.textContent = "-";
+      els.kpiHeat.textContent = "-";
+      els.kpiChapter.textContent = "-";
+      return;
+    }
+    const chapter = chapterById(state.story.chapterId);
+    els.seedPill.textContent = `Seed: ${state.seed}`;
+    els.kpiHp.textContent = `${state.player.hp}/${state.player.hpMax}`;
+    els.kpiMorale.textContent = String(state.cityStatus.morale);
+    els.kpiFatigue.textContent = String(state.cityStatus.fatigue);
+    els.kpiDebt.textContent = String(state.cityStatus.debt);
+    els.kpiHeat.textContent = String(state.cityStatus.heat);
+    els.kpiChapter.textContent = `第${chapter.id}章`;
   }
 
   function reqSatisfied(req) {
@@ -433,6 +510,7 @@
     if (reward.luk) {
       p.stats.luk += reward.luk;
     }
+    updateCityStatus({ morale: 5, debt: -6, fatigue: -3 });
   }
 
   function maybeCompleteSideQuest() {
@@ -514,6 +592,8 @@
       `当前主线: ${chapter.mission}`,
       `主线节点: ${mainlineTask ? mainlineTask.text : "本章已全部完成"}`,
       `当前支线: ${sideQuest ? `${sideQuest.title} (${getSideQuestProgressText(sideQuest)})` : "暂无"}`,
+      `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue}`,
+      `债务 ${state.cityStatus.debt} / 热度 ${state.cityStatus.heat}`,
       "",
       "属性:",
       `力量 ${p.stats.str}  敏捷 ${p.stats.agi}  体魄 ${p.stats.vit}`,
@@ -547,6 +627,8 @@
       `稀有遭遇: ${result.rareEvents} 次`,
       `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
       `代表成就: ${result.topAchievement}`,
+      `城市状态: 精神 ${result.cityStatus.morale} / 疲劳 ${result.cityStatus.fatigue}`,
+      `城市状态: 债务 ${result.cityStatus.debt} / 热度 ${result.cityStatus.heat}`,
       "",
       "成就:",
       ...(result.achievements.length ? result.achievements.map((a) => `[${a.tier}] ${a.title} - ${a.desc}`) : ["暂无"]),
@@ -561,9 +643,10 @@
     const height = els.canvas.height;
     ctx.clearRect(0, 0, width, height);
 
+    const heatRatio = clamp(state.cityStatus.heat / 100, 0, 1);
     const bg = ctx.createLinearGradient(0, 0, width, height);
-    bg.addColorStop(0, "#f8edd4");
-    bg.addColorStop(1, "#dfcda9");
+    bg.addColorStop(0, `rgba(${Math.floor(244 + heatRatio * 8)}, ${Math.floor(248 - heatRatio * 24)}, ${Math.floor(255 - heatRatio * 70)}, 1)`);
+    bg.addColorStop(1, `rgba(${Math.floor(214 + heatRatio * 20)}, ${Math.floor(229 - heatRatio * 45)}, ${Math.floor(247 - heatRatio * 90)}, 1)`);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
 
@@ -695,6 +778,8 @@
       `支线完成数: ${result.sideQuestCompletions}`,
       `达成成就: ${result.achievements.length} 个 / ${result.achievementPoints} 分`,
       `代表成就: ${result.topAchievement}`,
+      `精神/疲劳: ${result.cityStatus.morale}/${result.cityStatus.fatigue}`,
+      `债务/热度: ${result.cityStatus.debt}/${result.cityStatus.heat}`,
       `关键抉择: ${result.keyChoices || "无"}`,
       `胜场/战斗: ${result.victories}/${result.battles}`,
       `稀有事件: ${result.rareEvents}`,
@@ -726,6 +811,7 @@
   function render() {
     els.sheet.textContent = formatSheet();
     els.endingSheet.textContent = formatEndingSheet();
+    updateKpiStrip();
     drawMap();
   }
 
@@ -779,6 +865,7 @@
             state.flags.sectChosen = true;
             state.story.majorChoices.push(`门派: ${sect.name}`);
             state.story.stance += sect.id === "qingshan" ? 1 : sect.id === "lingyin" ? 2 : 0;
+            updateCityStatus({ morale: 4, fatigue: -2, debt: -4 });
             addMilestone(`拜入 ${sect.name}`);
             addLog(`你加入了 ${sect.name}。`);
             maybeProgressMainlineTask();
@@ -800,6 +887,7 @@
             p.perk = perk;
             state.flags.skillChosen = true;
             state.story.majorChoices.push(`天赋: ${perk.name}`);
+            updateCityStatus({ morale: 3, fatigue: -1 });
             addMilestone(`领悟 ${perk.name}`);
             addLog(`你领悟了天赋: ${perk.name}。`);
             maybeProgressMainlineTask();
@@ -866,6 +954,7 @@
       .map(([a, b]) => (a === current ? b : a));
     state.currentLocation = pick(neighbors);
     state.metrics.travels += 1;
+    updateCityStatus({ fatigue: 3, morale: -1, heat: state.cityStatus.heat > 50 ? 1 : 0 });
     const loc = locationById(state.currentLocation);
     addLog(`自动行走到 ${loc.name}。`);
   }
@@ -880,6 +969,7 @@
     if (p.hp < Math.floor(p.hpMax * 0.65)) {
       const heal = 18 + Math.floor(p.stats.vit / 2);
       p.hp = Math.min(p.hpMax, p.hp + heal);
+      updateCityStatus({ fatigue: -8, morale: 3 });
       addLog(`在客栈打坐调息，恢复 ${heal} 生命。`);
       return true;
     }
@@ -888,6 +978,7 @@
       p.gold -= 24;
       p.potion += 1;
       state.metrics.shops += 1;
+      updateCityStatus({ debt: -4, morale: 1 });
       addLog("在药铺购入一瓶疗伤药。(-24 金币)");
       return true;
     }
@@ -924,6 +1015,7 @@
     }
 
     addLog(`遭遇 ${enemy.name}，自动战斗开始。`);
+    updateCityStatus({ fatigue: 5, heat: 3 });
 
     let round = 0;
     while (enemy.hp > 0 && p.hp > 0 && round < 10) {
@@ -947,6 +1039,7 @@
 
     if (p.hp <= 0) {
       p.hp = 0;
+      updateCityStatus({ morale: -12 });
       addLog("你在战斗中陨落。江湖之路至此终结。");
       endRun(false);
       return;
@@ -958,6 +1051,7 @@
       const expGain = Math.floor(enemy.rewardExp * fortune);
       const goldGain = Math.floor(enemy.rewardGold * fortune);
       p.gold += goldGain;
+      updateCityStatus({ morale: 5, debt: -3 });
       gainExp(expGain);
       addLog(`击败 ${enemy.name}，获得 ${expGain} 经验与 ${goldGain} 金币。`);
       if (!isBoss && randInt(1, 100) <= 18 + Math.floor(p.stats.luk / 2)) {
@@ -994,6 +1088,7 @@
     const gain = randInt(8, 24) + Math.floor(p.stats.luk / 3);
     p.gold += gain;
     state.metrics.loots += 1;
+    updateCityStatus({ debt: -5, morale: 2 });
     addLog(`路遇遗落包裹，获得 ${gain} 金币。`);
   }
 
@@ -1314,6 +1409,45 @@
           p.potion += 1;
           state.story.stance += 1;
         }
+      },
+      {
+        id: "community-kitchen",
+        text: "社区食堂临时开餐，你省下一顿饭钱。",
+        condition: function () {
+          return area === "town";
+        },
+        apply: function () {
+          p.gold += randInt(18, 38);
+          updateCityStatus({ debt: -8, morale: 3, fatigue: -2 });
+        }
+      },
+      {
+        id: "metro-reading",
+        text: "你在地铁上刷完一门公开课，思路突然清晰。",
+        apply: function () {
+          p.stats.int += 1;
+          gainExp(18);
+          updateCityStatus({ morale: 2, fatigue: -1 });
+        }
+      },
+      {
+        id: "late-fee",
+        text: "银行卡短信响起：又一笔滞纳金悄悄扣除。",
+        apply: function () {
+          const cost = randInt(12, 36);
+          p.gold = Math.max(0, p.gold - cost);
+          updateCityStatus({ debt: 10, morale: -3 });
+        }
+      },
+      {
+        id: "public-praise",
+        text: "你做的一件小事被公开表扬，整天都轻快了。",
+        rare: true,
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          updateCityStatus({ morale: 8, heat: 2, fatigue: -4 });
+          addMilestone("城市善意回声");
+        }
       }
     ];
 
@@ -1324,6 +1458,9 @@
 
     const evt = pick(pool);
     evt.apply();
+    if (!evt.rare) {
+      updateCityStatus({ morale: random() > 0.45 ? 1 : -1, fatigue: random() > 0.6 ? -1 : 1 });
+    }
     state.metrics.randomEvents += 1;
     addLog(`随机事件: ${evt.text}`);
     return true;
@@ -1344,6 +1481,8 @@
       endRun(false);
       return;
     }
+
+    applyCityPressure();
 
     maybeAssignSideQuest();
 
@@ -1397,6 +1536,12 @@
 
   function composeTitle(isWin, score) {
     const p = state.player;
+    if (isWin && state.cityStatus.morale >= 76 && state.cityStatus.fatigue <= 30) {
+      return "城市稳态师";
+    }
+    if (isWin && state.cityStatus.heat >= 75) {
+      return "全城聚光者";
+    }
     if (isWin && state.metrics.rareEvents >= 3) {
       return "热搜定局人";
     }
@@ -1412,6 +1557,9 @@
     if (!isWin && state.story.chapterId >= 6) {
       return "折戟高楼夜";
     }
+    if (!isWin && state.cityStatus.debt >= 180) {
+      return "账单压城人";
+    }
     if (score >= 760) {
       return "全城传奇录";
     }
@@ -1422,10 +1570,11 @@
     const p = state.player;
     const sectName = p.sect ? p.sect.name : "无门无派";
     const perkName = p.perk ? p.perk.name : "未定流派";
+    const cityTail = `（精神${state.cityStatus.morale}/疲劳${state.cityStatus.fatigue}/债务${state.cityStatus.debt}）`;
     if (isWin) {
-      return `${p.name}混迹${sectName}，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。`;
+      return `${p.name}混迹${sectName}，靠${perkName}在钢铁丛林里完成清场，顺手把命运做成了可复刻挑战。${cityTail}`;
     }
-    return `${p.name}带着${perkName}推进到第${state.story.chapterId}章，在${locationById(state.currentLocation).name}被现实反杀，但留下了足够抽象的路线供后来者挑战。`;
+    return `${p.name}带着${perkName}推进到第${state.story.chapterId}章，在${locationById(state.currentLocation).name}被现实反杀，但留下了足够抽象的路线供后来者挑战。${cityTail}`;
   }
 
   function buildHighlight() {
@@ -1482,7 +1631,11 @@
       state.metrics.rareEvents * 80 +
       (isWin ? 260 : 0) +
       Math.floor(p.gold * 0.8) +
-      state.story.chapterId * 38;
+      state.story.chapterId * 38 +
+      Math.floor(state.cityStatus.morale * 1.1) -
+      Math.floor(state.cityStatus.fatigue * 0.7) -
+      Math.floor(state.cityStatus.debt * 0.2) -
+      Math.floor(state.cityStatus.heat * 0.3);
 
     const finalChapter = chapterById(state.story.chapterId);
     const title = composeTitle(isWin, score);
@@ -1502,6 +1655,7 @@
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
         `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
+        `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}`,
         `代表成就：${topAchievement}`,
         `名场面：${highlight}`,
         `同种子挑战：${challengeUrl}`
@@ -1510,6 +1664,7 @@
         `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
         `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
         `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个(${achievementPoints}分)`,
+        `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}，这都没倒`,
         `代表成就：${topAchievement}`,
         `最离谱一幕：${highlight}`,
         `来复刻我这条命运线：${challengeUrl}`
@@ -1517,6 +1672,7 @@
       [
         `这局我不想炫，但系统硬要给我「${title}」`,
         `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}(${achievementPoints}分)，也就一般发挥`,
+        `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 热度 ${state.cityStatus.heat}`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
     ];
@@ -1539,6 +1695,7 @@
       achievements,
       achievementPoints,
       topAchievement,
+      cityStatus: { ...state.cityStatus },
       finalChapter,
       keyChoices,
       milestones: [...state.story.milestones],
@@ -1592,6 +1749,12 @@
       stance: 0,
       mainlineProgress: { 1: 0 },
       activeSideQuest: null
+    };
+    state.cityStatus = {
+      morale: randInt(52, 68),
+      fatigue: randInt(18, 32),
+      debt: randInt(60, 110),
+      heat: randInt(8, 16)
     };
     state.metrics = {
       battles: 0,
@@ -1758,6 +1921,7 @@
       turn: state.turn,
       chapter: chapterById(state.story.chapterId),
       metrics: { ...state.metrics },
+      city_status: { ...state.cityStatus },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest
         ? {
@@ -1803,6 +1967,7 @@
             achievements: state.runResult.achievements.map((a) => a.id),
             achievement_points: state.runResult.achievementPoints,
             top_achievement: state.runResult.topAchievement,
+            city_status: state.runResult.cityStatus,
             challenge_url: state.runResult.challengeUrl
           }
         : null,

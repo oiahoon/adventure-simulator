@@ -5,32 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Adventure Simulator - Idle Text MUD</title>
   <meta name="description" content="Single-player idle text MUD prototype">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/styles/idle-mud.css">
 </head>
 <body>
   <main class="page">
-    <header class="hero">
-      <h1>Adventure Simulator</h1>
-      <p>单机挂机文字 MUD 验证版</p>
+    <header class="hero panel">
+      <div>
+        <h1>Adventure Simulator</h1>
+        <p>城市生存挂机 · 现代文字 MUD</p>
+      </div>
+      <div class="seed-pill" id="seed-pill">Seed: -</div>
     </header>
 
-    <section class="panel controls">
-      <button id="reroll-btn">掷骰角色</button>
-      <button id="start-btn" disabled>开始挂机</button>
-      <button id="pause-btn" disabled>暂停</button>
-      <button id="resume-btn" disabled>继续</button>
-      <button id="share-card-btn" disabled>生成战报图</button>
-      <button id="copy-share-btn" disabled>复制分享文案</button>
-      <button id="copy-link-btn" disabled>复制挑战链接</button>
-      <label for="speed-select">速度</label>
-      <select id="speed-select" disabled>
-        <option value="0.75">0.75x</option>
-        <option value="1" selected>1.0x</option>
-        <option value="1.5">1.5x</option>
-        <option value="2">2.0x</option>
-        <option value="3">3.0x</option>
-      </select>
-      <span class="hint">按 F 全屏，Esc 退出全屏</span>
+    <section class="kpi-strip">
+      <article class="kpi-card">
+        <span>生命</span>
+        <strong id="kpi-hp">-</strong>
+      </article>
+      <article class="kpi-card">
+        <span>精神</span>
+        <strong id="kpi-morale">-</strong>
+      </article>
+      <article class="kpi-card">
+        <span>疲劳</span>
+        <strong id="kpi-fatigue">-</strong>
+      </article>
+      <article class="kpi-card">
+        <span>债务</span>
+        <strong id="kpi-debt">-</strong>
+      </article>
+      <article class="kpi-card">
+        <span>热度</span>
+        <strong id="kpi-heat">-</strong>
+      </article>
+      <article class="kpi-card">
+        <span>章节</span>
+        <strong id="kpi-chapter">-</strong>
+      </article>
     </section>
 
     <section class="layout">
@@ -55,6 +69,31 @@
           <a id="download-share-link" class="hidden" download="jianghu-report.png">下载战报图</a>
         </section>
       </aside>
+    </section>
+
+    <section class="panel controls">
+      <div class="btn-row">
+        <button id="reroll-btn">掷骰角色</button>
+        <button id="start-btn" disabled>开始挂机</button>
+        <button id="pause-btn" disabled>暂停</button>
+        <button id="resume-btn" disabled>继续</button>
+      </div>
+      <div class="btn-row">
+        <button id="share-card-btn" disabled>生成战报图</button>
+        <button id="copy-share-btn" disabled>复制分享文案</button>
+        <button id="copy-link-btn" disabled>复制挑战链接</button>
+      </div>
+      <div class="meta-row">
+        <label for="speed-select">速度</label>
+        <select id="speed-select" disabled>
+          <option value="0.75">0.75x</option>
+          <option value="1" selected>1.0x</option>
+          <option value="1.5">1.5x</option>
+          <option value="2">2.0x</option>
+          <option value="3">3.0x</option>
+        </select>
+        <span class="hint">按 F 全屏，Esc 退出全屏</span>
+      </div>
     </section>
   </main>
 
