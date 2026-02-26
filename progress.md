@@ -27,3 +27,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Mainline now has denser per-chapter objective chains (4 nodes for most chapters) to avoid shallow chapter jumps.
 - Added larger side-quest pool focused on livelihood pressure arcs (rent/family/hospital/night school/training).
 - Implemented achievement system for both clear and death outcomes; achievements are now shown in ending panel, share card, and share copy.
+- Added deeper achievement system with tiered achievements (bronze/silver/gold/epic/hidden), score points, and top-achievement summary.
+- Integrated achievement points and representative achievement into ending panel, share card, share copy, and `render_game_to_text` payload.
+- Added more chapter objectives and side-quests to improve narrative density and reduce repetitive loops.

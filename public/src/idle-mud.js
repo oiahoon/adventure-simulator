@@ -94,16 +94,24 @@
   ];
 
   const achievementBook = [
-    { id: "ach-win", title: "终局幸存者", desc: "击败终局敌人完成通关。", when: "win", check: () => true },
-    { id: "ach-last-stand", title: "最后一班地铁", desc: "在终局前夕倒下。", when: "lose", check: () => state.story.chapterId >= 7 },
-    { id: "ach-relentless", title: "打不垮的上班人", desc: "总战斗场次达到 15。", when: "any", check: () => state.metrics.battles >= 15 },
-    { id: "ach-side-master", title: "兼职永动机", desc: "完成至少 6 条支线。", when: "any", check: () => state.metrics.sideQuestCompletions >= 6 },
-    { id: "ach-rare", title: "离谱见证者", desc: "触发至少 5 次稀有事件。", when: "any", check: () => state.metrics.rareEvents >= 5 },
-    { id: "ach-frugal", title: "精打细算", desc: "通关时金币不低于 300。", when: "win", check: () => state.player.gold >= 300 },
-    { id: "ach-courage", title: "逆风赶路人", desc: "死亡时胜场不低于 10。", when: "lose", check: () => state.metrics.victories >= 10 },
-    { id: "ach-solidarity", title: "人间互助网", desc: "累计触发随机事件达到 12。", when: "any", check: () => state.metrics.randomEvents >= 12 },
-    { id: "ach-mainline", title: "主线通勤王", desc: "主线节点完成数达到 20。", when: "any", check: () => countMainlineCompleted() >= 20 },
-    { id: "ach-steady", title: "扛压体质", desc: "最终等级达到 9 级。", when: "any", check: () => state.player.level >= 9 }
+    { id: "ach-win", tier: "gold", title: "终局幸存者", desc: "击败终局敌人完成通关。", when: "win", check: () => true },
+    { id: "ach-last-stand", tier: "silver", title: "最后一班地铁", desc: "在终局前夕倒下。", when: "lose", check: () => state.story.chapterId >= 7 },
+    { id: "ach-relentless", tier: "silver", title: "打不垮的上班人", desc: "总战斗场次达到 15。", when: "any", check: () => state.metrics.battles >= 15 },
+    { id: "ach-side-master", tier: "gold", title: "兼职永动机", desc: "完成至少 6 条支线。", when: "any", check: () => state.metrics.sideQuestCompletions >= 6 },
+    { id: "ach-rare", tier: "gold", title: "离谱见证者", desc: "触发至少 5 次稀有事件。", when: "any", check: () => state.metrics.rareEvents >= 5 },
+    { id: "ach-frugal", tier: "silver", title: "精打细算", desc: "通关时金币不低于 300。", when: "win", check: () => state.player.gold >= 300 },
+    { id: "ach-courage", tier: "silver", title: "逆风赶路人", desc: "死亡时胜场不低于 10。", when: "lose", check: () => state.metrics.victories >= 10 },
+    { id: "ach-solidarity", tier: "gold", title: "人间互助网", desc: "累计触发随机事件达到 12。", when: "any", check: () => state.metrics.randomEvents >= 12 },
+    { id: "ach-mainline", tier: "gold", title: "主线通勤王", desc: "主线节点完成数达到 20。", when: "any", check: () => countMainlineCompleted() >= 20 },
+    { id: "ach-steady", tier: "silver", title: "扛压体质", desc: "最终等级达到 9 级。", when: "any", check: () => state.player.level >= 9 },
+    { id: "ach-zero", tier: "bronze", title: "清零重开者", desc: "结算时金币低于 20。", when: "any", check: () => state.player.gold < 20 },
+    { id: "ach-night", tier: "silver", title: "夜色赶路人", desc: "存活到第 8 天。", when: "any", check: () => state.day >= 8 },
+    { id: "ach-chapter-full", tier: "gold", title: "全章穿透", desc: "到达第 8 章。", when: "any", check: () => state.story.chapterId >= 8 },
+    { id: "ach-boss-rush", tier: "epic", title: "速战速决", desc: "在第 8 天前通关。", when: "win", check: () => state.day <= 7 },
+    { id: "ach-iron", tier: "epic", title: "铁人模式", desc: "通关且未使用药剂。", when: "win", check: () => state.metrics.potionUsed === 0 },
+    { id: "ach-hidden-1", tier: "hidden", title: "雨夜同路", desc: "触发雨夜重逢并完成结算。", when: "any", check: () => state.story.milestones.some((m) => m.includes("雨夜重逢")) },
+    { id: "ach-hidden-2", tier: "hidden", title: "社保通关", desc: "触发社保流程打通并达成结局。", when: "any", check: () => state.story.milestones.some((m) => m.includes("社保流程")) },
+    { id: "ach-hidden-3", tier: "hidden", title: "凌晨回电", desc: "触发电话牵挂后继续存活至第 10 天。", when: "any", check: () => state.story.milestones.some((m) => m.includes("电话那头")) && state.day >= 10 }
   ];
 
   const locations = [
@@ -150,6 +158,7 @@
       travels: 0,
       shops: 0,
       loots: 0,
+      potionUsed: 0,
       randomEvents: 0,
       rareEvents: 0,
       chapterAdvances: 0,
@@ -536,10 +545,11 @@
       `主线节点完成: ${result.mainlineCompleted}`,
       `支线任务完成: ${result.sideQuestCompletions}`,
       `稀有遭遇: ${result.rareEvents} 次`,
-      `成就数: ${result.achievements.length}`,
+      `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
+      `代表成就: ${result.topAchievement}`,
       "",
       "成就:",
-      ...(result.achievements.length ? result.achievements.map((a) => `${a.title} - ${a.desc}`) : ["暂无"]),
+      ...(result.achievements.length ? result.achievements.map((a) => `[${a.tier}] ${a.title} - ${a.desc}`) : ["暂无"]),
       "",
       "里程碑:",
       ...result.milestones.slice(-5)
@@ -683,7 +693,8 @@
       `主线进度: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
       `主线节点完成: ${result.mainlineCompleted}`,
       `支线完成数: ${result.sideQuestCompletions}`,
-      `达成成就: ${result.achievements.length} 个`,
+      `达成成就: ${result.achievements.length} 个 / ${result.achievementPoints} 分`,
+      `代表成就: ${result.topAchievement}`,
       `关键抉择: ${result.keyChoices || "无"}`,
       `胜场/战斗: ${result.victories}/${result.battles}`,
       `稀有事件: ${result.rareEvents}`,
@@ -839,6 +850,7 @@
     const p = state.player;
     if (p.potion > 0 && p.hp < Math.floor(p.hpMax * 0.35)) {
       p.potion -= 1;
+      state.metrics.potionUsed += 1;
       const heal = 42 + p.stats.spi;
       p.hp = Math.min(p.hpMax, p.hp + heal);
       addLog(`自动使用疗伤药，恢复 ${heal} 生命。`);
@@ -1447,7 +1459,9 @@
   }
 
   function evaluateAchievements(isWin) {
-    return achievementBook.filter((item) => {
+    const tierValue = { bronze: 1, silver: 2, gold: 3, epic: 4, hidden: 5 };
+    return achievementBook
+      .filter((item) => {
       if (item.when === "win" && !isWin) {
         return false;
       }
@@ -1455,7 +1469,9 @@
         return false;
       }
       return item.check();
-    });
+      })
+      .map((item) => ({ ...item, points: (tierValue[item.tier] || 1) * 10 }))
+      .sort((a, b) => b.points - a.points);
   }
 
   function buildRunResult(isWin) {
@@ -1477,26 +1493,30 @@
     const mainlineCompleted = countMainlineCompleted();
     const sideQuestCompletions = state.metrics.sideQuestCompletions;
     const achievements = evaluateAchievements(isWin);
+    const achievementPoints = achievements.reduce((sum, item) => sum + item.points, 0);
+    const topAchievement = achievements.length ? `${achievements[0].title}(${achievements[0].tier})` : "无";
 
     const shareTemplates = [
       [
         `我在 Adventure Simulator 打出了结局「${title}」`,
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
-        `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}`,
+        `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
+        `代表成就：${topAchievement}`,
         `名场面：${highlight}`,
         `同种子挑战：${challengeUrl}`
       ],
       [
         `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
         `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
-        `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个`,
+        `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个(${achievementPoints}分)`,
+        `代表成就：${topAchievement}`,
         `最离谱一幕：${highlight}`,
         `来复刻我这条命运线：${challengeUrl}`
       ],
       [
         `这局我不想炫，但系统硬要给我「${title}」`,
-        `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}，也就一般发挥`,
+        `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}(${achievementPoints}分)，也就一般发挥`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
     ];
@@ -1517,6 +1537,8 @@
       mainlineCompleted,
       sideQuestCompletions,
       achievements,
+      achievementPoints,
+      topAchievement,
       finalChapter,
       keyChoices,
       milestones: [...state.story.milestones],
@@ -1577,6 +1599,7 @@
       travels: 0,
       shops: 0,
       loots: 0,
+      potionUsed: 0,
       randomEvents: 0,
       rareEvents: 0,
       chapterAdvances: 0,
@@ -1778,6 +1801,8 @@
             title: state.runResult.title,
             score: state.runResult.score,
             achievements: state.runResult.achievements.map((a) => a.id),
+            achievement_points: state.runResult.achievementPoints,
+            top_achievement: state.runResult.topAchievement,
             challenge_url: state.runResult.challengeUrl
           }
         : null,
