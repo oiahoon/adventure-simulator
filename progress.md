@@ -262,3 +262,22 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
     - mortgage-heavy: 0.134 (was ~0.061-0.081)
     - parenting-intent-two: 0.104
     - parenting-blocked-two: 0.117
+- Architecture pass completed (API/CLI decoupling and core extraction):
+  - Added shared core layer:
+    - `core/mud-engine.js` (pure run logic + actions)
+    - `core/mud-presenter.js` (text summary + CLI request detection)
+  - Refactored `api/index.js` into thin adapter:
+    - routes/HTTP only; delegates game actions to shared core.
+    - removed duplicated embedded engine logic from API file.
+  - Refactored `bin/mud-cli.js` local mode:
+    - now uses `core/mud-engine.js` instead of a separate LocalEngine ruleset.
+  - Added architecture doc:
+    - `docs/architecture/system-architecture.md` (layer boundaries, current status, next-stage split plan).
+  - Updated docs:
+    - `README.md` directory map includes `core/` and new architecture doc.
+    - `docs/api/cli-mud.md` notes shared core semantics.
+- Validation:
+  - `node --check` passed for `core/*`, `api/index.js`, `bin/mud-cli.js`.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - core smoke test passed (`new` + `step`).

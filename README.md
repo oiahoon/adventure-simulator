@@ -7,6 +7,7 @@
 - Web 游戏入口：`/game/`
 - 项目主页：`/`
 - CLI：`mud-cli`（远程/本地模式）
+- 共享核心：`core/mud-engine.js`（API/CLI 共用）
 - 事件引擎：`Queue -> Arcs -> Decks`
 - 事件数据包：`public/data/events/*.json`
 - 年度热点包：`public/data/events/hotpacks/*.json`（按日期自动激活）
@@ -95,12 +96,14 @@ vercel --prod
 
 ```text
 api/                      # serverless API
+core/                     # 共享核心（业务引擎/文本输出）
 bin/mud-cli.js            # CLI 入口
 public/index.html         # 主页
 public/game/index.html    # 游戏页面
 public/src/idle-mud.js    # 主引擎
 public/data/events/       # 事件数据包
 docs/                     # 架构与规则文档
+docs/architecture/system-architecture.md  # 当前分层与维护边界
 scripts/check-events.js   # 事件包检查
 scripts/check-replay.js   # 回放检查
 tests/replay/             # golden 回放样例

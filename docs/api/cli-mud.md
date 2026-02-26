@@ -4,6 +4,8 @@
 
 当请求头包含 `x-client-mode: cli`（或 `Accept: text/plain`）时，接口返回纯文本战报；否则返回 JSON。
 
+该接口由共享核心 `core/mud-engine.js` 驱动，CLI 本地模式与远程 API 使用同一套动作语义。
+
 ## Actions
 
 - `new`: 创建新局
@@ -44,4 +46,3 @@ curl -sS -X POST "$BASE/api/mud/run" \
   -H 'x-client-mode: cli' \
   -d "{\"action\":\"choose\",\"option\":\"logistics\",\"run\":$(echo "$RUN" | jq -c '.run')}"
 ```
-
