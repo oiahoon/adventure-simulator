@@ -30,3 +30,7 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added deeper achievement system with tiered achievements (bronze/silver/gold/epic/hidden), score points, and top-achievement summary.
 - Integrated achievement points and representative achievement into ending panel, share card, share copy, and `render_game_to_text` payload.
 - Added more chapter objectives and side-quests to improve narrative density and reduce repetitive loops.
+- Added `/api/mud/run` as unified web/CLI game runner.
+- Implemented header-based response mode: CLI mode via `x-client-mode: cli` or `Accept: text/plain` returns plain text battle report.
+- Added actions: `new`, `status`, `step`, `auto`, `choose` with state carried by client.
+- Added docs at `docs/api/cli-mud.md` with curl usage examples.
