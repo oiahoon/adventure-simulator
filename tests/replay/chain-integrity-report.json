@@ -1,69 +1,69 @@
 {
-  "generatedAt": "2026-02-26T15:25:08.206Z",
+  "generatedAt": "2026-02-26T15:55:51.915Z",
   "runsPerScenario": 240,
   "steps": 220,
   "referenceDate": "2026-02-26",
   "scenarios": {
     "baseline": {
       "runs": 240,
-      "avgEvents": 48.16,
-      "p10Events": 40,
+      "avgEvents": 48,
+      "p10Events": 41,
       "p90Events": 57,
       "topEvents": [
         {
           "id": "rent-rise",
-          "rate": 2.91
+          "rate": 2.74
         },
         {
           "id": "graduate-wave",
-          "rate": 2.52
+          "rate": 2.45
         },
         {
           "id": "civil-service-rush",
-          "rate": 2.3
-        },
-        {
-          "id": "medical-queue",
-          "rate": 2.23
+          "rate": 2.27
         },
         {
           "id": "ai-substitute",
-          "rate": 2.21
+          "rate": 2.19
         },
         {
-          "id": "q1-livecommerce-refund-wave",
-          "rate": 2.19
+          "id": "medical-queue",
+          "rate": 2.17
         },
         {
           "id": "housing-rate-adjust",
           "rate": 2.17
         },
         {
-          "id": "layoff-rumor",
-          "rate": 2.17
-        },
-        {
-          "id": "queue:jobhunt-feedback",
+          "id": "q1-night-market-gig",
           "rate": 2.15
         },
         {
-          "id": "q1-night-market-gig",
-          "rate": 2.14
+          "id": "layoff-rumor",
+          "rate": 2.12
         },
         {
           "id": "night-school-burst",
-          "rate": 2.1
+          "rate": 2.11
+        },
+        {
+          "id": "queue:jobhunt-feedback",
+          "rate": 2.09
+        },
+        {
+          "id": "q1-livecommerce-refund-wave",
+          "rate": 2.02
         },
         {
           "id": "q1-payday-loan-ad",
-          "rate": 1.93
+          "rate": 1.89
         }
       ],
       "chains": {
         "扶人风波->监控平反": {
-          "triggerRate": 0.879,
-          "closeRate": 0.3,
-          "closeGivenTrigger": 0.341
+          "triggerRate": 0.863,
+          "closeRate": 0.221,
+          "closeGivenTrigger": 0.256
         },
         "留学抉择->海归落差": {
           "triggerRate": 0,
@@ -71,161 +71,161 @@
           "closeGivenTrigger": 0
         },
         "新生儿->二胎讨论": {
-          "triggerRate": 0.2,
-          "closeRate": 0.083,
-          "closeGivenTrigger": 0.417
+          "triggerRate": 0.171,
+          "closeRate": 0.075,
+          "closeGivenTrigger": 0.439
         },
         "房贷预警->跨城迁移": {
-          "triggerRate": 0.808,
-          "closeRate": 0.446,
-          "closeGivenTrigger": 0.552
+          "triggerRate": 0.804,
+          "closeRate": 0.433,
+          "closeGivenTrigger": 0.539
         }
       },
       "notes": []
     },
     "mortgage-heavy": {
       "runs": 240,
-      "avgEvents": 50.74,
-      "p10Events": 42,
+      "avgEvents": 50.88,
+      "p10Events": 43,
       "p90Events": 60,
       "topEvents": [
         {
+          "id": "queue:jobhunt-feedback",
+          "rate": 2.6
+        },
+        {
           "id": "mortgage-overdue",
-          "rate": 2.55
+          "rate": 2.34
         },
         {
           "id": "queue:mortgage-followup",
-          "rate": 2.51
+          "rate": 2.32
         },
         {
           "id": "rent-rise",
-          "rate": 2.51
+          "rate": 2.22
         },
         {
           "id": "housing-rate-adjust",
-          "rate": 2.2
+          "rate": 1.97
         },
         {
           "id": "graduate-wave",
-          "rate": 2.17
-        },
-        {
-          "id": "civil-service-rush",
-          "rate": 2.01
-        },
-        {
-          "id": "medical-queue",
-          "rate": 1.98
-        },
-        {
-          "id": "ai-substitute",
-          "rate": 1.95
-        },
-        {
-          "id": "layoff-rumor",
-          "rate": 1.94
-        },
-        {
-          "id": "queue:jobhunt-feedback",
           "rate": 1.92
         },
         {
-          "id": "night-school-burst",
-          "rate": 1.82
+          "id": "ai-interview-bot",
+          "rate": 1.8
         },
         {
-          "id": "public-praise",
-          "rate": 1.82
+          "id": "civil-service-rush",
+          "rate": 1.78
+        },
+        {
+          "id": "ai-substitute",
+          "rate": 1.76
+        },
+        {
+          "id": "medical-queue",
+          "rate": 1.67
+        },
+        {
+          "id": "night-school-burst",
+          "rate": 1.66
+        },
+        {
+          "id": "q1-payday-loan-ad",
+          "rate": 1.61
         }
       ],
       "chains": {
         "扶人风波->监控平反": {
-          "triggerRate": 0.821,
-          "closeRate": 0.138,
-          "closeGivenTrigger": 0.168
+          "triggerRate": 0.738,
+          "closeRate": 0.129,
+          "closeGivenTrigger": 0.175
         },
         "留学抉择->海归落差": {
-          "triggerRate": 0.746,
-          "closeRate": 0.1,
-          "closeGivenTrigger": 0.134
+          "triggerRate": 0.713,
+          "closeRate": 0.075,
+          "closeGivenTrigger": 0.105
         },
         "新生儿->二胎讨论": {
-          "triggerRate": 0.604,
-          "closeRate": 0.35,
-          "closeGivenTrigger": 0.579
+          "triggerRate": 0.583,
+          "closeRate": 0.317,
+          "closeGivenTrigger": 0.543
         },
         "房贷预警->跨城迁移": {
-          "triggerRate": 0.958,
-          "closeRate": 0.679,
-          "closeGivenTrigger": 0.709
+          "triggerRate": 0.95,
+          "closeRate": 0.558,
+          "closeGivenTrigger": 0.588
         }
       },
       "notes": []
     },
     "parenting-intent-two": {
       "runs": 240,
-      "avgEvents": 49.3,
+      "avgEvents": 49.73,
       "p10Events": 42,
       "p90Events": 57,
       "topEvents": [
         {
-          "id": "mortgage-overdue",
-          "rate": 2.58
+          "id": "queue:jobhunt-feedback",
+          "rate": 2.6
         },
         {
-          "id": "queue:mortgage-followup",
-          "rate": 2.57
+          "id": "mortgage-overdue",
+          "rate": 2.2
         },
         {
           "id": "rent-rise",
-          "rate": 2.54
+          "rate": 2.16
+        },
+        {
+          "id": "queue:mortgage-followup",
+          "rate": 2.16
         },
         {
           "id": "housing-rate-adjust",
-          "rate": 2.32
-        },
-        {
-          "id": "night-school-burst",
-          "rate": 2.07
-        },
-        {
-          "id": "graduate-wave",
-          "rate": 1.99
+          "rate": 1.96
         },
         {
           "id": "medical-queue",
-          "rate": 1.98
+          "rate": 1.85
+        },
+        {
+          "id": "night-school-burst",
+          "rate": 1.8
+        },
+        {
+          "id": "graduate-wave",
+          "rate": 1.71
+        },
+        {
+          "id": "ai-interview-bot",
+          "rate": 1.7
         },
         {
           "id": "civil-service-rush",
-          "rate": 1.93
+          "rate": 1.68
         },
         {
           "id": "ai-substitute",
-          "rate": 1.86
+          "rate": 1.65
         },
         {
           "id": "layoff-rumor",
-          "rate": 1.79
-        },
-        {
-          "id": "q1-livecommerce-refund-wave",
-          "rate": 1.78
-        },
-        {
-          "id": "queue:jobhunt-feedback",
-          "rate": 1.77
+          "rate": 1.59
         }
       ],
       "chains": {
         "扶人风波->监控平反": {
-          "triggerRate": 0.779,
-          "closeRate": 0.113,
-          "closeGivenTrigger": 0.144
+          "triggerRate": 0.771,
+          "closeRate": 0.104,
+          "closeGivenTrigger": 0.135
         },
         "留学抉择->海归落差": {
-          "triggerRate": 0.804,
-          "closeRate": 0.083,
+          "triggerRate": 0.762,
+          "closeRate": 0.079,
           "closeGivenTrigger": 0.104
         },
         "新生儿->二胎讨论": {
@@ -234,78 +234,78 @@
           "closeGivenTrigger": 0
         },
         "房贷预警->跨城迁移": {
-          "triggerRate": 0.963,
-          "closeRate": 0.662,
-          "closeGivenTrigger": 0.688
+          "triggerRate": 0.938,
+          "closeRate": 0.521,
+          "closeGivenTrigger": 0.556
         }
       },
       "notes": []
     },
     "parenting-blocked-two": {
       "runs": 240,
-      "avgEvents": 49.17,
-      "p10Events": 41,
+      "avgEvents": 48.91,
+      "p10Events": 40,
       "p90Events": 58,
       "topEvents": [
         {
+          "id": "queue:jobhunt-feedback",
+          "rate": 2.54
+        },
+        {
           "id": "rent-rise",
-          "rate": 2.5
+          "rate": 2.15
         },
         {
           "id": "mortgage-overdue",
-          "rate": 2.4
+          "rate": 2.09
         },
         {
           "id": "queue:mortgage-followup",
-          "rate": 2.39
+          "rate": 2.06
         },
         {
           "id": "housing-rate-adjust",
-          "rate": 2.31
+          "rate": 1.91
         },
         {
           "id": "graduate-wave",
-          "rate": 2.1
-        },
-        {
-          "id": "civil-service-rush",
-          "rate": 2
-        },
-        {
-          "id": "medical-queue",
-          "rate": 2
-        },
-        {
-          "id": "night-school-burst",
-          "rate": 1.87
-        },
-        {
-          "id": "q1-livecommerce-refund-wave",
-          "rate": 1.85
-        },
-        {
-          "id": "layoff-rumor",
-          "rate": 1.84
-        },
-        {
-          "id": "queue:jobhunt-feedback",
           "rate": 1.82
         },
         {
+          "id": "civil-service-rush",
+          "rate": 1.82
+        },
+        {
+          "id": "ai-interview-bot",
+          "rate": 1.78
+        },
+        {
+          "id": "night-school-burst",
+          "rate": 1.72
+        },
+        {
+          "id": "medical-queue",
+          "rate": 1.7
+        },
+        {
           "id": "ai-substitute",
-          "rate": 1.79
+          "rate": 1.66
+        },
+        {
+          "id": "layoff-rumor",
+          "rate": 1.55
         }
       ],
       "chains": {
         "扶人风波->监控平反": {
-          "triggerRate": 0.808,
-          "closeRate": 0.129,
-          "closeGivenTrigger": 0.16
+          "triggerRate": 0.738,
+          "closeRate": 0.079,
+          "closeGivenTrigger": 0.107
         },
         "留学抉择->海归落差": {
-          "triggerRate": 0.783,
-          "closeRate": 0.092,
-          "closeGivenTrigger": 0.117
+          "triggerRate": 0.729,
+          "closeRate": 0.075,
+          "closeGivenTrigger": 0.103
         },
         "新生儿->二胎讨论": {
           "triggerRate": 0,
@@ -313,9 +313,9 @@
           "closeGivenTrigger": 0
         },
         "房贷预警->跨城迁移": {
-          "triggerRate": 0.963,
-          "closeRate": 0.646,
-          "closeGivenTrigger": 0.671
+          "triggerRate": 0.933,
+          "closeRate": 0.613,
+          "closeGivenTrigger": 0.656
         }
       },
       "notes": []

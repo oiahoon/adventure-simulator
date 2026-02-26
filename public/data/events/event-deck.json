@@ -661,6 +661,135 @@
       ]
     },
     {
+      "id": "platform-rating-freeze",
+      "title": "评分冻结",
+      "text": "平台抽检后你账号评分被临时冻结，接单与流量同时下滑。",
+      "deck": "work",
+      "tags": ["gig", "income", "heat"],
+      "baseWeight": 0.88,
+      "cooldown": 6,
+      "when": { "chapterMin": 4 },
+      "branches": [
+        {
+          "name": "快速申诉",
+          "when": { "randomLt": 0.46 },
+          "outcomes": [
+            {
+              "city": { "morale": -2, "fatigue": 3, "heat": 2 },
+              "player": { "gold": { "mode": "subRand", "min": 8, "max": 30 } },
+              "milestone": "评分冻结快速申诉"
+            }
+          ]
+        },
+        {
+          "name": "排队等待",
+          "outcomes": [
+            {
+              "city": { "morale": -5, "fatigue": 2, "debt": 6 },
+              "player": { "gold": { "mode": "subRand", "min": 15, "max": 36 } },
+              "milestone": "评分冻结排队中"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai-interview-bot",
+      "title": "AI 面试筛选",
+      "text": "你收到自动化面试邀请，系统会根据题库表现直接打分。",
+      "deck": "career",
+      "tags": ["jobhunt", "career", "ai"],
+      "baseWeight": 0.9,
+      "cooldown": 6,
+      "when": { "dayMin": 9, "chapterMin": 4 },
+      "branches": [
+        {
+          "name": "准备充分",
+          "when": { "statSumGte": { "keys": ["int", "spi"], "value": 25 } },
+          "outcomes": [
+            {
+              "player": { "exp": 22, "gold": { "mode": "addRand", "min": 12, "max": 38 } },
+              "city": { "morale": 4, "fatigue": 2 },
+              "milestone": "AI 面试筛选通过",
+              "enqueue": [{ "eventId": "queue:jobhunt-feedback", "dueIn": 1, "priority": 77 }]
+            }
+          ]
+        },
+        {
+          "name": "被系统刷掉",
+          "outcomes": [
+            {
+              "city": { "morale": -6, "fatigue": 2, "heat": 2 },
+              "milestone": "AI 面试首轮淘汰"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "childcare-seat-draw",
+      "title": "托位摇号",
+      "text": "社区托育名额放出，你要在公开摇号中争取一个稳定托位。",
+      "deck": "family",
+      "tags": ["parenting", "family", "debt"],
+      "baseWeight": 0.84,
+      "cooldown": 7,
+      "when": { "familyStageIn": ["育儿中"], "childCountGte": 1, "dayMin": 8 },
+      "branches": [
+        {
+          "name": "摇中托位",
+          "when": { "randomLt": 0.42 },
+          "outcomes": [
+            {
+              "city": { "fatigue": -5, "morale": 5, "debt": -6 },
+              "milestone": "托位摇号成功"
+            }
+          ]
+        },
+        {
+          "name": "继续排队",
+          "outcomes": [
+            {
+              "city": { "fatigue": 4, "morale": -4, "debt": 5 },
+              "milestone": "托位摇号未中"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "policy-spot-check",
+      "title": "补贴抽查",
+      "text": "你申报的补贴被抽查，需要补齐材料并等待复核。",
+      "deck": "policy",
+      "tags": ["policy", "stability", "debt"],
+      "baseWeight": 0.82,
+      "cooldown": 8,
+      "when": { "dayMin": 11 },
+      "branches": [
+        {
+          "name": "材料齐全",
+          "when": { "randomLt": 0.5 },
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "addRand", "min": 12, "max": 42 } },
+              "city": { "morale": 3, "debt": -4 },
+              "milestone": "补贴抽查通过"
+            }
+          ]
+        },
+        {
+          "name": "补件延期",
+          "outcomes": [
+            {
+              "city": { "morale": -3, "fatigue": 2, "debt": 6 },
+              "milestone": "补贴抽查补件"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "public-praise",
       "title": "善意回声",
       "text": "你做的一件小事被公开表扬，整天都轻快了。",

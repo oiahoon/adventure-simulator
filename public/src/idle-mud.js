@@ -63,6 +63,117 @@
     { id: "fortune", name: "鸿运", desc: "拾取金币和道具时额外 +30%。" }
   ];
 
+  const decisionCards = [
+    {
+      id: "overtime-rush",
+      title: "硬扛加班",
+      tag: "职业",
+      text: "压榨体力换现金流，短期稳住账单。",
+      apply: () => ({ gold: randInt(18, 46), city: { fatigue: 7, morale: -2, debt: -4 }, bias: [{ key: "tag:career", mul: 1.22, ttl: 5 }] })
+    },
+    {
+      id: "night-study",
+      title: "夜校补课",
+      tag: "成长",
+      text: "晚上继续学技能，赌下一次岗位跃迁。",
+      apply: () => ({ exp: randInt(12, 24), city: { fatigue: 5, morale: 2 }, bias: [{ key: "tag:exam", mul: 1.26, ttl: 6 }] })
+    },
+    {
+      id: "rent-negotiate",
+      title: "谈判房租",
+      tag: "债务",
+      text: "去和房东谈续租，试图压低月付。",
+      apply: () => ({ city: { debt: -8, morale: -1, heat: 1 }, bias: [{ key: "tag:rent", mul: 1.25, ttl: 5 }] })
+    },
+    {
+      id: "social-silence",
+      title: "低调潜行",
+      tag: "舆情",
+      text: "减少公开表达，先避开舆论风口。",
+      apply: () => ({ city: { heat: -7, morale: -1 }, bias: [{ key: "tag:relief", mul: 1.18, ttl: 4 }] })
+    },
+    {
+      id: "short-video",
+      title: "拍短视频",
+      tag: "热度",
+      text: "赌一把流量，也可能招来争议。",
+      apply: () => ({ city: { heat: 8, morale: 2 }, gold: randInt(-8, 28), bias: [{ key: "tag:heat", mul: 1.3, ttl: 5 }] })
+    },
+    {
+      id: "family-call",
+      title: "给家里打电话",
+      tag: "家庭",
+      text: "情绪回稳，但家庭责任感会更重。",
+      apply: () => ({ city: { morale: 6, fatigue: -2, debt: 3 }, bias: [{ key: "tag:family", mul: 1.22, ttl: 5 }] })
+    },
+    {
+      id: "job-market",
+      title: "投简历冲刺",
+      tag: "求职",
+      text: "刷新简历并密集投递，争取新面试。",
+      apply: () => ({
+        city: { morale: -1, fatigue: 2 },
+        bias: [{ key: "tag:jobhunt", mul: 1.32, ttl: 6 }],
+        enqueue: [{ eventId: "queue:jobhunt-feedback", dueIn: 1, priority: 82 }]
+      })
+    },
+    {
+      id: "mortgage-reshape",
+      title: "重算月供",
+      tag: "房贷",
+      text: "跟银行沟通展期方案，争取喘息。",
+      when: () => state.cityStatus.debt >= 85,
+      apply: () => ({
+        city: { debt: -14, morale: -1, fatigue: 2 },
+        bias: [{ key: "tag:mortgage", mul: 1.35, ttl: 6 }],
+        enqueue: [{ eventId: "queue:mortgage-followup", dueIn: 2, priority: 80 }]
+      })
+    },
+    {
+      id: "childcare-shift",
+      title: "托育排班",
+      tag: "育儿",
+      text: "重新排班照看孩子，家务与工作拉扯。",
+      when: () => state.story.familyStage === "育儿中",
+      apply: () => ({
+        city: { fatigue: 4, morale: 3, debt: 2 },
+        bias: [{ key: "tag:parenting", mul: 1.36, ttl: 6 }],
+        enqueue: [{ eventId: "queue:parenting-support", dueIn: 1, priority: 84 }]
+      })
+    },
+    {
+      id: "legal-evidence",
+      title: "证据存档",
+      tag: "法律",
+      text: "为潜在风波提前留存证据，降低翻车概率。",
+      apply: () => ({
+        city: { fatigue: 1, heat: -2 },
+        setFlags: [{ key: "legal.review.ready", value: true, ttl: 10 }],
+        bias: [{ key: "tag:legal", mul: 1.28, ttl: 6 }, { key: "tag:relief", mul: 1.2, ttl: 5 }]
+      })
+    },
+    {
+      id: "abroad-window",
+      title: "海外窗口",
+      tag: "留学",
+      text: "持续跟进海外机会，押注长期回报。",
+      when: () => state.story.chapterId >= 5,
+      apply: () => ({
+        city: { debt: 6, morale: 2 },
+        setFlags: [{ key: "career.abroad.active", value: true, ttl: 10 }],
+        enqueue: [{ eventId: "queue:abroad-feedback", dueIn: 2, priority: 79 }],
+        bias: [{ key: "tag:abroad", mul: 1.42, ttl: 7 }]
+      })
+    },
+    {
+      id: "rest-halfday",
+      title: "半日休整",
+      tag: "恢复",
+      text: "今天少赚点，先把身体和精神拉回来。",
+      apply: () => ({ hp: randInt(8, 18), city: { fatigue: -9, morale: 5, debt: 4 } })
+    }
+  ];
+
   const chapters = [
     { id: 1, name: "城市入场", minLevel: 1, mission: "挺过早高峰并拿到第一笔稳定收入" },
     { id: 2, name: "试用期炼狱", minLevel: 2, mission: "完成路线抉择并建立生存节奏" },
@@ -266,10 +377,12 @@
     player: null,
     turn: 0,
     day: 1,
-    speed: 1,
     currentLocation: "novice",
     isPaused: false,
     pendingChoice: null,
+    hand: [],
+    handPlayedThisTurn: null,
+    cardHistory: [],
     seed: "",
     rng: null,
     initialSeedFromUrl: null,
@@ -296,6 +409,7 @@
       nextRisk: "-"
     },
     metrics: {
+      cardPlays: 0,
       battles: 0,
       victories: 0,
       winStreak: 0,
@@ -328,17 +442,15 @@
 
   let rafId = 0;
   let rafLast = 0;
-  let turnAccumulator = 0;
 
   const els = {
     rerollBtn: document.getElementById("reroll-btn"),
     startBtn: document.getElementById("start-btn"),
-    pauseBtn: document.getElementById("pause-btn"),
-    resumeBtn: document.getElementById("resume-btn"),
     shareCardBtn: document.getElementById("share-card-btn"),
     copyShareBtn: document.getElementById("copy-share-btn"),
     copyLinkBtn: document.getElementById("copy-link-btn"),
-    speedSelect: document.getElementById("speed-select"),
+    handCards: document.getElementById("hand-cards"),
+    cardFeedback: document.getElementById("card-feedback"),
     log: document.getElementById("log"),
     trace: document.getElementById("event-trace"),
     sheet: document.getElementById("character-sheet"),
@@ -1816,7 +1928,8 @@
     const dDebt = state.cityStatus.debt - before.debt;
     const dHeat = state.cityStatus.heat - before.heat;
     const streak = state.metrics.winStreak > 0 ? ` 连胜${state.metrics.winStreak}` : "";
-    state.uiState.turnSummary = `${label}${streak}`;
+    const cardTag = state.handPlayedThisTurn ? ` | 出牌:${state.handPlayedThisTurn}` : "";
+    state.uiState.turnSummary = `${label}${streak}${cardTag}`;
     state.uiState.turnDelta = `HP ${dHp >= 0 ? "+" : ""}${dHp} | 金币 ${dGold >= 0 ? "+" : ""}${dGold} | 精神 ${dMorale >= 0 ? "+" : ""}${dMorale} | 疲劳 ${dFatigue >= 0 ? "+" : ""}${dFatigue} | 债务 ${dDebt >= 0 ? "+" : ""}${dDebt} | 热度 ${dHeat >= 0 ? "+" : ""}${dHeat}`;
     state.uiState.nextRisk = riskLevelText();
   }
@@ -2040,6 +2153,8 @@
       `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue}`,
       `债务 ${state.cityStatus.debt} / 热度 ${state.cityStatus.heat}`,
       `连胜 ${state.metrics.winStreak} / 最高连胜 ${state.metrics.maxWinStreak}`,
+      `本局出牌: ${state.metrics.cardPlays}`,
+      `上回合出牌: ${state.handPlayedThisTurn || "暂无"}`,
       "",
       "属性:",
       `力量 ${p.stats.str}  敏捷 ${p.stats.agi}  体魄 ${p.stats.vit}`,
@@ -2070,6 +2185,7 @@
       `关键抉择: ${result.keyChoices || "无"}`,
       `主线节点完成: ${result.mainlineCompleted}`,
       `支线任务完成: ${result.sideQuestCompletions}`,
+      `总出牌次数: ${result.cardPlays}`,
       `稀有遭遇: ${result.rareEvents} 次`,
       `最高连胜: ${result.maxWinStreak}`,
       `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
@@ -2282,17 +2398,50 @@
     els.trace.scrollTop = els.trace.scrollHeight;
   }
 
+  function renderCardHand() {
+    if (!els.handCards) return;
+    els.handCards.innerHTML = "";
+    if (state.mode !== "running") {
+      els.handCards.innerHTML = "<button class=\"decision-card\" disabled><h3>未开始</h3><p>点击“开始牌局”后将发出决策卡。</p><span class=\"tag\">准备</span></button>";
+      return;
+    }
+    if (state.pendingChoice) {
+      els.handCards.innerHTML = "<button class=\"decision-card\" disabled><h3>关键抉择中</h3><p>请先完成关键抉择，再继续出牌。</p><span class=\"tag\">抉择</span></button>";
+      return;
+    }
+    if (!state.hand.length) {
+      els.handCards.innerHTML = "<button class=\"decision-card\" disabled><h3>待发牌</h3><p>本回合牌已结算，正在准备下一手。</p><span class=\"tag\">发牌中</span></button>";
+      return;
+    }
+
+    for (let i = 0; i < state.hand.length; i += 1) {
+      const card = state.hand[i];
+      const btn = document.createElement("button");
+      btn.className = "decision-card";
+      btn.innerHTML = `<h3>${card.title}</h3><p>${card.text}</p><span class="tag">${card.tag}</span>`;
+      btn.addEventListener("click", function () {
+        playDecisionCard(card.id, btn);
+      });
+      els.handCards.appendChild(btn);
+    }
+  }
+
+  function setCardFeedback(text) {
+    if (!els.cardFeedback) return;
+    els.cardFeedback.textContent = text;
+    els.cardFeedback.classList.remove("flash");
+    void els.cardFeedback.offsetWidth;
+    els.cardFeedback.classList.add("flash");
+  }
+
   function render() {
     els.sheet.textContent = formatSheet();
     els.endingSheet.textContent = formatEndingSheet();
     updateKpiStrip();
     updateKilllinePanel();
     renderEventTrace();
+    renderCardHand();
     drawMap();
-  }
-
-  function getTurnMs() {
-    return 1200 / state.speed;
   }
 
   function gainExp(amount) {
@@ -2654,6 +2803,103 @@
     els.choiceModal.classList.add("hidden");
     if (state.mode === "running") {
       state.isPaused = false;
+      if (!state.hand.length) {
+        dealDecisionHand();
+      }
+    }
+    updateButtons();
+    render();
+  }
+
+  function cardAvailable(card) {
+    if (!card) return false;
+    if (typeof card.when === "function" && !card.when()) return false;
+    return true;
+  }
+
+  function dealDecisionHand() {
+    const available = decisionCards.filter(cardAvailable);
+    if (!available.length) {
+      state.hand = [];
+      return;
+    }
+    const pool = available.slice();
+    const picked = [];
+    while (pool.length && picked.length < 3) {
+      const index = randInt(0, pool.length - 1);
+      picked.push(pool[index]);
+      pool.splice(index, 1);
+    }
+    state.hand = picked;
+    state.handPlayedThisTurn = null;
+    setCardFeedback(`第 ${state.day} 天 / 回合 ${state.turn + 1}：请选择一张决策卡`);
+  }
+
+  function applyCardPayload(payload) {
+    if (!payload || !state.player) return;
+    const p = state.player;
+    if (Number.isFinite(payload.gold)) {
+      p.gold = Math.max(0, p.gold + payload.gold);
+    }
+    if (Number.isFinite(payload.hp)) {
+      p.hp = clamp(p.hp + payload.hp, 0, p.hpMax);
+    }
+    if (Number.isFinite(payload.exp) && payload.exp > 0) {
+      gainExp(payload.exp);
+    }
+    if (payload.city) {
+      updateCityStatus({
+        morale: payload.city.morale || 0,
+        fatigue: payload.city.fatigue || 0,
+        debt: payload.city.debt || 0,
+        heat: payload.city.heat || 0
+      });
+    }
+    if (Array.isArray(payload.bias)) {
+      for (let i = 0; i < payload.bias.length; i += 1) {
+        const b = payload.bias[i];
+        addBias(b.key, b.mul, b.ttl);
+      }
+    }
+    if (Array.isArray(payload.setFlags)) {
+      for (let i = 0; i < payload.setFlags.length; i += 1) {
+        const f = payload.setFlags[i];
+        setEngineFlag(f.key, f.value, f.ttl);
+      }
+    }
+    if (Array.isArray(payload.enqueue)) {
+      for (let i = 0; i < payload.enqueue.length; i += 1) {
+        const q = payload.enqueue[i];
+        enqueueEvent(q.eventId, q.dueIn, q.priority, q.forced);
+      }
+    }
+  }
+
+  function playDecisionCard(cardId, btnEl) {
+    if (state.mode !== "running" || state.pendingChoice || !state.hand.length) {
+      return;
+    }
+    const card = state.hand.find((item) => item.id === cardId);
+    if (!card) {
+      return;
+    }
+    if (btnEl) {
+      btnEl.classList.add("played");
+    }
+    const payload = card.apply ? card.apply() : {};
+    applyCardPayload(payload);
+    state.metrics.cardPlays += 1;
+    state.handPlayedThisTurn = card.title;
+    state.cardHistory.push(`D${state.day}T${state.turn + 1}:${card.title}`);
+    if (state.cardHistory.length > 16) {
+      state.cardHistory = state.cardHistory.slice(-16);
+    }
+    addLog(`你打出决策卡【${card.title}】：${card.text}`);
+    state.hand = [];
+    setCardFeedback(`已打出「${card.title}」，城市命运开始结算...`);
+    takeTurn();
+    if (state.mode === "running" && !state.pendingChoice) {
+      dealDecisionHand();
     }
     updateButtons();
     render();
@@ -3658,6 +3904,7 @@
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
         `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
+        `总出牌：${state.metrics.cardPlays}`,
         `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}`,
         `最高连胜：${state.metrics.maxWinStreak}`,
@@ -3670,6 +3917,7 @@
         `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
         `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
         `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个(${achievementPoints}分)`,
+        `总出牌：${state.metrics.cardPlays}`,
         `目前家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 债务 ${state.cityStatus.debt}，这都没倒`,
         `最高连胜：${state.metrics.maxWinStreak}`,
@@ -3681,6 +3929,7 @@
       [
         `这局我不想炫，但系统硬要给我「${title}」`,
         `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}(${achievementPoints}分)，也就一般发挥`,
+        `总出牌：${state.metrics.cardPlays}`,
         `家庭阶段：${state.story.familyStage} (${state.story.childCount} 个孩子)`,
         `城市状态：精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue} / 热度 ${state.cityStatus.heat}`,
         `最高连胜：${state.metrics.maxWinStreak}`,
@@ -3705,6 +3954,7 @@
       rareEvents: state.metrics.rareEvents,
       mainlineCompleted,
       sideQuestCompletions,
+      cardPlays: state.metrics.cardPlays,
       achievements,
       achievementPoints,
       topAchievement,
@@ -3725,7 +3975,9 @@
     if (state.mode === "ended" && state.runResult) return;
     state.mode = "ended";
     state.isPaused = true;
+    state.hand = [];
     state.runResult = buildRunResult(isWin);
+    setCardFeedback(isWin ? "牌局结束：你成功穿过终盘人生线。" : "牌局结束：角色已倒下。");
     addLog(isWin ? "结局: 你已通关，本轮挂机结束。" : "结局: 角色死亡，本轮挂机结束。");
     addLog(`结局称号: ${state.runResult.title}`);
     renderShareCard();
@@ -3739,9 +3991,6 @@
     const hasResult = !!state.runResult;
 
     els.startBtn.disabled = !hasPlayer || running || state.mode === "ended";
-    els.pauseBtn.disabled = !running || state.isPaused || !!state.pendingChoice;
-    els.resumeBtn.disabled = !running || (!state.isPaused && !state.pendingChoice);
-    els.speedSelect.disabled = !running;
     els.shareCardBtn.disabled = !hasResult;
     els.copyShareBtn.disabled = !hasResult;
     els.copyLinkBtn.disabled = !hasResult;
@@ -3759,6 +4008,9 @@
     state.mode = "menu";
     state.isPaused = false;
     state.pendingChoice = null;
+    state.hand = [];
+    state.handPlayedThisTurn = null;
+    state.cardHistory = [];
     state.story = {
       chapterId: 1,
       milestones: ["踏入城市生存"],
@@ -3779,6 +4031,7 @@
           heat: randInt(8, 16)
         };
     state.metrics = {
+      cardPlays: 0,
       battles: 0,
       victories: 0,
       winStreak: 0,
@@ -3813,6 +4066,7 @@
 
     clearShareCanvas();
     els.downloadShareLink.classList.add("hidden");
+    setCardFeedback("角色已生成，点击“开始牌局”进入卡牌决策模式。");
     addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 进入城市生存。`);
     if (state.player.profile) {
       addLog(`角色画像: ${state.player.profile.origin} / ${state.player.profile.education} / ${state.player.profile.family}`);
@@ -3834,38 +4088,10 @@
     state.mode = "running";
     state.isPaused = false;
     state.pendingChoice = null;
-    addLog("挂机开始，角色将自动探索、战斗与交易。");
+    dealDecisionHand();
+    addLog("牌局开始：每回合请选择一张卡牌，系统将按你的决策推进城市生存。");
     updateButtons();
     render();
-  }
-
-  function pauseRun() {
-    if (state.mode !== "running") {
-      return;
-    }
-    state.isPaused = true;
-    addLog("你暂时按下暂停。\n");
-    updateButtons();
-    render();
-  }
-
-  function resumeRun() {
-    if (state.mode !== "running") {
-      return;
-    }
-    if (state.pendingChoice) {
-      addLog("请先完成关键抉择，再继续挂机。\n");
-      return;
-    }
-    state.isPaused = false;
-    addLog("继续挂机。\n");
-    updateButtons();
-    render();
-  }
-
-  function onSpeedChange(e) {
-    state.speed = Number(e.target.value) || 1;
-    addLog(`挂机速度调整为 ${state.speed.toFixed(2)}x`);
   }
 
   async function copyText(text) {
@@ -3913,21 +4139,7 @@
     if (!rafLast) {
       rafLast = ts;
     }
-    const delta = Math.min(1000, ts - rafLast);
     rafLast = ts;
-
-    if (state.mode === "running" && !state.isPaused && !state.pendingChoice) {
-      turnAccumulator += delta;
-      const turnMs = getTurnMs();
-      while (turnAccumulator >= turnMs) {
-        takeTurn();
-        turnAccumulator -= turnMs;
-        if (state.mode !== "running" || state.isPaused || state.pendingChoice) {
-          break;
-        }
-      }
-    }
-
     rafId = requestAnimationFrame(loop);
   }
 
@@ -4024,6 +4236,8 @@
             options: state.pendingChoice.options.map((o) => o.id)
           }
         : null,
+      hand_cards: state.hand.map((card) => ({ id: card.id, title: card.title, tag: card.tag })),
+      card_history_tail: state.cardHistory.slice(-8),
       run_result: state.runResult
         ? {
             outcome: state.runResult.outcome,
@@ -4054,30 +4268,12 @@
     if (!Number.isFinite(ms) || ms <= 0) {
       return;
     }
-    if (state.mode !== "running" || state.isPaused || state.pendingChoice) {
-      render();
-      return;
-    }
-
-    turnAccumulator += ms;
-    const turnMs = getTurnMs();
-    let safety = 0;
-    while (turnAccumulator >= turnMs && safety < 200) {
-      takeTurn();
-      turnAccumulator -= turnMs;
-      safety += 1;
-      if (state.mode !== "running" || state.isPaused || state.pendingChoice) {
-        break;
-      }
-    }
     render();
   };
 
   function wireEvents() {
     els.rerollBtn.addEventListener("click", reroll);
     els.startBtn.addEventListener("click", startRun);
-    els.pauseBtn.addEventListener("click", pauseRun);
-    els.resumeBtn.addEventListener("click", resumeRun);
     els.shareCardBtn.addEventListener("click", onShareCard);
     els.copyShareBtn.addEventListener("click", function () {
       onCopyShare().catch(function () {
@@ -4089,7 +4285,6 @@
         addLog("复制挑战链接失败。\n");
       });
     });
-    els.speedSelect.addEventListener("change", onSpeedChange);
     window.addEventListener("keydown", handleKey);
   }
 

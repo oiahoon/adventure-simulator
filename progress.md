@@ -281,3 +281,27 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - core smoke test passed (`new` + `step`).
+- Card-decision gameplay pivot (Web) implemented:
+  - Converted web loop from auto-idle to manual turn decisions: each turn now requires playing 1 card from a 3-card hand.
+  - Added decision card system in `public/src/idle-mud.js`:
+    - new card pool (`decisionCards`) with contextual effects on gold/hp/city status + engine bias/flags/enqueue.
+    - hand lifecycle (`dealDecisionHand`, `playDecisionCard`, `applyCardPayload`).
+    - per-run card metrics (`cardPlays`) + card history tail in observability payload.
+  - Added mobile-first card UI with motion/feedback in:
+    - `public/game/index.html` (card panel + hand container + feedback strip)
+    - `public/assets/styles/idle-mud.css` (card layout, hover/play animations, feedback flash)
+  - Updated run flow semantics:
+    - Start now enters card mode and deals hand; no auto progression loop.
+    - Choice modal resolution auto-deals next hand if needed.
+    - `advanceTime(ms)` in web now render-only (no hidden auto turns).
+- Event richness expansion (deck pack):
+  - Added events: `platform-rating-freeze`, `ai-interview-bot`, `childcare-seat-draw`, `policy-spot-check`.
+  - Regenerated chain report: `tests/replay/chain-integrity-report.json`.
+- Deterministic replay maintenance:
+  - Updated replay golden hashes and containment assertions in `tests/replay/golden-cases.json` to match evolved deck.
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed (3/3).
+- Note:
+  - Attempted to run `develop-web-game` Playwright client; current local skill script requires ESM + playwright resolution from skill path and could not be executed directly in this environment setup.

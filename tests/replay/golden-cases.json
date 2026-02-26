@@ -19,7 +19,7 @@
         "graduate-wave",
         "rent-rise"
       ],
-      "expectedHash": "1d19fcc1",
+      "expectedHash": "dad6b87e",
       "referenceDate": "2026-02-26"
     },
     {
@@ -39,9 +39,9 @@
       },
       "mustContain": [
         "mortgage-overdue",
-        "city-relocate-plan"
+        "queue:mortgage-followup"
       ],
-      "expectedHash": "c8fdcbb0",
+      "expectedHash": "bb2653c6",
       "referenceDate": "2026-02-26"
     },
     {
@@ -61,10 +61,10 @@
         "heat": 22
       },
       "mustContain": [
-        "divorce-asset-split",
-        "mortgage-overdue"
+        "mortgage-overdue",
+        "queue:jobhunt-feedback"
       ],
-      "expectedHash": "87c39308",
+      "expectedHash": "ace91cbe",
       "referenceDate": "2026-02-26"
     }
   ]
