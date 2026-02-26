@@ -8,6 +8,8 @@
 - `public/data/events/arc-config.json`
 - `public/data/events/arc-events.json`
 - `public/data/events/event-deck.json`
+- `public/data/events/hotpacks/index.json`
+- `public/data/events/hotpacks/*.json`
 
 ## Condition (when)
 
@@ -70,6 +72,7 @@ npm run check:events
 - 条件/结果语法校验
 - 跨文件引用检查（arc order、event-meta 与 deck 对齐、queue 事件名）
 - 基础文案 lint（标题长度、正文长度提示）
+- 热点包索引与分包检查（日期区间、文件存在性、包内事件结构）
 
 ## Replay Check
 
@@ -87,3 +90,14 @@ npm run check:replay
 运行时默认仅启用 deck 数据包随机事件。
 
 - 调试兼容开关：URL 添加 `?legacyDeck=1` 才会启用 legacy 随机池 fallback。
+
+## Annual Hotpacks
+
+运行时会按当前日期自动激活 `hotpacks/index.json` 中窗口有效的分包，并合并到主 deck：
+
+- 同 `id`：热点包覆盖主 deck 事件定义
+- 新 `id`：热点包追加新事件
+- 合并后指标可在 `render_game_to_text.content` 中看到：
+  - `deck_event_count`
+  - `active_hotpacks`
+  - `hotpack_count`

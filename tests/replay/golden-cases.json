@@ -19,7 +19,8 @@
         "graduate-wave",
         "rent-rise"
       ],
-      "expectedHash": "9dfbf694"
+      "expectedHash": "f82f7ecb",
+      "referenceDate": "2026-02-26"
     },
     {
       "name": "mortgage-pressure",
@@ -38,9 +39,10 @@
       },
       "mustContain": [
         "mortgage-overdue",
-        "newborn"
+        "city-relocate-plan"
       ],
-      "expectedHash": "ff36f088"
+      "expectedHash": "867bc8a6",
+      "referenceDate": "2026-02-26"
     },
     {
       "name": "parenting-legal-mix",
@@ -62,7 +64,8 @@
         "divorce-asset-split",
         "mortgage-overdue"
       ],
-      "expectedHash": "c3242ff6"
+      "expectedHash": "6e646434",
+      "referenceDate": "2026-02-26"
     }
   ]
 }

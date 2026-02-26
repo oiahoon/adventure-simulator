@@ -252,7 +252,9 @@
       }
     },
     arcEvents: {},
-    eventDeck: { rollChance: 0.2, events: [] }
+    eventDeck: { rollChance: 0.2, events: [] },
+    hotPackIndex: { packs: [] },
+    activeHotPacks: []
   };
 
   function deepClone(obj) {
@@ -747,13 +749,69 @@
     return contentPacks().eventDeck || defaultContentPacks.eventDeck;
   }
 
+  function hotPackIndexConfig() {
+    return contentPacks().hotPackIndex || defaultContentPacks.hotPackIndex;
+  }
+
+  function activeHotPackConfig() {
+    return contentPacks().activeHotPacks || [];
+  }
+
+  function normalizeDateOnly(value) {
+    if (!value || typeof value !== "string") return null;
+    const d = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return null;
+    return d;
+  }
+
+  function isHotPackActive(pack, now) {
+    if (!pack || typeof pack !== "object") return false;
+    const ref = now || new Date();
+    const from = normalizeDateOnly(pack.activeFrom);
+    const to = normalizeDateOnly(pack.activeTo);
+    if (from && ref < from) return false;
+    if (to) {
+      const end = new Date(to.getTime());
+      end.setHours(23, 59, 59, 999);
+      if (ref > end) return false;
+    }
+    return true;
+  }
+
+  function mergeDeckEvents(baseDeck, activePacks) {
+    const merged = deepClone(baseDeck || { rollChance: 0.2, events: [] });
+    const byId = {};
+    const events = Array.isArray(merged.events) ? merged.events.slice() : [];
+    for (let i = 0; i < events.length; i += 1) {
+      byId[events[i].id] = i;
+    }
+    const packs = Array.isArray(activePacks) ? activePacks.slice() : [];
+    packs.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    for (let i = 0; i < packs.length; i += 1) {
+      const list = Array.isArray(packs[i].events) ? packs[i].events : [];
+      for (let j = 0; j < list.length; j += 1) {
+        const evt = list[j];
+        if (!evt || !evt.id) continue;
+        if (Number.isInteger(byId[evt.id])) {
+          events[byId[evt.id]] = evt;
+        } else {
+          byId[evt.id] = events.length;
+          events.push(evt);
+        }
+      }
+    }
+    merged.events = events;
+    return merged;
+  }
+
   async function loadContentPacks() {
     const base = deepClone(defaultContentPacks);
     const targets = [
       { key: "eventMeta", url: "/data/events/event-meta.json" },
       { key: "arcConfig", url: "/data/events/arc-config.json" },
       { key: "arcEvents", url: "/data/events/arc-events.json" },
-      { key: "eventDeck", url: "/data/events/event-deck.json" }
+      { key: "eventDeck", url: "/data/events/event-deck.json" },
+      { key: "hotPackIndex", url: "/data/events/hotpacks/index.json" }
     ];
     for (let i = 0; i < targets.length; i += 1) {
       const t = targets[i];
@@ -768,6 +826,32 @@
         // Use defaults when pack loading fails.
       }
     }
+    const index = base.hotPackIndex && Array.isArray(base.hotPackIndex.packs) ? base.hotPackIndex.packs : [];
+    const active = [];
+    for (let i = 0; i < index.length; i += 1) {
+      const item = index[i];
+      if (!isHotPackActive(item, new Date())) continue;
+      if (!item.file) continue;
+      try {
+        const res = await fetch(item.file, { cache: "no-store" });
+        if (!res.ok) continue;
+        const json = await res.json();
+        if (json && typeof json === "object") {
+          active.push({
+            id: item.id || json.id || `pack-${i}`,
+            name: json.name || item.id || `pack-${i}`,
+            priority: Number.isFinite(item.priority) ? item.priority : 0,
+            activeFrom: item.activeFrom || "",
+            activeTo: item.activeTo || "",
+            events: Array.isArray(json.events) ? json.events : []
+          });
+        }
+      } catch (_) {
+        // ignore single hot pack failure
+      }
+    }
+    base.activeHotPacks = active;
+    base.eventDeck = mergeDeckEvents(base.eventDeck, active);
     state.content = base;
   }
 
@@ -3877,7 +3961,9 @@
         event_meta_count: Object.keys(eventMetaConfig()).length,
         arc_order: (arcConfig().order || []).slice(),
         arc_event_count: Object.keys(arcEventsConfig()).length,
-        deck_event_count: ((eventDeckConfig().events || []).length || 0)
+        deck_event_count: ((eventDeckConfig().events || []).length || 0),
+        active_hotpacks: activeHotPackConfig().map((p) => p.id),
+        hotpack_count: activeHotPackConfig().length
       },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest

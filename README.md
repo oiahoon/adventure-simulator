@@ -9,6 +9,7 @@
 - CLI：`mud-cli`（远程/本地模式）
 - 事件引擎：`Queue -> Arcs -> Decks`
 - 事件数据包：`public/data/events/*.json`
+- 年度热点包：`public/data/events/hotpacks/*.json`（按日期自动激活）
 - 已有工程检查：
   - `npm run check:events`
   - `npm run check:replay`
@@ -62,6 +63,8 @@ mud-cli --mode local
 - `public/data/events/arc-config.json`
 - `public/data/events/arc-events.json`
 - `public/data/events/event-deck.json`
+- `public/data/events/hotpacks/index.json`
+- `public/data/events/hotpacks/*.json`
 
 ### 校验
 
@@ -86,6 +89,7 @@ vercel --prod
 ```
 
 详细见：`DEPLOYMENT.md`。
+热点包维护见：`docs/architecture/hotpack-workflow.md`。
 
 ## 目录（当前）
 

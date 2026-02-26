@@ -10,7 +10,8 @@ const FILES = {
   eventMeta: path.join(EVENT_DIR, "event-meta.json"),
   arcConfig: path.join(EVENT_DIR, "arc-config.json"),
   arcEvents: path.join(EVENT_DIR, "arc-events.json"),
-  eventDeck: path.join(EVENT_DIR, "event-deck.json")
+  eventDeck: path.join(EVENT_DIR, "event-deck.json"),
+  hotpackIndex: path.join(EVENT_DIR, "hotpacks", "index.json")
 };
 
 const VALID_DYNAMIC_MODES = new Set(["addRand", "subRand", "subRate", "addRate", "healRand"]);
@@ -46,6 +47,15 @@ function error(msg) {
 
 function warn(msg) {
   result.warnings.push(msg);
+}
+
+function resolvePublicDataPath(publicPath) {
+  if (!publicPath || typeof publicPath !== "string") return "";
+  const rel = publicPath.replace(/^\/+/, "");
+  if (rel.startsWith("data/")) {
+    return path.join(ROOT, "public", rel);
+  }
+  return path.join(ROOT, rel);
 }
 
 function validateDynamicValue(spec, where) {
@@ -213,9 +223,16 @@ function validateEventDeck(deck) {
   const idSet = new Set();
   deck.events.forEach((evt, i) => {
     const where = `[event-deck].events[${i}]`;
+    validateDeckEvent(evt, where, idSet);
+  });
+
+  return idSet;
+}
+
+function validateDeckEvent(evt, where, idSet) {
     if (!isObject(evt)) return error(`${where}: must be object`);
     if (typeof evt.id !== "string" || !evt.id) error(`${where}.id: required string`);
-    else {
+    else if (idSet) {
       if (idSet.has(evt.id)) error(`${where}.id: duplicate "${evt.id}"`);
       idSet.add(evt.id);
     }
@@ -255,9 +272,59 @@ function validateEventDeck(deck) {
         else b.outcomes.forEach((o, k) => validateOutcome(o, `${bwhere}.outcomes[${k}]`));
       });
     }
-  });
+}
 
-  return idSet;
+function validateHotpacks(deckIds) {
+  if (!fs.existsSync(FILES.hotpackIndex)) {
+    warn(`[hotpacks] index not found: ${FILES.hotpackIndex}`);
+    return;
+  }
+  const index = readJson(FILES.hotpackIndex);
+  if (!index || !Array.isArray(index.packs)) {
+    error(`[hotpacks] index.packs must be array`);
+    return;
+  }
+  for (let i = 0; i < index.packs.length; i += 1) {
+    const item = index.packs[i];
+    const where = `[hotpacks].index.packs[${i}]`;
+    if (!isObject(item)) {
+      error(`${where}: must be object`);
+      continue;
+    }
+    if (typeof item.id !== "string" || !item.id) error(`${where}.id: required string`);
+    if (typeof item.file !== "string" || !item.file) {
+      error(`${where}.file: required string`);
+      continue;
+    }
+    const from = item.activeFrom || "";
+    const to = item.activeTo || "";
+    if (from && Number.isNaN(new Date(`${from}T00:00:00`).getTime())) error(`${where}.activeFrom invalid date`);
+    if (to && Number.isNaN(new Date(`${to}T00:00:00`).getTime())) error(`${where}.activeTo invalid date`);
+    if (from && to && new Date(`${from}T00:00:00`) > new Date(`${to}T00:00:00`)) error(`${where}: activeFrom > activeTo`);
+
+    const abs = resolvePublicDataPath(item.file);
+    if (!fs.existsSync(abs)) {
+      error(`${where}: file not found ${item.file}`);
+      continue;
+    }
+    const pack = readJson(abs);
+    if (!pack || !isObject(pack)) continue;
+    if (typeof pack.id !== "string" || !pack.id) error(`${where}: pack.id required`);
+    if (pack.id && item.id && pack.id !== item.id) warn(`${where}: index id "${item.id}" != pack.id "${pack.id}"`);
+    if (!Array.isArray(pack.events)) {
+      error(`${where}: pack.events must be array`);
+      continue;
+    }
+    const localIds = new Set();
+    for (let j = 0; j < pack.events.length; j += 1) {
+      const evt = pack.events[j];
+      const ewhere = `${where}.events[${j}]`;
+      validateDeckEvent(evt, ewhere, localIds);
+      if (evt && evt.id && !deckIds.has(evt.id)) {
+        // Hot packs are allowed to introduce new ids.
+      }
+    }
+  }
 }
 
 function validateArcConfig(arcConfig, arcEvents) {
@@ -356,6 +423,7 @@ function main() {
   validateEventMeta(eventMeta, deckIds);
   const arcIds = validateArcEvents(arcEvents) || new Set();
   validateArcConfig(arcConfig, arcEvents);
+  validateHotpacks(deckIds);
 
   if (Array.isArray(arcConfig.order)) {
     arcIds.forEach((id) => {

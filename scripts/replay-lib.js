@@ -33,13 +33,70 @@ function hashText(text) {
 
 function loadDeck(cwd) {
   const file = path.join(cwd, "public", "data", "events", "event-deck.json");
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  const base = JSON.parse(fs.readFileSync(file, "utf8"));
+  const indexFile = path.join(cwd, "public", "data", "events", "hotpacks", "index.json");
+  let index = { packs: [] };
+  if (fs.existsSync(indexFile)) {
+    index = JSON.parse(fs.readFileSync(indexFile, "utf8"));
+  }
+  return { base, index };
+}
+
+function parseDateOnly(text) {
+  if (!text || typeof text !== "string") return null;
+  const d = new Date(`${text}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+function isPackActive(pack, refDate) {
+  const from = parseDateOnly(pack.activeFrom);
+  const to = parseDateOnly(pack.activeTo);
+  if (from && refDate < from) return false;
+  if (to) {
+    const end = new Date(to.getTime());
+    end.setHours(23, 59, 59, 999);
+    if (refDate > end) return false;
+  }
+  return true;
+}
+
+function mergeHotpacks(cwd, baseDeck, index, referenceDate) {
+  const ref = referenceDate ? new Date(`${referenceDate}T12:00:00`) : new Date("2026-02-26T12:00:00");
+  const merged = JSON.parse(JSON.stringify(baseDeck || { rollChance: 0.2, events: [] }));
+  const events = Array.isArray(merged.events) ? merged.events.slice() : [];
+  const byId = {};
+  for (let i = 0; i < events.length; i += 1) byId[events[i].id] = i;
+
+  const packs = Array.isArray(index && index.packs) ? index.packs.slice() : [];
+  packs.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  for (let i = 0; i < packs.length; i += 1) {
+    const p = packs[i];
+    if (!p || !p.file || !isPackActive(p, ref)) continue;
+    const rel = p.file.replace(/^\/+/, "");
+    const abs = rel.startsWith("data/") ? path.join(cwd, "public", rel) : path.join(cwd, rel);
+    if (!fs.existsSync(abs)) continue;
+    const body = JSON.parse(fs.readFileSync(abs, "utf8"));
+    const list = Array.isArray(body.events) ? body.events : [];
+    for (let j = 0; j < list.length; j += 1) {
+      const evt = list[j];
+      if (!evt || !evt.id) continue;
+      if (Number.isInteger(byId[evt.id])) events[byId[evt.id]] = evt;
+      else {
+        byId[evt.id] = events.length;
+        events.push(evt);
+      }
+    }
+  }
+  merged.events = events;
+  return merged;
 }
 
 function simulateReplay(opts) {
   const cfg = opts || {};
   const cwd = cfg.cwd || process.cwd();
-  const deck = loadDeck(cwd);
+  const loaded = loadDeck(cwd);
+  const deck = mergeHotpacks(cwd, loaded.base, loaded.index, cfg.referenceDate || "2026-02-26");
   const seed = cfg.seed || "replay-seed";
   const steps = Number.isFinite(cfg.steps) ? cfg.steps : 120;
   const random = mulberry32(hashSeed(seed));

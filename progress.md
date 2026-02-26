@@ -213,3 +213,17 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `node --check public/src/idle-mud.js` passed.
   - `npm run check:events` passed (0 errors, 0 warnings).
   - `npm run check:replay` passed (3/3, hashes updated after content evolution).
+- Annual hotpack mechanism implemented:
+  - Added hotpack index + quarterly packs under `public/data/events/hotpacks/`.
+  - Runtime now auto-loads and date-activates hotpacks, then merges into main deck (override on same id, append on new id).
+  - Exposed hotpack observability in `render_game_to_text.content`:
+    - `active_hotpacks`, `hotpack_count`, merged `deck_event_count`.
+  - Added hotpack checks to `scripts/check-events.js` (index/date/file/pack-structure validation).
+  - Updated replay engine to include active hotpacks with fixed referenceDate for deterministic regression checks.
+  - Added docs:
+    - `docs/architecture/hotpack-workflow.md`
+    - `docs/schema/event-pack-schema.md` (hotpack section)
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed (3/3) with hotpack-aware hashes.

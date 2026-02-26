@@ -27,7 +27,8 @@ function main() {
       cwd,
       seed: c.seed,
       steps: c.steps,
-      init: c.init || {}
+      init: c.init || {},
+      referenceDate: c.referenceDate || "2026-02-26"
     });
 
     const hashOk = !c.expectedHash || c.expectedHash === res.hash;
