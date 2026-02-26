@@ -103,3 +103,11 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - high heat and low heat now produce different event branches
 - Added guard for map renderer when canvas is absent, preventing runtime errors after removing map.
 - Validation: `node --check public/src/idle-mud.js` passed.
+- Implemented connected storyline arc system to reduce pure-random disconnected events.
+- Added four independent multi-stage arc chains (activation -> phase progression -> branch ending):
+  - `失业链` (组织调整 -> 面试/补偿 -> 再就业或灵活用工)
+  - `考编链` (报名冲刺 -> 模考阶段 -> 上岸或再战)
+  - `房贷链` (月供抬升 -> 协商成败 -> 稳住月供或资产调整)
+  - `育儿链` (托育排队 -> 资源分配 -> 协作稳定或持续硬扛)
+- Arc chains now progress in turn loop with day-gated stage continuity and branch logic driven by role stats/resources, creating coherent cause-effect stories.
+- Added active storyline chain display in character sheet and exported `story_arcs` in `render_game_to_text` payload for observability/testing.

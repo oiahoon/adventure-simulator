@@ -197,6 +197,15 @@
 
   const boss = { name: "系统性暴雷", hp: 142, atk: 21, rewardExp: 240, rewardGold: 180 };
 
+  function createStoryArcs() {
+    return {
+      unemployment: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
+      exam: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
+      mortgage: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
+      parenting: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" }
+    };
+  }
+
   const state = {
     mode: "menu",
     player: null,
@@ -217,7 +226,8 @@
       mainlineProgress: {},
       activeSideQuest: null,
       familyStage: "单身",
-      childCount: 0
+      childCount: 0,
+      arcs: createStoryArcs()
     },
     cityStatus: {
       morale: 58,
@@ -646,6 +656,246 @@
     return false;
   }
 
+  function activateArc(id) {
+    const arc = state.story.arcs[id];
+    if (!arc || arc.active || arc.completed) return false;
+    arc.active = true;
+    arc.stage = 1;
+    arc.nextDay = state.day;
+    return true;
+  }
+
+  function completeArc(id, ending) {
+    const arc = state.story.arcs[id];
+    if (!arc) return;
+    arc.active = false;
+    arc.completed = true;
+    arc.ending = ending || "";
+  }
+
+  function maybeActivateArcs() {
+    const p = state.player;
+    const arcs = state.story.arcs;
+    if (!p || !arcs) return;
+
+    if (!arcs.unemployment.active && !arcs.unemployment.completed && state.day >= 3 && state.story.chapterId >= 3) {
+      if (random() < 0.34) activateArc("unemployment");
+    }
+    if (!arcs.exam.active && !arcs.exam.completed && state.day >= 4 && state.story.chapterId >= 2) {
+      if (p.profession.id === "exam" || random() < 0.24) activateArc("exam");
+    }
+    if (!arcs.mortgage.active && !arcs.mortgage.completed && state.day >= 5 && (state.cityStatus.debt >= 95 || state.story.familyStage === "已婚")) {
+      if (random() < 0.36) activateArc("mortgage");
+    }
+    if (!arcs.parenting.active && !arcs.parenting.completed && state.day >= 7 && (state.story.familyStage === "育儿中" || state.story.childCount > 0)) {
+      if (random() < 0.48) activateArc("parenting");
+    }
+  }
+
+  function runUnemploymentArc(arc) {
+    const p = state.player;
+    if (arc.stage === 1) {
+      updateCityStatus({ morale: -7, fatigue: 4, heat: 3 });
+      p.gold = Math.max(0, p.gold - randInt(8, 22));
+      addMilestone("失业链启动：组织架构调整");
+      addLog("剧情链-失业：公司组织调整，你被转入待岗名单。");
+      arc.stage = 2;
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 2) {
+      const score = p.stats.int + p.stats.spi + Math.floor(p.stats.luk / 2);
+      if (score >= 24) {
+        updateCityStatus({ morale: 3, fatigue: 2, debt: -6 });
+        p.gold += randInt(18, 45);
+        addLog("剧情链-失业：你拿到补偿并接到两场面试。");
+        arc.stage = 3;
+      } else {
+        updateCityStatus({ morale: -6, debt: 16, fatigue: 3 });
+        addLog("剧情链-失业：面试连续失利，现金流进一步恶化。");
+        arc.stage = 3;
+      }
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 3) {
+      const success = p.stats.int + p.stats.agi + randInt(0, 12) >= 30;
+      if (success) {
+        p.gold += randInt(48, 96);
+        gainExp(34);
+        updateCityStatus({ morale: 8, debt: -10, fatigue: -2 });
+        addMilestone("失业链收束：再就业落地");
+        addLog("剧情链-失业：你成功再就业，暂时稳住了节奏。");
+        completeArc("unemployment", "再就业");
+      } else {
+        p.gold += randInt(14, 38);
+        updateCityStatus({ morale: -2, debt: 8, fatigue: 2 });
+        addMilestone("失业链收束：转入灵活用工");
+        addLog("剧情链-失业：你转入临时用工，收入恢复但稳定性较差。");
+        completeArc("unemployment", "灵活用工");
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function runExamArc(arc) {
+    const p = state.player;
+    if (arc.stage === 1) {
+      updateCityStatus({ fatigue: 6, morale: -2, debt: 6 });
+      p.gold = Math.max(0, p.gold - randInt(10, 24));
+      addMilestone("考编链启动：报名冲刺期");
+      addLog("剧情链-考编：报名、买课、刷题，作息开始失衡。");
+      arc.stage = 2;
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 2) {
+      const score = p.stats.int + p.stats.spi - Math.floor(state.cityStatus.fatigue / 20) + randInt(0, 8);
+      if (score >= 23) {
+        gainExp(28);
+        updateCityStatus({ morale: 5, fatigue: 2 });
+        addLog("剧情链-考编：模考排名上升，你进入面试阶段。");
+        arc.stage = 3;
+      } else {
+        updateCityStatus({ morale: -7, fatigue: 3 });
+        addLog("剧情链-考编：模考失利，你陷入是否继续的焦虑。");
+        arc.stage = 3;
+      }
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 3) {
+      const finalScore = p.stats.int + p.stats.spi + p.stats.luk + randInt(0, 12);
+      if (finalScore >= 34) {
+        p.gold += randInt(30, 70);
+        updateCityStatus({ morale: 10, debt: -8, fatigue: -2 });
+        addMilestone("考编链收束：成功上岸");
+        addLog("剧情链-考编：你拿到录用通知，家庭压力明显缓和。");
+        completeArc("exam", "上岸");
+      } else {
+        p.gold = Math.max(0, p.gold - randInt(8, 26));
+        updateCityStatus({ morale: -4, fatigue: 3 });
+        addMilestone("考编链收束：落榜再战");
+        addLog("剧情链-考编：本轮未上岸，你决定边工作边准备下一次。");
+        completeArc("exam", "再战");
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function runMortgageArc(arc) {
+    const p = state.player;
+    if (arc.stage === 1) {
+      updateCityStatus({ debt: 18, morale: -4, fatigue: 2 });
+      p.gold = Math.max(0, p.gold - randInt(12, 28));
+      addMilestone("房贷链启动：月供压力上升");
+      addLog("剧情链-房贷：月供上涨与装修尾款同时到期。");
+      arc.stage = 2;
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 2) {
+      const affordable = p.gold >= 80 || p.stats.int + p.stats.spi >= 24;
+      if (affordable) {
+        p.gold = Math.max(0, p.gold - randInt(36, 72));
+        updateCityStatus({ debt: -16, morale: 3, fatigue: 1 });
+        addLog("剧情链-房贷：你完成重组方案，现金流短期可控。");
+        arc.stage = 3;
+      } else {
+        updateCityStatus({ debt: 22, morale: -7, heat: 4, fatigue: 3 });
+        addLog("剧情链-房贷：协商失败，逾期风险上升并影响征信。");
+        arc.stage = 3;
+      }
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 3) {
+      const stabilize = p.stats.int + p.stats.luk + randInt(0, 10) >= 26;
+      if (stabilize) {
+        updateCityStatus({ debt: -12, morale: 5, heat: -2 });
+        addMilestone("房贷链收束：断供风险解除");
+        addLog("剧情链-房贷：你保住了还款节奏，风险暂时解除。");
+        completeArc("mortgage", "稳住月供");
+      } else {
+        p.gold = Math.max(0, p.gold - Math.floor(p.gold * 0.35));
+        updateCityStatus({ debt: 18, morale: -6, fatigue: 2, heat: 3 });
+        addMilestone("房贷链收束：资产被迫调整");
+        addLog("剧情链-房贷：你被迫出售部分资产换取续命空间。");
+        completeArc("mortgage", "资产调整");
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function runParentingArc(arc) {
+    const p = state.player;
+    if (arc.stage === 1) {
+      updateCityStatus({ fatigue: 7, morale: -2, debt: 6 });
+      p.hp = Math.max(1, p.hp - randInt(2, 7));
+      addMilestone("育儿链启动：托育排队");
+      addLog("剧情链-育儿：托育名额紧张，通勤与照护冲突加剧。");
+      arc.stage = 2;
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 2) {
+      const canBuyTime = p.gold >= 70 || p.stats.spi + p.stats.int >= 24;
+      if (canBuyTime) {
+        p.gold = Math.max(0, p.gold - randInt(26, 58));
+        updateCityStatus({ fatigue: -6, morale: 4, debt: 6 });
+        addLog("剧情链-育儿：你争取到临时托育支持，节奏稍有改善。");
+        arc.stage = 3;
+      } else {
+        updateCityStatus({ fatigue: 9, morale: -5, debt: 10 });
+        p.hp = Math.max(1, p.hp - randInt(3, 8));
+        addLog("剧情链-育儿：无人接替夜间照护，你连续透支状态。");
+        arc.stage = 3;
+      }
+      arc.nextDay = state.day + 1;
+      return true;
+    }
+    if (arc.stage === 3) {
+      const stabilize = p.stats.spi + p.stats.vit + randInt(0, 8) >= 22;
+      if (stabilize) {
+        updateCityStatus({ morale: 7, fatigue: -5, debt: -6 });
+        addMilestone("育儿链收束：家庭协作成型");
+        addLog("剧情链-育儿：家庭协作机制稳定，压力回落。");
+        completeArc("parenting", "协作稳定");
+      } else {
+        updateCityStatus({ morale: -4, fatigue: 6, debt: 10 });
+        addMilestone("育儿链收束：硬扛阶段");
+        addLog("剧情链-育儿：你进入长期硬扛模式，后续风险仍高。");
+        completeArc("parenting", "持续硬扛");
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function maybeRunStoryArc() {
+    if (state.mode !== "running") return false;
+    maybeActivateArcs();
+    const order = ["unemployment", "exam", "mortgage", "parenting"];
+    for (let i = 0; i < order.length; i += 1) {
+      const id = order[i];
+      const arc = state.story.arcs[id];
+      if (!arc || !arc.active || arc.completed || state.day < arc.nextDay) continue;
+      let progressed = false;
+      if (id === "unemployment") progressed = runUnemploymentArc(arc);
+      if (id === "exam") progressed = runExamArc(arc);
+      if (id === "mortgage") progressed = runMortgageArc(arc);
+      if (id === "parenting") progressed = runParentingArc(arc);
+      if (progressed) {
+        updateCityStatus({ heat: random() < 0.3 ? 1 : 0 });
+        return true;
+      }
+    }
+    return false;
+  }
+
   function updateKpiStrip() {
     if (!state.player) {
       els.seedPill.textContent = "Seed: -";
@@ -916,6 +1166,10 @@
     const chapter = chapterById(state.story.chapterId);
     const mainlineTask = getCurrentMainlineTask();
     const sideQuest = state.story.activeSideQuest;
+    const activeArcs = Object.entries(state.story.arcs || {})
+      .filter(([, arc]) => arc.active)
+      .map(([id, arc]) => `${id}:阶段${arc.stage}`)
+      .join(" / ");
 
     return [
       `姓名: ${p.name}`,
@@ -932,6 +1186,7 @@
       `当前主线: ${chapter.mission}`,
       `主线节点: ${mainlineTask ? mainlineTask.text : "本章已全部完成"}`,
       `当前支线: ${sideQuest ? `${sideQuest.title} (${getSideQuestProgressText(sideQuest)})` : "暂无"}`,
+      `剧情链: ${activeArcs || "暂无活跃链"}`,
       `家庭阶段: ${state.story.familyStage} (${state.story.childCount} 个孩子)`,
       `精神 ${state.cityStatus.morale} / 疲劳 ${state.cityStatus.fatigue}`,
       `债务 ${state.cityStatus.debt} / 热度 ${state.cityStatus.heat}`,
@@ -1959,6 +2214,16 @@
     if (checkTerminalLines()) return;
 
     maybeAssignSideQuest();
+    if (maybeRunStoryArc()) {
+      turnLabel = "剧情链推进";
+      maybeCompleteSideQuest();
+      maybeProgressMainlineTask();
+      updateChapterProgress();
+      if (checkTerminalLines()) return;
+      finalizeTurnFeedback(before, turnLabel);
+      render();
+      return;
+    }
 
     if (maybeOpenChoice()) {
       return;
@@ -2251,7 +2516,8 @@
       mainlineProgress: { 1: 0 },
       activeSideQuest: null,
       familyStage: "单身",
-      childCount: 0
+      childCount: 0,
+      arcs: createStoryArcs()
     };
     state.cityStatus = state.player.startCityStatus
       ? { ...state.player.startCityStatus }
@@ -2442,6 +2708,12 @@
         stage: state.story.familyStage,
         child_count: state.story.childCount
       },
+      story_arcs: Object.fromEntries(
+        Object.entries(state.story.arcs || {}).map(([k, arc]) => [
+          k,
+          { active: arc.active, completed: arc.completed, stage: arc.stage, ending: arc.ending || "" }
+        ])
+      ),
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest
         ? {
