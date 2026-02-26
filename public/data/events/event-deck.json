@@ -101,6 +101,37 @@
       ]
     },
     {
+      "id": "housing-rate-adjust",
+      "title": "房贷利率窗口",
+      "text": "存量房贷利率调整消息落地，朋友圈刷屏一整天。",
+      "deck": "housing",
+      "tags": ["mortgage", "debt"],
+      "baseWeight": 1.02,
+      "cooldown": 4,
+      "when": { "debtGte": 100 },
+      "outcomes": [
+        {
+          "city": { "debt": -14, "morale": 4 },
+          "milestone": "房贷利率下调窗口"
+        }
+      ]
+    },
+    {
+      "id": "night-school-burst",
+      "title": "夜校冲刺",
+      "text": "夜校挤满了进修的人，你只抢到最后一排。",
+      "deck": "exam",
+      "tags": ["exam", "skill"],
+      "baseWeight": 1.06,
+      "cooldown": 2,
+      "outcomes": [
+        {
+          "player": { "stats": { "int": 1 }, "exp": 20 },
+          "city": { "fatigue": 2 }
+        }
+      ]
+    },
+    {
       "id": "medical-queue",
       "title": "深夜陪诊",
       "text": "挂号队伍排到天亮，你在走廊补了 20 分钟觉。",

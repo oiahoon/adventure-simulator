@@ -19,7 +19,7 @@
         "graduate-wave",
         "rent-rise"
       ],
-      "expectedHash": "2bb0005a"
+      "expectedHash": "28af39fe"
     },
     {
       "name": "mortgage-pressure",
@@ -40,7 +40,7 @@
         "mortgage-overdue",
         "newborn"
       ],
-      "expectedHash": "e0f7b0db"
+      "expectedHash": "0c734db4"
     },
     {
       "name": "parenting-legal-mix",
@@ -59,10 +59,10 @@
         "heat": 22
       },
       "mustContain": [
-        "helping-fall-fraud",
-        "camera-clear"
+        "divorce-asset-split",
+        "mortgage-overdue"
       ],
-      "expectedHash": "9f15f4a7"
+      "expectedHash": "5c357faa"
     }
   ]
 }

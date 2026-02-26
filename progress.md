@@ -178,3 +178,11 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
     - `node --check public/src/idle-mud.js` passed.
     - `npm run check:events` passed (warnings only).
     - `npm run check:replay` passed (3/3).
+- Phase C progressed (legacy random fallback retirement):
+  - Migrated remaining legacy-only meta events into deck pack: `housing-rate-adjust`, `night-school-burst`.
+  - `maybeRandomEvent` now defaults to deck-only; legacy random pool executes only with `?legacyDeck=1` compatibility switch.
+  - Updated replay golden hashes/case assertions after deck migration.
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - `npm run check:events` passed (0 errors, 1 title-length warning).
+  - `npm run check:replay` passed (3/3).

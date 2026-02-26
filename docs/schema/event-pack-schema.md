@@ -81,3 +81,9 @@ npm run check:replay
 
 - 相同 seed/初始化参数下事件序列哈希稳定
 - 关键事件链在样例场景中可命中（`mustContain`）
+
+## Legacy Fallback
+
+运行时默认仅启用 deck 数据包随机事件。
+
+- 调试兼容开关：URL 添加 `?legacyDeck=1` 才会启用 legacy 随机池 fallback。

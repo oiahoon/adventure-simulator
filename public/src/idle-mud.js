@@ -2468,7 +2468,19 @@
     if (maybeRandomEventFromDeck()) {
       return true;
     }
+    if (!shouldUseLegacyRandomFallback()) {
+      return false;
+    }
     return maybeRandomEventLegacy();
+  }
+
+  function shouldUseLegacyRandomFallback() {
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      return qs.get("legacyDeck") === "1";
+    } catch (_) {
+      return false;
+    }
   }
 
   function maybeRandomEventLegacy() {
