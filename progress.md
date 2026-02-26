@@ -34,3 +34,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Implemented header-based response mode: CLI mode via `x-client-mode: cli` or `Accept: text/plain` returns plain text battle report.
 - Added actions: `new`, `status`, `step`, `auto`, `choose` with state carried by client.
 - Added docs at `docs/api/cli-mud.md` with curl usage examples.
+- Added installable CLI app: `mud-cli` (`bin/mud-cli.js`) with interactive menu-based UI.
+- CLI supports `remote` mode (calls `/api/mud/run`) and `local` mode (offline playable fallback).
+- Added npm bin wiring and scripts in root package.json; updated README with install/run commands.

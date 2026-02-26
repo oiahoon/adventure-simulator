@@ -2,8 +2,12 @@
   "name": "adventure-simulator",
   "version": "1.0.0",
   "description": "江湖奇缘 - 智能文字MUD游戏",
+  "bin": {
+    "mud-cli": "bin/mud-cli.js"
+  },
   "scripts": {
-    "build": "echo 'Static files already in public directory - build complete'"
+    "build": "echo 'Static files already in public directory - build complete'",
+    "mud:cli": "mud-cli --mode local"
   },
   "keywords": [
     "mud",

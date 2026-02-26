@@ -62,6 +62,35 @@ python3 -m http.server 8080
 - 📡 API服务: http://localhost:3000/api/health
 - 🏮 MUD状态: http://localhost:3000/api/mud/status
 
+## 💻 CLI模式（命令行游玩）
+
+支持安装后通过命令直接游玩，内置简单交互式 CLI UI。
+
+### 安装
+
+```bash
+npm i -g git+ssh://git@github.com/oiahoon/adventure-simulator.git
+```
+
+### 运行
+
+```bash
+# 远程模式（默认，调用线上 /api/mud/run）
+mud-cli
+
+# 指定远程地址
+mud-cli --base-url https://adventure-simulator.vercel.app
+
+# 本地模式（不依赖网络）
+mud-cli --mode local
+```
+
+### 本地开发直接运行
+
+```bash
+npm run mud:cli
+```
+
 ## 🌐 Vercel部署
 
 ### 部署步骤
