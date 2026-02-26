@@ -248,7 +248,8 @@
     flags: {
       sectChosen: false,
       skillChosen: false,
-      bossDefeated: false
+      bossDefeated: false,
+      lineEventDay: {}
     },
     log: []
   };
@@ -298,7 +299,7 @@
     choiceOptions: document.getElementById("choice-options")
   };
 
-  const ctx = els.canvas.getContext("2d");
+  const ctx = els.canvas ? els.canvas.getContext("2d") : null;
   const shareCtx = els.shareCanvas.getContext("2d");
 
   function mulberry32(seed) {
@@ -519,6 +520,130 @@
       updateCityStatus({ heat: 1 });
       addLog("精神压力拉满，临时判断力下降。");
     }
+  }
+
+  function lineValues() {
+    return {
+      hp: state.player ? Math.round((state.player.hp / Math.max(1, state.player.hpMax)) * 100) : 100,
+      morale: state.cityStatus.morale,
+      fatigue: 100 - state.cityStatus.fatigue,
+      debt: 100 - Math.round((state.cityStatus.debt / 300) * 100)
+    };
+  }
+
+  function maybeApplyLineThresholdEvents() {
+    const p = state.player;
+    if (!p || state.mode !== "running") return;
+    if (!state.flags.lineEventDay) state.flags.lineEventDay = {};
+    const lines = lineValues();
+    const lock = state.flags.lineEventDay;
+    const dayKey = String(state.day);
+
+    if (lines.hp <= 24 && lock.hp !== dayKey) {
+      lock.hp = dayKey;
+      if (random() < 0.55) {
+        const hit = randInt(4, 10);
+        p.hp = Math.max(0, p.hp - hit);
+        updateCityStatus({ morale: -3, fatigue: 2 });
+        addLog("低生命阈值事件：通勤途中旧伤复发，状态下滑。");
+      } else {
+        const heal = randInt(6, 12);
+        p.hp = Math.min(p.hpMax, p.hp + heal);
+        p.gold = Math.max(0, p.gold - randInt(6, 18));
+        addLog("低生命阈值事件：社区门诊处理后勉强续航。");
+      }
+    }
+
+    if (lines.morale <= 20 && lock.morale !== dayKey) {
+      lock.morale = dayKey;
+      if (random() < 0.6) {
+        updateCityStatus({ morale: -6, heat: 4 });
+        p.stats.int = Math.max(2, p.stats.int - 1);
+        addLog("低精神阈值事件：负面消息连击，判断力短暂下降。");
+      } else {
+        updateCityStatus({ morale: 5, fatigue: -3 });
+        p.gold = Math.max(0, p.gold - randInt(10, 24));
+        addLog("低精神阈值事件：你强行休整一天，花钱换回状态。");
+      }
+    }
+
+    if (lines.fatigue <= 20 && lock.fatigue !== dayKey) {
+      lock.fatigue = dayKey;
+      if (random() < 0.58) {
+        const hit = randInt(3, 9);
+        p.hp = Math.max(0, p.hp - hit);
+        updateCityStatus({ fatigue: 8, morale: -4 });
+        addLog("低精力阈值事件：连续熬夜导致过劳反噬。");
+      } else {
+        updateCityStatus({ fatigue: -10, morale: 2, debt: 6 });
+        p.gold = Math.max(0, p.gold - randInt(8, 20));
+        addLog("低精力阈值事件：临时请假休息，恢复但现金流承压。");
+      }
+    }
+
+    if (lines.debt <= 22 && lock.debt !== dayKey) {
+      lock.debt = dayKey;
+      if (random() < 0.64) {
+        updateCityStatus({ debt: 18, morale: -5, heat: 3 });
+        p.gold = Math.max(0, p.gold - randInt(12, 36));
+        addLog("低债务线阈值事件：催收与违约提醒同时到来。");
+      } else {
+        updateCityStatus({ debt: -10, fatigue: 4, morale: -1 });
+        addLog("低债务线阈值事件：你完成分期重组，暂时止血。");
+      }
+    }
+
+    if (state.cityStatus.heat >= 82 && lock.heatHigh !== dayKey) {
+      lock.heatHigh = dayKey;
+      if (random() < 0.55) {
+        updateCityStatus({ heat: 8, morale: -4, fatigue: 4 });
+        p.gold = Math.max(0, p.gold - randInt(10, 30));
+        addLog("高热度事件：你被推上舆情中心，压力骤增。");
+      } else {
+        p.gold += randInt(24, 60);
+        updateCityStatus({ heat: 3, morale: 2 });
+        addLog("高热度事件：流量短期变现，但风险继续堆积。");
+      }
+    }
+
+    if (state.cityStatus.heat <= 8 && lock.heatLow !== dayKey && state.day >= 3) {
+      lock.heatLow = dayKey;
+      if (random() < 0.6) {
+        updateCityStatus({ heat: -2, morale: 3, fatigue: -2 });
+        addLog("低热度事件：你获得一段安静窗口，稳步修复状态。");
+      } else {
+        updateCityStatus({ morale: -2, debt: 6 });
+        addLog("低热度事件：关注度过低导致机会流失，收入受影响。");
+      }
+    }
+  }
+
+  function checkTerminalLines() {
+    const p = state.player;
+    if (!p || state.mode !== "running") return false;
+    const line = lineValues();
+    if (p.hp <= 0) {
+      p.hp = 0;
+      addLog("生存线归零：生命线断裂。");
+      endRun(false);
+      return true;
+    }
+    if (line.morale <= 0) {
+      addLog("生存线归零：精神线断裂。");
+      endRun(false);
+      return true;
+    }
+    if (line.fatigue <= 0) {
+      addLog("生存线归零：精力线断裂。");
+      endRun(false);
+      return true;
+    }
+    if (line.debt <= 0) {
+      addLog("生存线归零：债务线断裂。");
+      endRun(false);
+      return true;
+    }
+    return false;
   }
 
   function updateKpiStrip() {
@@ -858,6 +983,9 @@
   }
 
   function drawMap() {
+    if (!els.canvas || !ctx) {
+      return;
+    }
     const width = els.canvas.width;
     const height = els.canvas.height;
     ctx.clearRect(0, 0, width, height);
@@ -1827,6 +1955,8 @@
     let turnLabel = "日常推进";
 
     applyCityPressure();
+    maybeApplyLineThresholdEvents();
+    if (checkTerminalLines()) return;
 
     maybeAssignSideQuest();
 
@@ -1846,6 +1976,7 @@
       maybeCompleteSideQuest();
       maybeProgressMainlineTask();
       updateChapterProgress();
+      if (checkTerminalLines()) return;
       finalizeTurnFeedback(before, turnLabel);
       render();
       return;
@@ -1856,6 +1987,7 @@
       maybeCompleteSideQuest();
       maybeProgressMainlineTask();
       updateChapterProgress();
+      if (checkTerminalLines()) return;
       finalizeTurnFeedback(before, turnLabel);
       render();
       return;
@@ -1876,10 +2008,7 @@
       doRestOrShop() || doTravel();
     }
 
-    if (p.hp <= 0) {
-      endRun(false);
-      return;
-    }
+    if (checkTerminalLines()) return;
 
     maybeCompleteSideQuest();
     maybeProgressMainlineTask();
@@ -2077,6 +2206,7 @@
   }
 
   function endRun(isWin) {
+    if (state.mode === "ended" && state.runResult) return;
     state.mode = "ended";
     state.isPaused = true;
     state.runResult = buildRunResult(isWin);
@@ -2154,7 +2284,8 @@
     state.flags = {
       sectChosen: false,
       skillChosen: false,
-      bossDefeated: false
+      bossDefeated: false,
+      lineEventDay: {}
     };
 
     clearShareCanvas();

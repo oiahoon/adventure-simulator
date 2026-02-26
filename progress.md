@@ -91,3 +91,15 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added new homepage stylesheet `public/assets/styles/home.css`.
 - Validation: `node --check public/src/idle-mud.js` passed.
 - Playwright status: still blocked in sandbox due Chromium launch permission (`MachPortRendezvousServer ... Permission denied (1100)`).
+- Removed map from game UI (`/game`) to reduce low-value visual area and tighten the core loop around status + controls + log.
+- Reworked game page layout to group `角色状态 + 操作台 + 生存日志 + 结局` in one contiguous column for better mobile flow and reduced cognitive distance.
+- Added line-based survival termination logic:
+  - 生命线归零 => 结束
+  - 精神线归零 => 结束
+  - 精力线归零（对应疲劳拉满）=> 结束
+  - 债务线归零（对应债务超过上限）=> 结束
+- Added threshold-driven special events based on line pressure and heat extremes:
+  - low HP / low morale / low stamina-line / low debt-line each trigger dedicated crisis/recovery events with day-level lock
+  - high heat and low heat now produce different event branches
+- Added guard for map renderer when canvas is absent, preventing runtime errors after removing map.
+- Validation: `node --check public/src/idle-mud.js` passed.
