@@ -6,6 +6,28 @@
     { id: "freelancer", name: "县城返乡青年", mod: { str: 1, agi: 1, vit: 0, int: 1, spi: 0, luk: 2 }, skill: "人情网络" }
   ];
 
+  const regionalOrigins = [
+    { id: "county", label: "县城普通家庭", stat: { vit: 1, spi: 1, luk: 1 }, city: { debt: 14, morale: -1, fatigue: 1 }, gold: -6 },
+    { id: "prefecture", label: "地级市工薪家庭", stat: { str: 1, vit: 1, int: 1 }, city: { debt: 8, morale: 0, fatigue: 0 }, gold: -2 },
+    { id: "metro", label: "一线租房青年", stat: { agi: 1, int: 1, spi: -1 }, city: { debt: 18, morale: -2, fatigue: 2, heat: 1 }, gold: 3 },
+    { id: "newtown", label: "新一线合租青年", stat: { agi: 1, int: 1, luk: 1 }, city: { debt: 10, morale: 1, fatigue: 1 }, gold: 1 },
+    { id: "smallbiz", label: "个体户子女", stat: { str: 1, vit: 1, luk: 2 }, city: { debt: 6, morale: 1 }, gold: 8 }
+  ];
+
+  const educationTracks = [
+    { id: "college", label: "本科应届生", stat: { int: 2, spi: -1 }, city: { morale: -1, fatigue: 1 }, gold: -2 },
+    { id: "junior", label: "大专技能岗", stat: { agi: 1, vit: 1, int: 1 }, city: { fatigue: 1 }, gold: 0 },
+    { id: "postgrad", label: "考研二战", stat: { int: 2, spi: 1, vit: -1 }, city: { morale: -2, fatigue: 2 }, gold: -4 },
+    { id: "selflearn", label: "自学转行", stat: { int: 1, spi: 1, luk: 1 }, city: { morale: 1, fatigue: 1 }, gold: -1 }
+  ];
+
+  const familyPressures = [
+    { id: "support-home", label: "每月寄钱回家", stat: { spi: 1, vit: 1 }, city: { debt: 12, morale: -1, fatigue: 1 }, gold: -8 },
+    { id: "single-burden", label: "独生子女压力", stat: { spi: 2 }, city: { debt: 10, fatigue: 1 }, gold: -5 },
+    { id: "no-burden", label: "暂时无家庭负担", stat: { int: 1, luk: 1 }, city: { debt: -5, morale: 2, fatigue: -1 }, gold: 4 },
+    { id: "roommates", label: "合租互助", stat: { agi: 1, spi: 1 }, city: { debt: -2, morale: 2 }, gold: 2 }
+  ];
+
   const sects = [
     { id: "public", name: "体制冲线", bonus: { vit: 2, spi: 2 }, desc: "抗压更稳，精神恢复更快。" },
     { id: "corp", name: "大厂硬扛", bonus: { str: 2, agi: 1 }, desc: "推进更快，战斗收益更高。" },
@@ -310,11 +332,41 @@
     return randInt(1, 6) + randInt(1, 6) + randInt(1, 6);
   }
 
+  function addStatMod(target, mod) {
+    if (!mod) return;
+    target.str += mod.str || 0;
+    target.agi += mod.agi || 0;
+    target.vit += mod.vit || 0;
+    target.int += mod.int || 0;
+    target.spi += mod.spi || 0;
+    target.luk += mod.luk || 0;
+  }
+
+  function normalizeStats(stats) {
+    stats.str = clamp(stats.str, 4, 22);
+    stats.agi = clamp(stats.agi, 4, 22);
+    stats.vit = clamp(stats.vit, 4, 22);
+    stats.int = clamp(stats.int, 4, 22);
+    stats.spi = clamp(stats.spi, 4, 22);
+    stats.luk = clamp(stats.luk, 4, 22);
+    return stats;
+  }
+
   function makeName() {
-    const first = ["张", "王", "李", "赵", "周", "吴", "徐", "孙", "马", "刘"];
-    const second = ["子", "嘉", "雨", "浩", "思", "若", "晨", "宇", "一", "梓"];
-    const third = ["轩", "宁", "然", "凡", "彤", "航", "涛", "妍", "杰", "婷"];
-    return `${pick(first)}${pick(second)}${pick(third)}`;
+    const surname = ["王", "李", "张", "刘", "陈", "杨", "赵", "黄", "周", "吴", "徐", "孙", "胡", "朱", "高"];
+    const commonTwoChar = ["宇轩", "浩然", "梓涵", "子豪", "思雨", "佳宁", "俊杰", "梦瑶", "一诺", "嘉怡", "晨曦", "博文"];
+    const commonOneChar = ["伟", "磊", "静", "敏", "娜", "婷", "超", "涛", "勇", "峰"];
+    const memePrefix = ["打工人", "考编人", "躺平派", "牛马", "卷王", "通勤侠"];
+    const memeSuffix = ["阿强", "小刘", "老王", "同学", "师傅", "队长"];
+
+    if (random() < 0.2) {
+      return `${pick(memePrefix)}${pick(memeSuffix)}`;
+    }
+
+    if (random() < 0.58) {
+      return `${pick(surname)}${pick(commonTwoChar)}`;
+    }
+    return `${pick(surname)}${pick(commonOneChar)}`;
   }
 
   function locationById(id) {
@@ -327,21 +379,48 @@
 
   function createPlayer() {
     const job = pick(professions);
-    const stats = {
-      str: roll3d6() + job.mod.str,
-      agi: roll3d6() + job.mod.agi,
-      vit: roll3d6() + job.mod.vit,
-      int: roll3d6() + job.mod.int,
-      spi: roll3d6() + job.mod.spi,
-      luk: roll3d6() + job.mod.luk
-    };
+    const origin = pick(regionalOrigins);
+    const edu = pick(educationTracks);
+    const family = pick(familyPressures);
+    const stats = normalizeStats({
+      str: roll3d6(),
+      agi: roll3d6(),
+      vit: roll3d6(),
+      int: roll3d6(),
+      spi: roll3d6(),
+      luk: roll3d6()
+    });
+    addStatMod(stats, job.mod);
+    addStatMod(stats, origin.stat);
+    addStatMod(stats, edu.stat);
+    addStatMod(stats, family.stat);
+    normalizeStats(stats);
 
     const hpMax = 70 + stats.vit * 5;
     const mpMax = 24 + stats.spi * 3;
+    const baseCity = {
+      morale: 58 + randInt(-4, 4),
+      fatigue: 24 + randInt(-3, 3),
+      debt: 70 + randInt(-8, 12),
+      heat: 12 + randInt(-2, 2)
+    };
+    const cityStatus = {
+      morale: clamp(baseCity.morale + (origin.city.morale || 0) + (edu.city.morale || 0) + (family.city.morale || 0), 20, 90),
+      fatigue: clamp(baseCity.fatigue + (origin.city.fatigue || 0) + (edu.city.fatigue || 0) + (family.city.fatigue || 0), 10, 65),
+      debt: clamp(baseCity.debt + (origin.city.debt || 0) + (edu.city.debt || 0) + (family.city.debt || 0), 20, 220),
+      heat: clamp(baseCity.heat + (origin.city.heat || 0) + (edu.city.heat || 0) + (family.city.heat || 0), 0, 45)
+    };
+    const startGold = clamp(40 + (origin.gold || 0) + (edu.gold || 0) + (family.gold || 0), 16, 80);
+    const startPotion = cityStatus.fatigue >= 30 ? 2 : 1;
 
     return {
       name: makeName(),
       profession: job,
+      profile: {
+        origin: origin.label,
+        education: edu.label,
+        family: family.label
+      },
       stats,
       level: 1,
       exp: 0,
@@ -350,11 +429,12 @@
       hpMax,
       mp: mpMax,
       mpMax,
-      gold: 40,
-      potion: 1,
+      gold: startGold,
+      potion: startPotion,
       sect: null,
       skill: job.skill,
-      perk: null
+      perk: null,
+      startCityStatus: cityStatus
     };
   }
 
@@ -684,6 +764,9 @@
     return [
       `姓名: ${p.name}`,
       `职业: ${p.profession.name}`,
+      `出身: ${p.profile ? p.profile.origin : "未知"}`,
+      `教育: ${p.profile ? p.profile.education : "未知"}`,
+      `家庭压力: ${p.profile ? p.profile.family : "未知"}`,
       `等级: ${p.level} 经验: ${p.exp}/${p.nextExp}`,
       `生命: ${p.hp}/${p.hpMax}`,
       `内力: ${p.mp}/${p.mpMax}`,
@@ -2009,12 +2092,14 @@
       familyStage: "单身",
       childCount: 0
     };
-    state.cityStatus = {
-      morale: randInt(52, 68),
-      fatigue: randInt(18, 32),
-      debt: randInt(60, 110),
-      heat: randInt(8, 16)
-    };
+    state.cityStatus = state.player.startCityStatus
+      ? { ...state.player.startCityStatus }
+      : {
+          morale: randInt(52, 68),
+          fatigue: randInt(18, 32),
+          debt: randInt(60, 110),
+          heat: randInt(8, 16)
+        };
     state.metrics = {
       battles: 0,
       victories: 0,
@@ -2044,6 +2129,9 @@
     clearShareCanvas();
     els.downloadShareLink.classList.add("hidden");
     addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 进入城市生存线。`);
+    if (state.player.profile) {
+      addLog(`角色画像: ${state.player.profile.origin} / ${state.player.profile.education} / ${state.player.profile.family}`);
+    }
     addLog(`本局命运种子: ${state.seed}`);
     maybeProgressMainlineTask();
     if (state.initialSeedFromUrl) {
@@ -2208,6 +2296,7 @@
         ? {
             name: p.name,
             profession: p.profession.name,
+            profile: p.profile ? { ...p.profile } : null,
             level: p.level,
             hp: p.hp,
             hp_max: p.hpMax,

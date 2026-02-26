@@ -66,3 +66,10 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Updated share/report wording from `江湖战报` to `斩杀线战报`, and download filename to `killline-report.png`.
 - Validation: `node --check public/src/idle-mud.js` and `node --check api/index.js` passed.
 - Playwright loop status: blocked in current environment due missing `chromium_headless_shell` runtime expected by skill client; attempted install and dependency setup, but runtime binary still unavailable.
+- Improved reroll character realism for CN context:
+  - Added three-layer role generation: regional origin + education track + family pressure profile.
+  - Name generation now mixes high-frequency Chinese real names with tieba-style meme nicknames (20% chance) for shareable humor.
+  - Base stats now combine dice + profession + social profile modifiers, with bounded ranges to avoid outliers.
+  - Initial city status/gold now derive from profile burden instead of pure random, making debt/fatigue/morale opening state more believable.
+  - Character sheet/log/render_game_to_text now include profile fields (`出身/教育/家庭压力`).
+- Validation: `node --check public/src/idle-mud.js` passed.
