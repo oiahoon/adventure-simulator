@@ -5,6 +5,13 @@
   "scripts": {
     "build": "echo 'Static files already in public directory - build complete'"
   },
-  "keywords": ["mud", "game", "vercel"],
-  "license": "MIT"
+  "keywords": [
+    "mud",
+    "game",
+    "vercel"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
 }
