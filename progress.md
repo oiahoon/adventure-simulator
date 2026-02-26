@@ -9,3 +9,5 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Validation status: JS syntax check passed (`node --check public/src/idle-mud.js`).
 - Blocker: automated Playwright run could not complete in this environment because browser binary install (`npx playwright install chromium`) did not finish and local `python3 -m http.server` bind returned permission error.
 - Next: push to GitHub and deploy on Vercel with project-linked environment.
+- Git: committed and force-pushed to origin/main at `6964c62`.
+- Deploy blocker: `npx vercel --prod --yes` reached CLI but failed with `The specified token is not valid. Use vercel login to generate a new token.`
