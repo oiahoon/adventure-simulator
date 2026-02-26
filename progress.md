@@ -23,3 +23,7 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added auto side-quest system (`sideQuestTemplates`) with acceptance, progress tracking, completion rewards, and integration into run metrics.
 - Greatly expanded random event pool with modern absurd city-life events and additional rare events.
 - Run summary now includes mainline completed count and side-quest completion count in ending panel/share card/share copy.
+- Further expanded social-reality narrative with harder life-pressure themes (rent, overtime, hospital queue, layoffs rumor, social insurance, family burden) while keeping absurd dark-humor tone.
+- Mainline now has denser per-chapter objective chains (4 nodes for most chapters) to avoid shallow chapter jumps.
+- Added larger side-quest pool focused on livelihood pressure arcs (rent/family/hospital/night school/training).
+- Implemented achievement system for both clear and death outcomes; achievements are now shown in ending panel, share card, and share copy.

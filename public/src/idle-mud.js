@@ -33,37 +33,44 @@
     1: [
       { id: "c1-1", text: "完成 2 次城市移动", req: { travels: 2 } },
       { id: "c1-2", text: "击败 1 名街头敌人", req: { victories: 1 } },
-      { id: "c1-3", text: "累计拾取 1 次补给", req: { loots: 1 } }
+      { id: "c1-3", text: "累计拾取 1 次补给", req: { loots: 1 } },
+      { id: "c1-4", text: "触发 1 次随机事件", req: { randomEvents: 1 } }
     ],
     2: [
       { id: "c2-1", text: "完成门派抉择", req: { choices: 1 } },
       { id: "c2-2", text: "累计 3 场战斗", req: { battles: 3 } },
-      { id: "c2-3", text: "触发 1 次城市随机事件", req: { randomEvents: 1 } }
+      { id: "c2-3", text: "触发 2 次城市随机事件", req: { randomEvents: 2 } },
+      { id: "c2-4", text: "完成 1 次支线任务", req: { sideQuestCompletions: 1 } }
     ],
     3: [
       { id: "c3-1", text: "连胜推进到 4 场胜利", req: { victories: 4 } },
       { id: "c3-2", text: "完成 1 次商店补给", req: { shops: 1 } },
-      { id: "c3-3", text: "累计触发 1 次稀有事件", req: { rareEvents: 1 } }
+      { id: "c3-3", text: "累计触发 1 次稀有事件", req: { rareEvents: 1 } },
+      { id: "c3-4", text: "累计 5 次城市移动", req: { travels: 5 } }
     ],
     4: [
       { id: "c4-1", text: "完成进阶天赋抉择", req: { choices: 2 } },
       { id: "c4-2", text: "达到 Lv.4", req: { level: 4 } },
-      { id: "c4-3", text: "累计 6 场胜利", req: { victories: 6 } }
+      { id: "c4-3", text: "累计 6 场胜利", req: { victories: 6 } },
+      { id: "c4-4", text: "累计完成 2 次支线", req: { sideQuestCompletions: 2 } }
     ],
     5: [
       { id: "c5-1", text: "在城市边区间穿梭 8 次", req: { travels: 8 } },
       { id: "c5-2", text: "完成 2 次支线任务", req: { sideQuestCompletions: 2 } },
-      { id: "c5-3", text: "累计 2 次稀有事件", req: { rareEvents: 2 } }
+      { id: "c5-3", text: "累计 2 次稀有事件", req: { rareEvents: 2 } },
+      { id: "c5-4", text: "累计 8 场胜利", req: { victories: 8 } }
     ],
     6: [
       { id: "c6-1", text: "推进至古战场并获胜 8 场", req: { victories: 8 } },
       { id: "c6-2", text: "累计 10 场战斗", req: { battles: 10 } },
-      { id: "c6-3", text: "累计 3 次关键抉择/支线抉择", req: { choices: 2, sideQuestCompletions: 3 } }
+      { id: "c6-3", text: "累计 3 次关键抉择/支线抉择", req: { choices: 2, sideQuestCompletions: 3 } },
+      { id: "c6-4", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } }
     ],
     7: [
       { id: "c7-1", text: "角色达到 Lv.7", req: { level: 7 } },
       { id: "c7-2", text: "累计完成 4 次支线任务", req: { sideQuestCompletions: 4 } },
-      { id: "c7-3", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } }
+      { id: "c7-3", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } },
+      { id: "c7-4", text: "累计 12 场战斗", req: { battles: 12 } }
     ],
     8: [{ id: "c8-1", text: "击败血煞教主完成全城终局", req: { bossDefeated: true } }]
   };
@@ -76,7 +83,27 @@
     { id: "sq-hotsearch", title: "热搜反击", text: "以胜场和事件覆盖负面话题。", req: { victories: 2, rareEvents: 1 }, reward: { exp: 40, spi: 1 } },
     { id: "sq-campus", title: "社团返场", text: "回母校分享你的都市生存法。", req: { loots: 2, randomEvents: 1 }, reward: { gold: 30, exp: 22 } },
     { id: "sq-interview", title: "反向面试二周目", text: "继续在面试战场存活。", req: { randomEvents: 3, battles: 1 }, reward: { int: 1, spi: 1, exp: 28 } },
-    { id: "sq-stream", title: "直播连麦", text: "完成一场不翻车的连麦挑战。", req: { victories: 2, randomEvents: 1 }, reward: { gold: 70, exp: 35 } }
+    { id: "sq-stream", title: "直播连麦", text: "完成一场不翻车的连麦挑战。", req: { victories: 2, randomEvents: 1 }, reward: { gold: 70, exp: 35 } },
+    { id: "sq-rent", title: "月底房租", text: "在发薪前凑够本月房租。", req: { loots: 2, victories: 1 }, reward: { gold: 85, exp: 26 } },
+    { id: "sq-family", title: "家庭支援", text: "寄一笔钱回家并维持本周状态。", req: { travels: 2, shops: 1 }, reward: { spi: 1, gold: 48, exp: 22 } },
+    { id: "sq-hospital", title: "深夜陪诊", text: "跑完夜路后还要去医院排号。", req: { travels: 3, randomEvents: 2 }, reward: { vit: 1, exp: 34 } },
+    { id: "sq-training", title: "技能证书", text: "白天打工晚上备考，争取一张证书。", req: { battles: 2, randomEvents: 2 }, reward: { int: 1, exp: 38 } },
+    { id: "sq-neighbor", title: "邻里互助", text: "帮邻居搬家后继续上夜班。", req: { travels: 3, victories: 1 }, reward: { gold: 40, vit: 1 } },
+    { id: "sq-delivery-peak", title: "高峰单王", text: "在晚高峰连续扛住两轮压力。", req: { battles: 3, loots: 1 }, reward: { gold: 78, agi: 1 } },
+    { id: "sq-night-school", title: "夜校复读", text: "下班后再去夜校上一节硬课。", req: { randomEvents: 3 }, reward: { int: 1, spi: 1, exp: 30 } }
+  ];
+
+  const achievementBook = [
+    { id: "ach-win", title: "终局幸存者", desc: "击败终局敌人完成通关。", when: "win", check: () => true },
+    { id: "ach-last-stand", title: "最后一班地铁", desc: "在终局前夕倒下。", when: "lose", check: () => state.story.chapterId >= 7 },
+    { id: "ach-relentless", title: "打不垮的上班人", desc: "总战斗场次达到 15。", when: "any", check: () => state.metrics.battles >= 15 },
+    { id: "ach-side-master", title: "兼职永动机", desc: "完成至少 6 条支线。", when: "any", check: () => state.metrics.sideQuestCompletions >= 6 },
+    { id: "ach-rare", title: "离谱见证者", desc: "触发至少 5 次稀有事件。", when: "any", check: () => state.metrics.rareEvents >= 5 },
+    { id: "ach-frugal", title: "精打细算", desc: "通关时金币不低于 300。", when: "win", check: () => state.player.gold >= 300 },
+    { id: "ach-courage", title: "逆风赶路人", desc: "死亡时胜场不低于 10。", when: "lose", check: () => state.metrics.victories >= 10 },
+    { id: "ach-solidarity", title: "人间互助网", desc: "累计触发随机事件达到 12。", when: "any", check: () => state.metrics.randomEvents >= 12 },
+    { id: "ach-mainline", title: "主线通勤王", desc: "主线节点完成数达到 20。", when: "any", check: () => countMainlineCompleted() >= 20 },
+    { id: "ach-steady", title: "扛压体质", desc: "最终等级达到 9 级。", when: "any", check: () => state.player.level >= 9 }
   ];
 
   const locations = [
@@ -509,6 +536,10 @@
       `主线节点完成: ${result.mainlineCompleted}`,
       `支线任务完成: ${result.sideQuestCompletions}`,
       `稀有遭遇: ${result.rareEvents} 次`,
+      `成就数: ${result.achievements.length}`,
+      "",
+      "成就:",
+      ...(result.achievements.length ? result.achievements.map((a) => `${a.title} - ${a.desc}`) : ["暂无"]),
       "",
       "里程碑:",
       ...result.milestones.slice(-5)
@@ -652,6 +683,7 @@
       `主线进度: 第${result.finalChapter.id}章《${result.finalChapter.name}》`,
       `主线节点完成: ${result.mainlineCompleted}`,
       `支线完成数: ${result.sideQuestCompletions}`,
+      `达成成就: ${result.achievements.length} 个`,
       `关键抉择: ${result.keyChoices || "无"}`,
       `胜场/战斗: ${result.victories}/${result.battles}`,
       `稀有事件: ${result.rareEvents}`,
@@ -1168,6 +1200,108 @@
           p.stats.int += 2;
           addMilestone("电梯演讲封神");
         }
+      },
+      {
+        id: "rent-notice",
+        text: "房东发来新消息：下月房租微调，你的钱包先行阵亡。",
+        condition: function () {
+          return area === "town" && state.day >= 2;
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(18, 45));
+          p.stats.spi += 1;
+          addMilestone("房租压力警报");
+        }
+      },
+      {
+        id: "overtime-loop",
+        text: "今天你在工位和地铁之间无限循环，脑子快烧了。",
+        apply: function () {
+          p.stats.vit += 1;
+          p.stats.int = Math.max(1, p.stats.int - 1);
+          gainExp(20);
+        }
+      },
+      {
+        id: "hospital-queue",
+        text: "医院队伍绕了三圈，你熬到凌晨终于挂上号。",
+        condition: function () {
+          return state.day >= 3;
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - 24);
+          p.stats.spi += 2;
+          addMilestone("深夜排号生存成功");
+        }
+      },
+      {
+        id: "layoff-rumor",
+        text: "工位间传来裁员传闻，所有人都在假装镇定。",
+        rare: true,
+        condition: function () {
+          return state.story.chapterId >= 3;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.stats.vit += 1;
+          p.stats.luk += 1;
+          addMilestone("裁员风暴中稳住节奏");
+        }
+      },
+      {
+        id: "delivery-rush",
+        text: "暴雨晚高峰，单子像洪水一样涌来。",
+        condition: function () {
+          return area === "wild";
+        },
+        apply: function () {
+          p.gold += randInt(35, 70);
+          p.stats.agi += 1;
+          state.story.stance += 1;
+        }
+      },
+      {
+        id: "family-call",
+        text: "家里来电只说一句“别太累”，你沉默了很久。",
+        apply: function () {
+          p.stats.spi += 1;
+          p.stats.vit += 1;
+          addMilestone("电话那头的牵挂");
+        }
+      },
+      {
+        id: "class-shift",
+        text: "你在楼下夜校听完一整节课，转身继续赶路。",
+        condition: function () {
+          return state.day >= 2;
+        },
+        apply: function () {
+          p.stats.int += 1;
+          gainExp(24);
+          addMilestone("夜校充电完成");
+        }
+      },
+      {
+        id: "social-insurance",
+        text: "你终于把社保流程跑通，整个人松了一口气。",
+        rare: true,
+        condition: function () {
+          return state.story.chapterId >= 5;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.stats.spi += 2;
+          p.stats.vit += 1;
+          addMilestone("社保流程打通");
+        }
+      },
+      {
+        id: "street-mutual-help",
+        text: "街口大爷递给你一瓶水：年轻人慢点跑。",
+        apply: function () {
+          p.potion += 1;
+          state.story.stance += 1;
+        }
       }
     ];
 
@@ -1312,6 +1446,18 @@
     return count;
   }
 
+  function evaluateAchievements(isWin) {
+    return achievementBook.filter((item) => {
+      if (item.when === "win" && !isWin) {
+        return false;
+      }
+      if (item.when === "lose" && isWin) {
+        return false;
+      }
+      return item.check();
+    });
+  }
+
   function buildRunResult(isWin) {
     const p = state.player;
     const score =
@@ -1330,26 +1476,27 @@
     const highlight = buildHighlight();
     const mainlineCompleted = countMainlineCompleted();
     const sideQuestCompletions = state.metrics.sideQuestCompletions;
+    const achievements = evaluateAchievements(isWin);
 
     const shareTemplates = [
       [
         `我在 Adventure Simulator 打出了结局「${title}」`,
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
-        `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}`,
+        `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}`,
         `名场面：${highlight}`,
         `同种子挑战：${challengeUrl}`
       ],
       [
         `谁懂啊，刚下地铁就通关了，称号是「${title}」`,
         `${p.name} 这把全靠 ${p.perk ? p.perk.name : "临场发挥"}，硬打到第${finalChapter.id}章`,
-        `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个`,
+        `顺手清了 ${sideQuestCompletions} 条支线，主线节点过了 ${mainlineCompleted} 个，成就拿了 ${achievements.length} 个`,
         `最离谱一幕：${highlight}`,
         `来复刻我这条命运线：${challengeUrl}`
       ],
       [
         `这局我不想炫，但系统硬要给我「${title}」`,
-        `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，也就一般发挥`,
+        `评分 ${score}，主线节点 ${mainlineCompleted}，支线 ${sideQuestCompletions}，成就 ${achievements.length}，也就一般发挥`,
         `如果你更强，欢迎同种子来超我：${challengeUrl}`
       ]
     ];
@@ -1369,6 +1516,7 @@
       rareEvents: state.metrics.rareEvents,
       mainlineCompleted,
       sideQuestCompletions,
+      achievements,
       finalChapter,
       keyChoices,
       milestones: [...state.story.milestones],
@@ -1629,6 +1777,7 @@
             outcome: state.runResult.outcome,
             title: state.runResult.title,
             score: state.runResult.score,
+            achievements: state.runResult.achievements.map((a) => a.id),
             challenge_url: state.runResult.challengeUrl
           }
         : null,
