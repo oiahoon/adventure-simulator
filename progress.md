@@ -76,3 +76,8 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added profession-specific name generation themes for reroll:
   - Each career now has dedicated realistic common-name pool + meme nickname templates.
   - `makeName(jobId)` now uses职业主题优先，再回退到通用中文姓名规则，降低重复并增强职业代入感。
+- Compliance/content pass: removed all visible `斩杀线` / `中国` wording from web UI and game narrative labels; renamed brand to `都市生存模拟器`, chapter-8 endpoint to `终盘生存线`, and share artifacts to `生存战报` / `survival-report.png`.
+- UI/UX redesign pass (mobile-first): overhauled `idle-mud.css` with stronger visual hierarchy (layered gradients, richer card accents, higher-contrast KPI cards, improved spacing/typography, cleaner sticky control bar, modernized panel treatment) to make screenshot/share surface more attractive.
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - Playwright run still blocked in sandboxed environment; Chromium launch fails with `MachPortRendezvousServer Permission denied (1100)`.

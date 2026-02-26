@@ -71,7 +71,7 @@
     { id: 5, name: "成家与房贷", minLevel: 5, mission: "在家庭责任与账单压力中维持平衡" },
     { id: 6, name: "舆情与法律", minLevel: 6, mission: "处理高风险公共事件，避免连锁失控" },
     { id: 7, name: "现金流保卫", minLevel: 7, mission: "在终局前稳住身心状态与债务曲线" },
-    { id: 8, name: "中国版斩杀线", minLevel: 8, mission: "击败系统性暴雷并活着走出终盘" }
+    { id: 8, name: "终盘生存线", minLevel: 8, mission: "击败系统性暴雷并活着走出终盘" }
   ];
 
   const chapterQuestBook = {
@@ -118,7 +118,7 @@
       { id: "c7-3", text: "累计触发 3 次稀有事件", req: { rareEvents: 3 } },
       { id: "c7-4", text: "累计 12 场战斗", req: { battles: 12 } }
     ],
-    8: [{ id: "c8-1", text: "击败系统性暴雷完成中国版斩杀线", req: { bossDefeated: true } }]
+    8: [{ id: "c8-1", text: "击败系统性暴雷完成终盘生存线", req: { bossDefeated: true } }]
   };
 
   const sideQuestTemplates = [
@@ -942,7 +942,7 @@
     shareCtx.fillRect(0, 0, w, h);
     shareCtx.fillStyle = "#35251a";
     shareCtx.font = "bold 60px serif";
-    shareCtx.fillText("斩杀线战报", 120, 180);
+    shareCtx.fillText("生存战报", 120, 180);
     shareCtx.font = "42px serif";
     shareCtx.fillText("本局结束后可生成分享卡", 120, 270);
   }
@@ -972,7 +972,7 @@
 
     shareCtx.fillStyle = "#2f1d14";
     shareCtx.font = "bold 72px serif";
-    shareCtx.fillText("斩杀线战报", 90, 120);
+    shareCtx.fillText("生存战报", 90, 120);
     shareCtx.font = "42px serif";
     shareCtx.fillText(`${result.name} · ${result.profession}`, 90, 190);
 
@@ -1287,7 +1287,7 @@
       if (isBoss) {
         state.flags.bossDefeated = true;
         addMilestone("击败系统性暴雷");
-        addLog("你熬穿系统性暴雷，斩杀线成功抬升。");
+        addLog("你熬穿系统性暴雷，生存评分大幅抬升。");
         endRun(true);
       }
     } else {
@@ -2013,7 +2013,7 @@
 
     const shareTemplates = [
       [
-        `我在《中国版斩杀线》打出了结局「${title}」`,
+        `我在《都市生存模拟器》打出了结局「${title}」`,
         `角色：${p.name}（${p.profession.name}）｜评分：${score}`,
         `主线：第${finalChapter.id}章《${finalChapter.name}》｜主线节点 ${mainlineCompleted} 个`,
         `支线完成：${sideQuestCompletions}｜稀有事件：${state.metrics.rareEvents}｜成就 ${achievements.length}/${achievementPoints}分`,
@@ -2115,7 +2115,7 @@
     state.pendingChoice = null;
     state.story = {
       chapterId: 1,
-      milestones: ["踏入城市生存线"],
+      milestones: ["踏入城市生存"],
       majorChoices: [],
       stance: 0,
       mainlineProgress: { 1: 0 },
@@ -2159,7 +2159,7 @@
 
     clearShareCanvas();
     els.downloadShareLink.classList.add("hidden");
-    addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 进入城市生存线。`);
+    addLog(`掷骰完成: ${state.player.name} (${state.player.profession.name}) 进入城市生存。`);
     if (state.player.profile) {
       addLog(`角色画像: ${state.player.profile.origin} / ${state.player.profile.education} / ${state.player.profile.family}`);
     }
