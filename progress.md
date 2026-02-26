@@ -73,3 +73,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Initial city status/gold now derive from profile burden instead of pure random, making debt/fatigue/morale opening state more believable.
   - Character sheet/log/render_game_to_text now include profile fields (`出身/教育/家庭压力`).
 - Validation: `node --check public/src/idle-mud.js` passed.
+- Added profession-specific name generation themes for reroll:
+  - Each career now has dedicated realistic common-name pool + meme nickname templates.
+  - `makeName(jobId)` now uses职业主题优先，再回退到通用中文姓名规则，降低重复并增强职业代入感。

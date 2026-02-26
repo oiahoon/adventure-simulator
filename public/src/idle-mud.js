@@ -28,6 +28,29 @@
     { id: "roommates", label: "合租互助", stat: { agi: 1, spi: 1 }, city: { debt: -2, morale: 2 }, gold: 2 }
   ];
 
+  const professionNameThemes = {
+    rider: {
+      common: ["王建国", "李志强", "赵海峰", "刘东", "陈龙", "周伟"],
+      memePrefix: ["跑单王", "超时侠", "逆风骑士", "电驴战神", "单王", "冲单侠"],
+      memeSuffix: ["老王", "阿峰", "小刘", "师傅", "队长", "哥"]
+    },
+    coder: {
+      common: ["张子豪", "陈宇轩", "徐浩然", "杨博文", "吴佳宁", "黄思雨"],
+      memePrefix: ["改Bug", "上线人", "熬夜侠", "工位战神", "需求受害者", "发布守夜人"],
+      memeSuffix: ["同学", "工程师", "老哥", "小陈", "小张", "老师"]
+    },
+    exam: {
+      common: ["李一诺", "王嘉怡", "周晨曦", "孙静", "赵梦瑶", "胡俊杰"],
+      memePrefix: ["申论侠", "行测人", "考编战士", "刷题王", "上岸候补", "背书机器"],
+      memeSuffix: ["同学", "小李", "小周", "老师", "队友", "学员"]
+    },
+    freelancer: {
+      common: ["刘伟", "高磊", "朱勇", "马涛", "黄娜", "吴敏"],
+      memePrefix: ["返乡青年", "县城合伙人", "小镇创业人", "自媒体练习生", "夜市摊主", "直播试水员"],
+      memeSuffix: ["阿强", "小吴", "老刘", "老板", "同学", "哥"]
+    }
+  };
+
   const sects = [
     { id: "public", name: "体制冲线", bonus: { vit: 2, spi: 2 }, desc: "抗压更稳，精神恢复更快。" },
     { id: "corp", name: "大厂硬扛", bonus: { str: 2, agi: 1 }, desc: "推进更快，战斗收益更高。" },
@@ -352,15 +375,23 @@
     return stats;
   }
 
-  function makeName() {
+  function makeName(jobId) {
     const surname = ["王", "李", "张", "刘", "陈", "杨", "赵", "黄", "周", "吴", "徐", "孙", "胡", "朱", "高"];
     const commonTwoChar = ["宇轩", "浩然", "梓涵", "子豪", "思雨", "佳宁", "俊杰", "梦瑶", "一诺", "嘉怡", "晨曦", "博文"];
     const commonOneChar = ["伟", "磊", "静", "敏", "娜", "婷", "超", "涛", "勇", "峰"];
-    const memePrefix = ["打工人", "考编人", "躺平派", "牛马", "卷王", "通勤侠"];
-    const memeSuffix = ["阿强", "小刘", "老王", "同学", "师傅", "队长"];
+    const fallbackMemePrefix = ["打工人", "考编人", "躺平派", "牛马", "卷王", "通勤侠"];
+    const fallbackMemeSuffix = ["阿强", "小刘", "老王", "同学", "师傅", "队长"];
+    const theme = professionNameThemes[jobId] || null;
+    const memePrefix = theme ? theme.memePrefix : fallbackMemePrefix;
+    const memeSuffix = theme ? theme.memeSuffix : fallbackMemeSuffix;
+    const commonPool = theme ? theme.common : [];
 
     if (random() < 0.2) {
       return `${pick(memePrefix)}${pick(memeSuffix)}`;
+    }
+
+    if (commonPool.length && random() < 0.62) {
+      return pick(commonPool);
     }
 
     if (random() < 0.58) {
@@ -414,7 +445,7 @@
     const startPotion = cityStatus.fatigue >= 30 ? 2 : 1;
 
     return {
-      name: makeName(),
+      name: makeName(job.id),
       profession: job,
       profile: {
         origin: origin.label,
