@@ -152,3 +152,12 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `node --check public/src/idle-mud.js` passed.
   - `event-deck.json` JSON parse passed.
   - Playwright 端到端回放仍受当前沙箱 Chromium 权限限制，未完成截图回归。
+- Blueprint completeness audit completed against `docs/architecture/deep-research-report.md`.
+- Added gap analysis: `docs/architecture/event-engine-gap-analysis.md`.
+- Conclusion: implementation is not yet complete; engine is at mid-stage.
+- Newly recorded roadmap (priority order):
+  - Phase A (P0): event schema + content lint + unified pack checks.
+  - Phase B (P0): structured EventLog + deterministic replay + golden cases.
+  - Phase C (P1): retire legacy random-event fallback and unify semantics.
+  - Phase D (P1): standardized telemetry/quality metrics output.
+  - Phase E (P2): project-wide cleanup + docs modernization after A/B guardrails.
