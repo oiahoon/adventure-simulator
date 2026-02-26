@@ -94,7 +94,10 @@
     { id: "sq-night-school", title: "夜校复读", text: "下班后再去夜校上一节硬课。", req: { randomEvents: 3 }, reward: { int: 1, spi: 1, exp: 30 } },
     { id: "sq-marriage-plan", title: "婚礼预算", text: "在现实压力里凑齐婚礼预算。", req: { shops: 2, loots: 2 }, reward: { gold: 60, spi: 1, exp: 38 } },
     { id: "sq-parent-meet", title: "双方见面", text: "协调两边家庭安排并维持工作节奏。", req: { randomEvents: 3, travels: 2 }, reward: { spi: 1, gold: 32, exp: 32 } },
-    { id: "sq-newborn-night", title: "新生儿夜班", text: "夜里照顾孩子，白天继续上工。", req: { battles: 2, randomEvents: 2 }, reward: { vit: 1, spi: 1, exp: 44 } }
+    { id: "sq-newborn-night", title: "新生儿夜班", text: "夜里照顾孩子，白天继续上工。", req: { battles: 2, randomEvents: 2 }, reward: { vit: 1, spi: 1, exp: 44 } },
+    { id: "sq-bride-price", title: "彩礼谈判", text: "在现实和体面之间寻找双方都能接受的方案。", req: { randomEvents: 3, loots: 2 }, reward: { gold: 42, spi: 1, exp: 36, debt: -8 } },
+    { id: "sq-mortgage-budget", title: "房贷重算", text: "重新核算家庭现金流，避免断供风险。", req: { shops: 2, randomEvents: 2 }, reward: { exp: 34, int: 1, debt: -12 } },
+    { id: "sq-second-child", title: "二胎准备", text: "评估二胎计划并安排托育与预算。", req: { sideQuestCompletions: 5, randomEvents: 3 }, reward: { exp: 46, spi: 1, morale: 6, fatigue: -2 } }
   ];
 
   const achievementBook = [
@@ -122,7 +125,10 @@
     { id: "ach-hard-life", tier: "hidden", title: "硬扛到底", desc: "债务 >= 180 且通关。", when: "win", check: () => state.cityStatus.debt >= 180 },
     { id: "ach-family-setup", tier: "gold", title: "成家立业", desc: "结算时进入已婚或育儿阶段。", when: "any", check: () => state.story.familyStage === "已婚" || state.story.familyStage === "育儿中" },
     { id: "ach-newborn", tier: "epic", title: "奶粉与远方", desc: "结算时处于育儿阶段。", when: "any", check: () => state.story.familyStage === "育儿中" },
-    { id: "ach-parent-iron", tier: "hidden", title: "凌晨四点的灯", desc: "育儿阶段达成通关。", when: "win", check: () => state.story.familyStage === "育儿中" }
+    { id: "ach-parent-iron", tier: "hidden", title: "凌晨四点的灯", desc: "育儿阶段达成通关。", when: "win", check: () => state.story.familyStage === "育儿中" },
+    { id: "ach-second-child", tier: "hidden", title: "二胎守夜人", desc: "结算时孩子数量 >= 2。", when: "any", check: () => state.story.childCount >= 2 },
+    { id: "ach-mortgage", tier: "gold", title: "房贷不断供", desc: "触发房贷事件后仍然通关。", when: "win", check: () => state.story.milestones.some((m) => m.includes("房贷")) },
+    { id: "ach-good-samaritan", tier: "epic", title: "扶人不折心", desc: "经历扶人风波后完成结局。", when: "any", check: () => state.story.milestones.some((m) => m.includes("扶人")) }
   ];
 
   const locations = [
@@ -519,6 +525,12 @@
     if (reward.luk) {
       p.stats.luk += reward.luk;
     }
+    updateCityStatus({
+      morale: reward.morale || 0,
+      fatigue: reward.fatigue || 0,
+      debt: reward.debt || 0,
+      heat: reward.heat || 0
+    });
     updateCityStatus({ morale: 5, debt: -6, fatigue: -3 });
   }
 
@@ -1450,6 +1462,42 @@
         }
       },
       {
+        id: "bride-price-shock",
+        text: "彩礼临时上涨，双方气氛瞬间紧绷。",
+        condition: function () {
+          return state.story.familyStage === "恋爱中" || state.story.familyStage === "已婚";
+        },
+        apply: function () {
+          p.gold = Math.max(0, p.gold - randInt(40, 110));
+          updateCityStatus({ debt: 26, morale: -5, fatigue: 3 });
+          addMilestone("彩礼谈判拉锯");
+        }
+      },
+      {
+        id: "mortgage-apply",
+        text: "你签下 30 年房贷，合同厚到像一本字典。",
+        condition: function () {
+          return state.story.familyStage === "已婚" && state.day >= 6;
+        },
+        apply: function () {
+          updateCityStatus({ debt: 55, morale: 2, fatigue: 4 });
+          addMilestone("房贷上肩");
+        }
+      },
+      {
+        id: "mortgage-overdue",
+        text: "月供扣款失败，银行提示你尽快补齐。",
+        condition: function () {
+          return state.cityStatus.debt >= 120;
+        },
+        apply: function () {
+          const cost = randInt(25, 65);
+          p.gold = Math.max(0, p.gold - cost);
+          updateCityStatus({ morale: -6, heat: 4, debt: 18 });
+          addMilestone("房贷预警触发");
+        }
+      },
+      {
         id: "newborn",
         text: "家里迎来新生命，喜悦和压力同时翻倍。",
         rare: true,
@@ -1462,6 +1510,22 @@
           state.story.childCount += 1;
           updateCityStatus({ morale: 8, fatigue: 12, debt: 35, heat: -2 });
           addMilestone("迎来新生儿，进入育儿阶段");
+        }
+      },
+      {
+        id: "second-child-discuss",
+        text: "家里开始讨论二胎，预算表和精力表一起爆红。",
+        condition: function () {
+          return state.story.familyStage === "育儿中" && state.story.childCount === 1 && state.day >= 10;
+        },
+        apply: function () {
+          updateCityStatus({ morale: 2, fatigue: 6, debt: 24 });
+          if (random() > 0.62) {
+            state.story.childCount += 1;
+            addMilestone("二胎落地，家庭升级");
+          } else {
+            addMilestone("二胎计划暂缓");
+          }
         }
       },
       {
@@ -1486,6 +1550,31 @@
         apply: function () {
           updateCityStatus({ fatigue: -10, morale: 4, debt: -6 });
           p.hp = Math.min(p.hpMax, p.hp + randInt(5, 12));
+        }
+      },
+      {
+        id: "helping-fall-fraud",
+        text: "你路上扶人反被质疑，围观和解释拖垮了整天节奏。",
+        rare: true,
+        condition: function () {
+          return state.day >= 4;
+        },
+        apply: function () {
+          state.metrics.rareEvents += 1;
+          p.gold = Math.max(0, p.gold - randInt(10, 40));
+          updateCityStatus({ morale: -8, fatigue: 6, heat: 8 });
+          addMilestone("扶人风波");
+        }
+      },
+      {
+        id: "camera-clear",
+        text: "调取监控后真相还原，旁观者向你道歉。",
+        condition: function () {
+          return state.story.milestones.some((m) => m.includes("扶人风波")) && !state.story.milestones.some((m) => m.includes("平反"));
+        },
+        apply: function () {
+          updateCityStatus({ morale: 6, heat: -6, debt: -4 });
+          addMilestone("扶人风波平反");
         }
       },
       {

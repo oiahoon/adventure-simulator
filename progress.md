@@ -47,3 +47,6 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Added marriage/childbirth storyline track: family stage state (`单身/恋爱中/已婚/育儿中`) + child count.
 - Added family-related random events (dating, marriage budget pressure, newborn, child ER night, family support) with city-pressure impacts.
 - Added family-focused side quests and achievements; family progression now appears in sheet, ending report, share copy, and render_game_to_text payload.
+- Added real-world issue arcs requested by user: bride price pressure, mortgage onboarding/overdue risk, second-child planning/outcome, and helping-fall false-accusation + monitoring vindication chain.
+- Added matching side quests (`彩礼谈判`, `房贷重算`, `二胎准备`) and achievements (`二胎守夜人`, `房贷不断供`, `扶人不折心`).
+- Expanded family progression impact on debt/morale/fatigue and fixed one-time event gating for the vindication event.
