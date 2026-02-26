@@ -1,0 +1,68 @@
+{
+  "cases": [
+    {
+      "name": "default-city-loop",
+      "seed": "replay-default-v1",
+      "steps": 160,
+      "init": {
+        "day": 1,
+        "chapter": 3,
+        "profession": "office",
+        "familyStage": "单身",
+        "debt": 82,
+        "gold": 90,
+        "morale": 56,
+        "fatigue": 24,
+        "heat": 12
+      },
+      "mustContain": [
+        "graduate-wave",
+        "rent-rise"
+      ],
+      "expectedHash": "2bb0005a"
+    },
+    {
+      "name": "mortgage-pressure",
+      "seed": "replay-mortgage-v1",
+      "steps": 180,
+      "init": {
+        "day": 6,
+        "chapter": 5,
+        "profession": "worker",
+        "familyStage": "已婚",
+        "debt": 165,
+        "gold": 120,
+        "morale": 52,
+        "fatigue": 33,
+        "heat": 18
+      },
+      "mustContain": [
+        "mortgage-overdue",
+        "newborn"
+      ],
+      "expectedHash": "e0f7b0db"
+    },
+    {
+      "name": "parenting-legal-mix",
+      "seed": "replay-parenting-legal-v1",
+      "steps": 220,
+      "init": {
+        "day": 10,
+        "chapter": 6,
+        "profession": "gig",
+        "familyStage": "育儿中",
+        "childCount": 1,
+        "debt": 138,
+        "gold": 95,
+        "morale": 49,
+        "fatigue": 44,
+        "heat": 22
+      },
+      "mustContain": [
+        "helping-fall-fraud",
+        "camera-clear"
+      ],
+      "expectedHash": "9f15f4a7"
+    }
+  ]
+}

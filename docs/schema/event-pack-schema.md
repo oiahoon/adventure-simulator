@@ -70,3 +70,14 @@ npm run check:events
 - 条件/结果语法校验
 - 跨文件引用检查（arc order、event-meta 与 deck 对齐、queue 事件名）
 - 基础文案 lint（标题长度、正文长度提示）
+
+## Replay Check
+
+```bash
+npm run check:replay
+```
+
+会执行 `tests/replay/golden-cases.json` 中的 deterministic replay case，校验：
+
+- 相同 seed/初始化参数下事件序列哈希稳定
+- 关键事件链在样例场景中可命中（`mustContain`）

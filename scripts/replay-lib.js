@@ -1,0 +1,262 @@
+"use strict";
+
+const fs = require("node:fs");
+const path = require("node:path");
+
+function hashSeed(text) {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function random() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashText(text) {
+  let h = 5381;
+  for (let i = 0; i < text.length; i += 1) {
+    h = ((h << 5) + h + text.charCodeAt(i)) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+function loadDeck(cwd) {
+  const file = path.join(cwd, "public", "data", "events", "event-deck.json");
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function simulateReplay(opts) {
+  const cfg = opts || {};
+  const cwd = cfg.cwd || process.cwd();
+  const deck = loadDeck(cwd);
+  const seed = cfg.seed || "replay-seed";
+  const steps = Number.isFinite(cfg.steps) ? cfg.steps : 120;
+  const random = mulberry32(hashSeed(seed));
+  const history = [];
+
+  const state = {
+    day: cfg.init && Number.isFinite(cfg.init.day) ? cfg.init.day : 1,
+    turn: 0,
+    chapter: cfg.init && Number.isFinite(cfg.init.chapter) ? cfg.init.chapter : 3,
+    location: cfg.init && cfg.init.location ? cfg.init.location : "novice",
+    locationType: cfg.init && cfg.init.locationType ? cfg.init.locationType : "town",
+    profession: cfg.init && cfg.init.profession ? cfg.init.profession : "worker",
+    familyStage: cfg.init && cfg.init.familyStage ? cfg.init.familyStage : "单身",
+    childCount: cfg.init && Number.isFinite(cfg.init.childCount) ? cfg.init.childCount : 0,
+    stats: { int: 12, spi: 9, agi: 9, vit: 10, luk: 8, ...(cfg.init && cfg.init.stats ? cfg.init.stats : {}) },
+    hp: cfg.init && Number.isFinite(cfg.init.hp) ? cfg.init.hp : 120,
+    hpMax: cfg.init && Number.isFinite(cfg.init.hpMax) ? cfg.init.hpMax : 120,
+    gold: cfg.init && Number.isFinite(cfg.init.gold) ? cfg.init.gold : 80,
+    city: {
+      morale: cfg.init && Number.isFinite(cfg.init.morale) ? cfg.init.morale : 58,
+      fatigue: cfg.init && Number.isFinite(cfg.init.fatigue) ? cfg.init.fatigue : 24,
+      debt: cfg.init && Number.isFinite(cfg.init.debt) ? cfg.init.debt : 70,
+      heat: cfg.init && Number.isFinite(cfg.init.heat) ? cfg.init.heat : 12
+    },
+    flags: {},
+    bias: {},
+    cooldowns: {},
+    seen: {}
+  };
+
+  function randInt(min, max) {
+    return Math.floor(random() * (max - min + 1)) + min;
+  }
+
+  function markSeen(id, cooldown) {
+    state.seen[id] = (state.seen[id] || 0) + 1;
+    if (cooldown > 0) state.cooldowns[id] = cooldown;
+  }
+
+  function cooldownTick() {
+    Object.keys(state.cooldowns).forEach((k) => {
+      state.cooldowns[k] -= 1;
+      if (state.cooldowns[k] <= 0) delete state.cooldowns[k];
+    });
+    Object.keys(state.flags).forEach((k) => {
+      if (!state.flags[k].ttl) return;
+      state.flags[k].ttl -= 1;
+      if (state.flags[k].ttl <= 0) delete state.flags[k];
+    });
+    Object.keys(state.bias).forEach((k) => {
+      state.bias[k].ttl -= 1;
+      if (state.bias[k].ttl <= 0) delete state.bias[k];
+    });
+  }
+
+  function getFlag(k, fallback) {
+    return Object.prototype.hasOwnProperty.call(state.flags, k) ? state.flags[k].value : fallback;
+  }
+
+  function sumStats(keys) {
+    return (keys || []).reduce((acc, k) => acc + (state.stats[k] || 0), 0);
+  }
+
+  function evalCond(cond) {
+    if (!cond || typeof cond !== "object") return true;
+    if (Array.isArray(cond.all)) return cond.all.every((c) => evalCond(c));
+    if (Array.isArray(cond.any)) return cond.any.some((c) => evalCond(c));
+    if (cond.not) return !evalCond(cond.not);
+    if (Number.isFinite(cond.dayMin) && state.day < cond.dayMin) return false;
+    if (Number.isFinite(cond.dayMax) && state.day > cond.dayMax) return false;
+    if (Number.isFinite(cond.chapterMin) && state.chapter < cond.chapterMin) return false;
+    if (Number.isFinite(cond.goldGte) && state.gold < cond.goldGte) return false;
+    if (Number.isFinite(cond.goldLte) && state.gold > cond.goldLte) return false;
+    if (Number.isFinite(cond.debtGte) && state.city.debt < cond.debtGte) return false;
+    if (Number.isFinite(cond.moraleLte) && state.city.morale > cond.moraleLte) return false;
+    if (Number.isFinite(cond.fatigueGte) && state.city.fatigue < cond.fatigueGte) return false;
+    if (Array.isArray(cond.professionIn) && !cond.professionIn.includes(state.profession)) return false;
+    if (Array.isArray(cond.locationIn) && !cond.locationIn.includes(state.location)) return false;
+    if (Array.isArray(cond.locationTypeIn) && !cond.locationTypeIn.includes(state.locationType)) return false;
+    if (Array.isArray(cond.familyStageIn) && !cond.familyStageIn.includes(state.familyStage)) return false;
+    if (Array.isArray(cond.familyStageNotIn) && cond.familyStageNotIn.includes(state.familyStage)) return false;
+    if (Number.isFinite(cond.childCountGte) && state.childCount < cond.childCountGte) return false;
+    if (Number.isFinite(cond.childCountEq) && state.childCount !== cond.childCountEq) return false;
+    if (typeof cond.engineFlagTrue === "string" && !getFlag(cond.engineFlagTrue, false)) return false;
+    if (typeof cond.engineFlagFalse === "string" && getFlag(cond.engineFlagFalse, false)) return false;
+    if (cond.seenEventGte && typeof cond.seenEventGte === "object") {
+      if ((state.seen[cond.seenEventGte.id] || 0) < (cond.seenEventGte.value || 0)) return false;
+    }
+    if (cond.statSumGte && typeof cond.statSumGte === "object") {
+      if (sumStats(cond.statSumGte.keys || []) < (cond.statSumGte.value || 0)) return false;
+    }
+    if (Number.isFinite(cond.randomLt) && random() >= cond.randomLt) return false;
+    return true;
+  }
+
+  function resolveDynamicValue(spec, currentValue, maxValue) {
+    if (typeof spec === "number") return spec;
+    if (!spec || typeof spec !== "object") return 0;
+    if (spec.mode === "addRand") return randInt(spec.min || 0, spec.max || 0);
+    if (spec.mode === "subRand") return -randInt(spec.min || 0, spec.max || 0);
+    if (spec.mode === "subRate") return -Math.floor((currentValue || 0) * (spec.rate || 0));
+    if (spec.mode === "addRate") return Math.floor((currentValue || 0) * (spec.rate || 0));
+    if (spec.mode === "healRand") return Math.min(maxValue || 9999, (currentValue || 0) + randInt(spec.min || 0, spec.max || 0)) - (currentValue || 0);
+    return 0;
+  }
+
+  function applyOutcome(outcome) {
+    if (!outcome || typeof outcome !== "object") return;
+    if (outcome.city) {
+      state.city.morale += outcome.city.morale || 0;
+      state.city.fatigue += outcome.city.fatigue || 0;
+      state.city.debt += outcome.city.debt || 0;
+      state.city.heat += outcome.city.heat || 0;
+    }
+    if (outcome.player) {
+      if (outcome.player.gold != null) state.gold = Math.max(0, state.gold + resolveDynamicValue(outcome.player.gold, state.gold, 999999));
+      if (outcome.player.hp != null) state.hp = Math.max(0, Math.min(state.hpMax, state.hp + resolveDynamicValue(outcome.player.hp, state.hp, state.hpMax)));
+      if (outcome.player.stats && typeof outcome.player.stats === "object") {
+        Object.keys(outcome.player.stats).forEach((k) => {
+          state.stats[k] = (state.stats[k] || 0) + (outcome.player.stats[k] || 0);
+        });
+      }
+    }
+    if (Array.isArray(outcome.setFlags)) {
+      outcome.setFlags.forEach((f) => {
+        state.flags[f.key] = { value: f.value, ttl: Number(f.ttl) > 0 ? Number(f.ttl) : 0 };
+      });
+    }
+    if (Array.isArray(outcome.clearFlags)) {
+      outcome.clearFlags.forEach((k) => delete state.flags[k]);
+    }
+    if (outcome.story && typeof outcome.story === "object") {
+      if (typeof outcome.story.familyStage === "string") state.familyStage = outcome.story.familyStage;
+      if (Number.isFinite(outcome.story.childCountAdd)) state.childCount = Math.max(0, state.childCount + outcome.story.childCountAdd);
+    }
+  }
+
+  function noveltyPenalty(id) {
+    const seen = state.seen[id] || 0;
+    if (seen <= 0) return 1;
+    return 1 / (1 + seen * 0.35);
+  }
+
+  function weightedPick(pool) {
+    let total = 0;
+    for (let i = 0; i < pool.length; i += 1) total += Math.max(0, pool[i].weight || 0);
+    if (total <= 0) return null;
+    let roll = random() * total;
+    for (let i = 0; i < pool.length; i += 1) {
+      roll -= Math.max(0, pool[i].weight || 0);
+      if (roll <= 0) return pool[i].event;
+    }
+    return pool[pool.length - 1].event;
+  }
+
+  for (let i = 0; i < steps; i += 1) {
+    state.turn += 1;
+    if (state.turn % 8 === 0) state.day += 1;
+    cooldownTick();
+
+    if (random() > (Number.isFinite(deck.rollChance) ? deck.rollChance : 0.2)) continue;
+
+    const pool = [];
+    const events = Array.isArray(deck.events) ? deck.events : [];
+    for (let j = 0; j < events.length; j += 1) {
+      const evt = events[j];
+      if (!evt || !evt.id) continue;
+      if ((state.cooldowns[evt.id] || 0) > 0) continue;
+      if (evt.oncePerRun && (state.seen[evt.id] || 0) > 0) continue;
+      if (Array.isArray(evt.requireFlags) && evt.requireFlags.some((k) => !getFlag(k, false))) continue;
+      if (Array.isArray(evt.blockFlags) && evt.blockFlags.some((k) => getFlag(k, false))) continue;
+      if (Array.isArray(evt.prereqEventsAll) && evt.prereqEventsAll.some((k) => (state.seen[k] || 0) <= 0)) continue;
+      if (Array.isArray(evt.prereqEventsAny) && evt.prereqEventsAny.length && !evt.prereqEventsAny.some((k) => (state.seen[k] || 0) > 0)) continue;
+      if (evt.when && !evalCond(evt.when)) continue;
+
+      const tags = evt.tags || [];
+      const deckName = evt.deck || "";
+      let weight = Number.isFinite(evt.baseWeight) ? evt.baseWeight : evt.rare ? 0.7 : 1.2;
+      if (deckName === "career" && state.chapter >= 3) weight *= 1.25;
+      if (deckName === "family" && state.familyStage !== "单身") weight *= 1.2;
+      if (deckName === "housing" && state.city.debt >= 90) weight *= 1.25;
+      if (state.city.heat >= 75 && tags.includes("heat")) weight *= 1.3;
+      if (state.city.heat <= 12 && tags.includes("relief")) weight *= 1.2;
+      weight *= noveltyPenalty(evt.id);
+      pool.push({ event: evt, weight: Math.max(0.05, weight) });
+    }
+    if (!pool.length) continue;
+
+    const chosen = weightedPick(pool) || pool[Math.floor(random() * pool.length)].event;
+    const branches = Array.isArray(chosen.branches) ? chosen.branches : [];
+    let branch = null;
+    for (let b = 0; b < branches.length; b += 1) {
+      if (!branches[b].when || evalCond(branches[b].when)) {
+        branch = branches[b];
+        break;
+      }
+    }
+    const outcomes = branch ? branch.outcomes || [] : chosen.outcomes || [];
+    outcomes.forEach((o) => applyOutcome(o));
+    markSeen(chosen.id, chosen.cooldown || (chosen.rare ? 5 : 2));
+
+    history.push({
+      day: state.day,
+      turn: state.turn,
+      id: chosen.id,
+      branch: branch && branch.name ? branch.name : "normal"
+    });
+  }
+
+  const signature = history.map((h) => `${h.id}:${h.branch}`).join("|");
+  return {
+    seed,
+    steps,
+    count: history.length,
+    hash: hashText(signature),
+    history
+  };
+}
+
+module.exports = { simulateReplay };

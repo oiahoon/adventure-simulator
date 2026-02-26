@@ -166,3 +166,15 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Added runtime schema reference doc: `docs/schema/event-pack-schema.md`.
   - Added npm script: `npm run check:events`.
   - Validation run result: passed with 0 errors, 3 warnings (2 legacy meta entries not yet migrated to deck + 1 short title style warning).
+- Phase B started and delivered (EventLog + deterministic replay):
+  - Runtime engine now records structured `eventLog` entries with before/after snapshots and computed deltas for Queue/Arc/Deck/Legacy events.
+  - `render_game_to_text` now exports `engine.event_log_count` and `recent_event_log` for machine verification.
+  - Added deterministic replay library/check:
+    - `scripts/replay-lib.js`
+    - `scripts/check-replay.js`
+    - golden cases at `tests/replay/golden-cases.json`
+  - Added npm script: `npm run check:replay`.
+  - Validation status:
+    - `node --check public/src/idle-mud.js` passed.
+    - `npm run check:events` passed (warnings only).
+    - `npm run check:replay` passed (3/3).

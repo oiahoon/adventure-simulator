@@ -213,7 +213,8 @@
       bias: {},
       cooldowns: {},
       seen: {},
-      trace: []
+      trace: [],
+      eventLog: []
     };
   }
 
@@ -821,6 +822,51 @@
     }
   }
 
+  function snapshotEventState() {
+    const p = state.player;
+    return {
+      hp: p ? p.hp : 0,
+      gold: p ? p.gold : 0,
+      morale: state.cityStatus.morale,
+      fatigue: state.cityStatus.fatigue,
+      debt: state.cityStatus.debt,
+      heat: state.cityStatus.heat,
+      familyStage: state.story.familyStage,
+      childCount: state.story.childCount,
+      chapter: state.story.chapterId
+    };
+  }
+
+  function diffEventState(before, after) {
+    const keys = ["hp", "gold", "morale", "fatigue", "debt", "heat", "childCount", "chapter"];
+    const delta = {};
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      delta[key] = (after[key] || 0) - (before[key] || 0);
+    }
+    delta.familyStageChanged = before.familyStage !== after.familyStage;
+    return delta;
+  }
+
+  function appendEventLog(entry, before, after) {
+    const e = engineState();
+    e.eventLog.push({
+      day: state.day,
+      turn: state.turn,
+      source: entry.source || "misc",
+      id: entry.id || "unknown",
+      title: entry.title || entry.id || "未命名事件",
+      branch: entry.branch || "",
+      summary: entry.summary || "",
+      before,
+      after,
+      delta: diffEventState(before, after)
+    });
+    if (e.eventLog.length > 320) {
+      e.eventLog = e.eventLog.slice(-320);
+    }
+  }
+
   function isEventCooling(eventId) {
     const e = engineState();
     return (e.cooldowns[eventId] || 0) > 0;
@@ -937,7 +983,9 @@
     if (!due.length) return false;
     const chosen = due[0];
     e.queue = e.queue.filter((item) => item !== chosen);
+    const before = snapshotEventState();
     if (runQueueEventItem(chosen)) {
+      const after = snapshotEventState();
       state.metrics.randomEvents += 1;
       recordEventTrace({
         source: "queue",
@@ -946,6 +994,17 @@
         summary: "队列回收执行",
         cause: `priority:${chosen.priority}`
       });
+      appendEventLog(
+        {
+          source: "queue",
+          id: chosen.eventId,
+          title: `后续事件 ${chosen.eventId}`,
+          branch: `priority:${chosen.priority}`,
+          summary: "队列回收执行"
+        },
+        before,
+        after
+      );
       return true;
     }
     return false;
@@ -1205,6 +1264,7 @@
     if (!pool.length) return false;
 
     const chosen = weightedPick(pool) || pick(pool).event;
+    const before = snapshotEventState();
     const branches = Array.isArray(chosen.branches) ? chosen.branches : [];
     let branch = null;
     for (let i = 0; i < branches.length; i += 1) {
@@ -1237,6 +1297,17 @@
       summary: chosen.text || "",
       cause: branch && branch.name ? branch.name : "normal"
     });
+    appendEventLog(
+      {
+        source: "deck",
+        id: chosen.id,
+        title: chosen.title || chosen.id,
+        branch: branch && branch.name ? branch.name : "normal",
+        summary: chosen.text || ""
+      },
+      before,
+      snapshotEventState()
+    );
     return true;
   }
 
@@ -1247,6 +1318,7 @@
     const node = pack[String(arcState.stage)];
     if (!node) return false;
     if (node.when && !evaluateEngineCondition(node.when)) return false;
+    const before = snapshotEventState();
 
     const branches = Array.isArray(node.branches) && node.branches.length
       ? node.branches
@@ -1268,6 +1340,7 @@
 
     if (chosen.complete || node.complete) {
       completeArc(arcId, chosen.ending || node.ending || "");
+      const afterComplete = snapshotEventState();
       recordEventTrace({
         source: "arc",
         id: `${arcId}:s${stageBefore}`,
@@ -1275,6 +1348,17 @@
         summary: chosen.ending || node.ending || "阶段结束",
         cause: "complete"
       });
+      appendEventLog(
+        {
+          source: "arc",
+          id: `${arcId}:s${stageBefore}`,
+          title: `${arcId} 剧情链`,
+          branch: chosen.ending || node.ending || "complete",
+          summary: "阶段结束"
+        },
+        before,
+        afterComplete
+      );
       return true;
     }
 
@@ -1282,6 +1366,7 @@
     arcState.stage = nextStage;
     const nextOffset = Number.isFinite(chosen.nextDayOffset) ? chosen.nextDayOffset : Number.isFinite(node.nextDayOffset) ? node.nextDayOffset : 1;
     arcState.nextDay = state.day + nextOffset;
+    const after = snapshotEventState();
     recordEventTrace({
       source: "arc",
       id: `${arcId}:s${stageBefore}`,
@@ -1289,6 +1374,17 @@
       summary: `推进至阶段 ${nextStage}`,
       cause: "progress"
     });
+    appendEventLog(
+      {
+        source: "arc",
+        id: `${arcId}:s${stageBefore}`,
+        title: `${arcId} 剧情链`,
+        branch: `stage->${nextStage}`,
+        summary: "剧情链推进"
+      },
+      before,
+      after
+    );
     return true;
   }
 
@@ -1869,6 +1965,7 @@
       `成就数: ${result.achievements.length} (${result.achievementPoints} 分)`,
       `代表成就: ${result.topAchievement}`,
       `剧情轨迹: ${result.traceSummary}`,
+      `事件记录: ${engineState().eventLog.length}`,
       `家庭阶段: ${result.familyStage} (${result.childCount} 个孩子)`,
       `城市状态: 精神 ${result.cityStatus.morale} / 疲劳 ${result.cityStatus.fatigue}`,
       `城市状态: 债务 ${result.cityStatus.debt} / 热度 ${result.cityStatus.heat}`,
@@ -2864,6 +2961,7 @@
 
     const evt = weightedPick(weighted) || pick(pool);
     const meta = metaById[evt.id] || {};
+    const before = snapshotEventState();
     evt.apply();
     if (!evt.rare) {
       updateCityStatus({ morale: random() > 0.45 ? 1 : -1, fatigue: random() > 0.6 ? -1 : 1 });
@@ -2895,6 +2993,17 @@
       summary: evt.text || "",
       cause: "fallback"
     });
+    appendEventLog(
+      {
+        source: "legacy",
+        id: evt.id,
+        title: evt.id,
+        branch: "fallback",
+        summary: evt.text || ""
+      },
+      before,
+      snapshotEventState()
+    );
     return true;
   }
 
@@ -3454,7 +3563,8 @@
       engine: {
         queue_size: engineState().queue.length,
         active_bias: Object.keys(engineState().bias).length,
-        active_flags: Object.keys(engineState().flags).length
+        active_flags: Object.keys(engineState().flags).length,
+        event_log_count: engineState().eventLog.length
       },
       content: {
         event_meta_count: Object.keys(eventMetaConfig()).length,
@@ -3517,7 +3627,8 @@
           }
         : null,
       recent_log: state.log.slice(-8),
-      recent_trace: (engineState().trace || []).slice(-8)
+      recent_trace: (engineState().trace || []).slice(-8),
+      recent_event_log: (engineState().eventLog || []).slice(-8)
     };
 
     return JSON.stringify(payload);
