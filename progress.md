@@ -161,3 +161,8 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Phase C (P1): retire legacy random-event fallback and unify semantics.
   - Phase D (P1): standardized telemetry/quality metrics output.
   - Phase E (P2): project-wide cleanup + docs modernization after A/B guardrails.
+- Phase A started and delivered (schema/lint/check pipeline):
+  - Added `scripts/check-events.js` for unified event-pack validation across `event-meta/arc-config/arc-events/event-deck`.
+  - Added runtime schema reference doc: `docs/schema/event-pack-schema.md`.
+  - Added npm script: `npm run check:events`.
+  - Validation run result: passed with 0 errors, 3 warnings (2 legacy meta entries not yet migrated to deck + 1 short title style warning).
