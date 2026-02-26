@@ -81,3 +81,13 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
 - Validation:
   - `node --check public/src/idle-mud.js` passed.
   - Playwright run still blocked in sandboxed environment; Chromium launch fails with `MachPortRendezvousServer Permission denied (1100)`.
+- Added a dedicated homepage + intro at root `/` (`public/index.html`) with project summary, feature cards, and primary CTA to `/game/`.
+- Migrated playable game UI to `/game/` (`public/game/index.html`) and added top navigation back to homepage for better mobile flow.
+- Mobile UX improvement pass on game UI:
+  - Added compact top nav and clearer button labels (`开始运行` / `恢复`).
+  - Improved sticky controls for thumb reach (44px min touch targets, safer bottom dock styling).
+  - Added small-screen (`max-width: 560px`) tuning for type scale, KPI density, map/log sizing, and control wrapping.
+- Updated share challenge link generation to always target `/game/` route.
+- Added new homepage stylesheet `public/assets/styles/home.css`.
+- Validation: `node --check public/src/idle-mud.js` passed.
+- Playwright status: still blocked in sandbox due Chromium launch permission (`MachPortRendezvousServer ... Permission denied (1100)`).

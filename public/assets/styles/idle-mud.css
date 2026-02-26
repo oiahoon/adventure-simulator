@@ -35,6 +35,27 @@ body {
   gap: 12px;
 }
 
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8fbff;
+}
+
+.top-nav span {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.home-link {
+  color: var(--brand);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -281,10 +302,12 @@ body {
 .controls {
   padding: 10px;
   position: sticky;
-  bottom: 8px;
+  bottom: 4px;
   z-index: 8;
   background: color-mix(in srgb, #ffffff 84%, #e9f2ff);
   backdrop-filter: blur(8px);
+  border-width: 1px 1px 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .btn-row {
@@ -307,6 +330,7 @@ body {
   color: var(--ink);
   font-size: 0.86rem;
   font-weight: 700;
+  min-height: 44px;
   padding: 10px 8px;
   cursor: pointer;
 }
@@ -345,7 +369,7 @@ body {
 .hint {
   margin-left: auto;
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
 }
 
 .choice-modal {
@@ -408,6 +432,8 @@ body {
   .controls {
     position: static;
     padding: 12px;
+    border-width: 1px;
+    border-radius: 18px;
   }
 
   .btn-row {
@@ -420,5 +446,89 @@ body {
 
   .choice-modal {
     align-items: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .hero {
+    padding: 12px;
+  }
+
+  .hero h1 {
+    font-size: 1.34rem;
+  }
+
+  .hero p {
+    font-size: 0.84rem;
+  }
+
+  .seed-pill {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    max-width: 44vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .kpi-card {
+    padding: 8px;
+  }
+
+  .kpi-card strong {
+    font-size: 0.98rem;
+  }
+
+  .killline-row {
+    grid-template-columns: 58px 1fr 40px;
+    gap: 6px;
+  }
+
+  .killline-row span,
+  .killline-row em {
+    font-size: 0.74rem;
+  }
+
+  #world-canvas {
+    margin: 8px;
+    width: calc(100% - 16px);
+    border-radius: 10px;
+  }
+
+  #log,
+  #character-sheet,
+  #ending-sheet,
+  #share-canvas {
+    margin: 8px;
+    width: calc(100% - 16px);
+  }
+
+  #log {
+    height: 220px;
+    font-size: 0.82rem;
+  }
+
+  #character-sheet,
+  #ending-sheet {
+    font-size: 0.78rem;
+  }
+
+  .btn-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .meta-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .hint {
+    width: 100%;
+    margin-left: 0;
   }
 }

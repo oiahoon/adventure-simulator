@@ -1951,7 +1951,7 @@
   }
 
   function buildChallengeUrl() {
-    const url = new URL(window.location.href);
+    const url = new URL("/game/", window.location.origin);
     url.searchParams.set("seed", state.seed);
     url.searchParams.set("source", "share");
     return url.toString();
