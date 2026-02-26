@@ -40,9 +40,7 @@ class LocalEngine {
 
   async runAction(payload) {
     const result = this.service.runAction(payload || {});
-    if (!result.ok) {
-      throw new Error(result.error || "本地引擎执行失败");
-    }
+    if (!result.ok) throw new Error(result.error || "本地引擎执行失败");
     return result.payload;
   }
 }
@@ -55,9 +53,7 @@ class RemoteEngine {
   async runAction(payload) {
     const res = await fetch(this.endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     if (!res.ok) {
@@ -69,27 +65,27 @@ class RemoteEngine {
 }
 
 function printRun(run) {
-  const recent = (run.log || []).slice(-4);
+  const recent = (run.log || []).slice(-5);
+  const hand = (run.hand || []).map((c, idx) => `${idx + 1}. ${c.title} [${c.tag}] (${c.id})`);
   console.clear();
-  console.log("==================== MUD CLI ====================");
+  console.log("==================== CARD MUD CLI ====================");
   console.log(`玩家: ${run.player.name} (${run.player.profession})`);
-  console.log(`状态: ${run.mode}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`);
+  console.log(`状态: ${run.mode}  ${run.story.lifeStage}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`);
   console.log(`Lv.${run.player.level} EXP ${run.player.exp}/${run.player.nextExp}`);
-  console.log(`HP ${run.player.hp}/${run.player.maxHp}  MP ${run.player.mp}/${run.player.maxMp}`);
-  console.log(`ATK ${run.player.atk} DEF ${run.player.def}  金币 ${run.player.gold}`);
-  console.log(`组织: ${run.player.sect || "未选"}  天赋: ${run.player.perk || "未选"}`);
-  console.log(
-    `战斗 ${run.metrics.battles} 胜利 ${run.metrics.wins} 事件 ${run.metrics.events} 兼职 ${run.metrics.sideJobs}`
-  );
+  console.log(`HP ${run.player.hp}/${run.player.maxHp} MP ${run.player.mp}/${run.player.maxMp} 金币 ${run.player.gold}`);
+  console.log(`精神 ${run.city.morale} 疲劳 ${run.city.fatigue} 债务 ${run.city.debt} 热度 ${run.city.heat}`);
+  console.log(`组织: ${run.player.sect || "未选"} 天赋: ${run.player.perk || "未选"}`);
+  console.log(`出牌 ${run.metrics.cardPlays} 关键事件 ${run.metrics.keyEvents}`);
   if (run.pendingChoice) {
     console.log(`\n[关键抉择] ${run.pendingChoice.title}`);
-    for (const item of run.pendingChoice.options) {
-      console.log(`- ${item.id}: ${item.label}`);
-    }
+    for (const item of run.pendingChoice.options) console.log(`- ${item.id}: ${item.label}`);
   }
+  console.log("\n当前手牌:");
+  if (!hand.length) console.log("- 无（可使用 draw）");
+  else hand.forEach((line) => console.log(`- ${line}`));
   console.log("\n最近日志:");
-  for (const line of recent) console.log(`- ${line}`);
-  console.log("=================================================");
+  recent.forEach((line) => console.log(`- ${line}`));
+  console.log("=======================================================");
 }
 
 async function main() {
@@ -99,13 +95,11 @@ async function main() {
 
   mud-cli [--mode remote|local] [--base-url URL] [--name NAME]
 
-默认 remote 模式会调用线上 API。
-如果线上 API 不可用，建议使用 --mode local 直接本地单机游玩。`);
+卡牌协议动作: new/status/draw/play/choose`);
     return;
   }
 
   let engine = args.mode === "local" ? new LocalEngine() : new RemoteEngine(args.baseUrl);
-
   const rl = createInterface({ input: stdin, output: stdout });
   let run = null;
 
@@ -116,23 +110,32 @@ async function main() {
     while (true) {
       printRun(run);
       console.log("\n操作菜单:");
-      console.log("1) 推进 1 回合");
-      console.log("2) 自动推进 5 回合");
+      console.log("1) 抽牌");
+      console.log("2) 出牌");
       console.log("3) 处理关键抉择");
       console.log("4) 新开一局");
       console.log("5) 切换到本地模式");
       console.log("6) 退出");
 
       const choice = (await rl.question("\n请输入选项 [1-6]: ")).trim();
-
       if (choice === "6") break;
 
       if (choice === "1") {
-        const resp = await engine.runAction({ action: "step", run });
+        const resp = await engine.runAction({ action: "draw", run });
         run = resp.run;
       } else if (choice === "2") {
-        const resp = await engine.runAction({ action: "auto", steps: 5, run });
-        run = resp.run;
+        if (!run.hand || !run.hand.length) {
+          await rl.question("当前无手牌，回车继续...");
+        } else {
+          const cardInput = (await rl.question("输入卡牌序号或 cardId: ")).trim();
+          const asIndex = Number(cardInput);
+          let cardId = cardInput;
+          if (Number.isFinite(asIndex) && asIndex >= 1 && asIndex <= run.hand.length) {
+            cardId = run.hand[asIndex - 1].id;
+          }
+          const resp = await engine.runAction({ action: "play", cardId, run });
+          run = resp.run;
+        }
       } else if (choice === "3") {
         if (!run.pendingChoice) {
           await rl.question("当前没有关键抉择，回车继续...");

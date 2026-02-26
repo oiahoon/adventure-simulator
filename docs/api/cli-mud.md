@@ -10,8 +10,8 @@
 
 - `new`: 创建新局
 - `status`: 查看状态
-- `step`: 推进 1 回合
-- `auto`: 批量推进（传 `steps`）
+- `draw`: 抽 3 张可选决策卡（无手牌时）
+- `play`: 打出一张卡（传 `cardId`）
 - `choose`: 处理关键抉择（传 `option`）
 
 ## Curl 示例
@@ -32,11 +32,11 @@ RUN=$(curl -sS -X POST "$BASE/api/mud/run" \
   -H 'Content-Type: application/json' \
   -d '{"action":"new","name":"老李"}')
 
-# 3) 推进 5 回合（CLI 输出）
+# 3) 查看手牌并打出一张（CLI 输出）
 curl -sS -X POST "$BASE/api/mud/run" \
   -H 'Content-Type: application/json' \
   -H 'x-client-mode: cli' \
-  -d "{\"action\":\"auto\",\"steps\":5,\"run\":$(echo "$RUN" | jq -c '.run')}"
+  -d "{\"action\":\"play\",\"cardId\":\"job-sprint\",\"run\":$(echo "$RUN" | jq -c '.run')}"
 ```
 
 ```bash

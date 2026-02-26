@@ -276,5 +276,141 @@
         }
       ]
     }
+  },
+  "jobhunt": {
+    "1": {
+      "nextDayOffset": 1,
+      "outcomes": [
+        {
+          "city": { "morale": -4, "fatigue": 3, "heat": 2 },
+          "milestone": "求职链启动：面试循环",
+          "log": "剧情链-求职：你进入高频投递和面试循环，节奏明显变快。",
+          "bias": [{ "key": "tag:jobhunt", "mul": 1.42, "ttl": 10 }],
+          "enqueue": [{ "eventId": "queue:jobhunt-feedback", "dueIn": 1, "priority": 84 }]
+        }
+      ]
+    },
+    "2": {
+      "nextDayOffset": 1,
+      "branches": [
+        {
+          "when": { "any": [{ "statSumGte": { "keys": ["int", "spi"], "value": 24 } }, { "goldGte": 100 }] },
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "player": { "exp": 24, "gold": { "mode": "addRand", "min": 12, "max": 36 } },
+              "city": { "morale": 4, "fatigue": 2 },
+              "log": "剧情链-求职：你拿到二面机会，反馈开始回暖。"
+            }
+          ]
+        },
+        {
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "morale": -6, "fatigue": 3, "debt": 8 },
+              "log": "剧情链-求职：连续一轮游，现金流和情绪同步承压。"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "branches": [
+        {
+          "when": { "all": [{ "moraleLte": 65, "not": { "moraleLte": 20 } }, { "statSumGte": { "keys": ["int", "agi"], "value": 28 } }] },
+          "complete": true,
+          "ending": "岗位落地",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "addRand", "min": 30, "max": 72 } },
+              "city": { "debt": -10, "morale": 6, "fatigue": -2 },
+              "milestone": "求职链收束：岗位落地",
+              "log": "剧情链-求职：你拿到正式 offer，求职链阶段性结束。"
+            }
+          ]
+        },
+        {
+          "complete": true,
+          "ending": "继续等待",
+          "outcomes": [
+            {
+              "city": { "debt": 8, "morale": -3, "fatigue": 2 },
+              "milestone": "求职链收束：继续等待",
+              "log": "剧情链-求职：你继续在等待窗口里循环投递。"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "legal": {
+    "1": {
+      "nextDayOffset": 1,
+      "outcomes": [
+        {
+          "city": { "heat": 9, "morale": -4, "fatigue": 2 },
+          "milestone": "法律链启动：舆情发酵",
+          "log": "剧情链-法律：争议片段扩散，你开始被动进入应对流程。",
+          "setFlags": [{ "key": "legal.risk", "value": true, "ttl": 12 }],
+          "bias": [{ "key": "tag:legal", "mul": 1.35, "ttl": 10 }]
+        }
+      ]
+    },
+    "2": {
+      "nextDayOffset": 1,
+      "branches": [
+        {
+          "when": { "engineFlagTrue": "legal.review.ready" },
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "heat": -7, "morale": 3, "debt": -3 },
+              "log": "剧情链-法律：你提交完整证据，舆情与流程开始回落。"
+            }
+          ]
+        },
+        {
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 20, "max": 56 } },
+              "city": { "heat": 6, "morale": -3, "debt": 8 },
+              "log": "剧情链-法律：证据不完整，处理成本持续上升。"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "branches": [
+        {
+          "when": { "any": [{ "engineFlagTrue": "legal.review.ready" }, { "statSumGte": { "keys": ["int", "spi"], "value": 26 } }] },
+          "complete": true,
+          "ending": "平反收束",
+          "outcomes": [
+            {
+              "city": { "heat": -10, "morale": 7, "debt": -4 },
+              "milestone": "法律链收束：平反",
+              "clearFlags": ["legal.risk", "legal.review.ready"],
+              "log": "剧情链-法律：关键证据还原事实，风波进入收束阶段。"
+            }
+          ]
+        },
+        {
+          "complete": true,
+          "ending": "和解止损",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 30, "max": 72 } },
+              "city": { "debt": 10, "morale": -4, "heat": -2 },
+              "milestone": "法律链收束：和解止损",
+              "clearFlags": ["legal.risk"],
+              "log": "剧情链-法律：你选择和解止损，风波结束但财富受损。"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

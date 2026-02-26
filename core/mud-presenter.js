@@ -5,28 +5,32 @@ function summarizeRun(run) {
   const choice = run.pendingChoice
     ? `${run.pendingChoice.title}: ${run.pendingChoice.options.map((o) => `${o.id}/${o.label}`).join(", ")}`
     : "无";
-  const recent = (run.log || []).slice(-4).map((l) => `- ${l}`).join("\n");
+  const recent = (run.log || []).slice(-5).map((l) => `- ${l}`).join("\n");
+  const hand = (run.hand || []).length
+    ? run.hand.map((c) => `${c.id}/${c.title}[${c.tag}]`).join(" | ")
+    : "无";
 
   return [
-    `=== CLI MUD (${status}) ===`,
+    `=== CARD MUD (${status}) ===`,
     `玩家: ${run.player.name} (${run.player.profession})`,
-    `等级: Lv.${run.player.level} EXP ${run.player.exp}/${run.player.nextExp}`,
-    `生命/体力: ${run.player.hp}/${run.player.maxHp}  MP ${run.player.mp}/${run.player.maxMp}`,
-    `战力: ATK ${run.player.atk} DEF ${run.player.def}`,
-    `金币: ${run.player.gold}  位置: ${run.location}  天数: ${run.day}  回合: ${run.turn}`,
+    `阶段: ${run.story.lifeStage}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`,
+    `Lv.${run.player.level} EXP ${run.player.exp}/${run.player.nextExp}`,
+    `HP ${run.player.hp}/${run.player.maxHp}  MP ${run.player.mp}/${run.player.maxMp}`,
+    `金币 ${run.player.gold}  精神 ${run.city.morale}  疲劳 ${run.city.fatigue}  债务 ${run.city.debt}  热度 ${run.city.heat}`,
     `组织: ${run.player.sect || "未选"}  天赋: ${run.player.perk || "未选"}`,
-    `战斗: ${run.metrics.battles} 胜利: ${run.metrics.wins} 事件: ${run.metrics.events} 兼职: ${run.metrics.sideJobs}`,
+    `出牌 ${run.metrics.cardPlays} 关键事件 ${run.metrics.keyEvents} 战斗杂项 ${run.metrics.battles + run.metrics.events}`,
     `待选择: ${choice}`,
+    `当前手牌: ${hand}`,
     "",
     "最近日志:",
     recent || "- 无",
     "",
     "可用动作:",
-    "- new            新开一局",
-    "- status         查看状态",
-    "- step           推进 1 回合",
-    "- auto           批量推进，传 steps",
-    "- choose         处理抉择，传 option"
+    "- new                 新开一局",
+    "- status              查看状态",
+    "- draw                发牌（无手牌时）",
+    "- play                出牌（传 cardId）",
+    "- choose              处理关键抉择（传 option）"
   ].join("\n");
 }
 

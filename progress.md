@@ -305,3 +305,19 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:replay` passed (3/3).
 - Note:
   - Attempted to run `develop-web-game` Playwright client; current local skill script requires ESM + playwright resolution from skill path and could not be executed directly in this environment setup.
+- API/CLI card protocol upgrade completed:
+  - Shared core engine (`core/mud-engine.js`) moved to card actions: `new/status/draw/play/choose`.
+  - Added card hand state and play resolution in core run model (`run.hand`, `lastPlayedCard`, `metrics.cardPlays`).
+  - Added five long event chains in core loop (unemployment/mortgage/parenting/legal/jobhunt) with staged progression and resolution outcomes.
+  - Updated CLI to card-native menu flow (draw/play/choose), removed step/auto UX path.
+  - API `/api/mud/status` now reports supported actions from core constants.
+- Web content tuning for card mode:
+  - Reduced generic battle/misc fallback frequency in `takeTurn` to emphasize key events.
+  - Expanded arc system to include new long chains: `jobhunt`, `legal`.
+  - Updated arc config/order + activation in both runtime defaults and data pack.
+  - Added `jobhunt` and `legal` staged chains in `public/data/events/arc-events.json`.
+- Validation:
+  - `node --check` passed for `core/mud-engine.js`, `bin/mud-cli.js`, `public/src/idle-mud.js`.
+  - `npm run check:events` passed (0 error / 0 warning).
+  - `npm run check:replay` passed (3/3).
+  - Core protocol smoke test passed (`new -> play`).

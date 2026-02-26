@@ -44,7 +44,7 @@ app.get("/api/mud/status", (req, res) => {
     success: true,
     engine: "core/mud-engine",
     mode: ["web", "cli"],
-    supportedActions: ["new", "status", "step", "auto", "choose"]
+    supportedActions: mud.constants.SUPPORTED_ACTIONS
   });
 });
 

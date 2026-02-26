@@ -1,10 +1,15 @@
 {
-  "order": ["unemployment", "exam", "mortgage", "parenting"],
+  "order": ["unemployment", "jobhunt", "mortgage", "parenting", "legal", "exam"],
   "activation": {
     "unemployment": {
       "minDay": 3,
       "minChapter": 3,
       "baseChance": 0.34
+    },
+    "jobhunt": {
+      "minDay": 4,
+      "minChapter": 3,
+      "baseChance": 0.36
     },
     "exam": {
       "minDay": 4,
@@ -24,6 +29,12 @@
       "baseChance": 0.48,
       "familyStages": ["育儿中"],
       "minChildCount": 1
+    },
+    "legal": {
+      "minDay": 6,
+      "minChapter": 4,
+      "baseChance": 0.28,
+      "heatMin": 48
     }
   }
 }

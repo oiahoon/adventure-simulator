@@ -311,9 +311,11 @@
   function createStoryArcs() {
     return {
       unemployment: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
+      jobhunt: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
       exam: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
       mortgage: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
-      parenting: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" }
+      parenting: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" },
+      legal: { active: false, completed: false, stage: 0, nextDay: 0, ending: "" }
     };
   }
 
@@ -354,12 +356,14 @@
       "gold-price-spike": { deck: "finance", tags: ["finance", "heat"], cooldown: 5 }
     },
     arcConfig: {
-      order: ["unemployment", "exam", "mortgage", "parenting"],
+      order: ["unemployment", "jobhunt", "mortgage", "parenting", "legal", "exam"],
       activation: {
         unemployment: { minDay: 3, minChapter: 3, baseChance: 0.34 },
+        jobhunt: { minDay: 4, minChapter: 3, baseChance: 0.36 },
         exam: { minDay: 4, minChapter: 2, baseChance: 0.24, preferredProfessions: ["exam"], preferredChance: 0.5 },
         mortgage: { minDay: 5, baseChance: 0.36, debtMin: 95, familyStages: ["已婚"] },
-        parenting: { minDay: 7, baseChance: 0.48, familyStages: ["育儿中"], minChildCount: 1 }
+        parenting: { minDay: 7, baseChance: 0.48, familyStages: ["育儿中"], minChildCount: 1 },
+        legal: { minDay: 6, minChapter: 4, baseChance: 0.28, heatMin: 48 }
       }
     },
     arcEvents: {},
@@ -1621,6 +1625,15 @@
       if (random() < (u.baseChance || 0.34)) activateArc("unemployment");
     }
 
+    const jh = cfg.jobhunt || {};
+    const jhMinDay = jh.minDay || 4;
+    const jhMinChapter = jh.minChapter || 3;
+    if (!arcs.jobhunt.active && !arcs.jobhunt.completed && state.day >= jhMinDay && state.story.chapterId >= jhMinChapter) {
+      const base = jh.baseChance || 0.36;
+      const boosted = (state.cityStatus.debt >= 95 || (engineState().seen["layoff-rumor"] || 0) > 0) ? base + 0.12 : base;
+      if (random() < boosted) activateArc("jobhunt");
+    }
+
     const ex = cfg.exam || {};
     const examMinDay = ex.minDay || 4;
     const examMinChapter = ex.minChapter || 2;
@@ -1646,6 +1659,15 @@
     const paFamilyMatch = paFamilyStages.includes(state.story.familyStage);
     if (!arcs.parenting.active && !arcs.parenting.completed && state.day >= paMinDay && (paFamilyMatch || state.story.childCount >= paMinChild)) {
       if (random() < (pa.baseChance || 0.48)) activateArc("parenting");
+    }
+
+    const lg = cfg.legal || {};
+    const lgMinDay = lg.minDay || 6;
+    const lgMinChapter = lg.minChapter || 4;
+    const lgHeatMin = lg.heatMin || 48;
+    const legalSignal = getEngineFlag("legal.risk", false) || state.cityStatus.heat >= lgHeatMin;
+    if (!arcs.legal.active && !arcs.legal.completed && state.day >= lgMinDay && state.story.chapterId >= lgMinChapter && legalSignal) {
+      if (random() < (lg.baseChance || 0.28)) activateArc("legal");
     }
   }
 
@@ -1835,7 +1857,7 @@
   function maybeRunStoryArc() {
     if (state.mode !== "running") return false;
     maybeActivateArcs();
-    const order = arcConfig().order || ["unemployment", "exam", "mortgage", "parenting"];
+    const order = arcConfig().order || ["unemployment", "jobhunt", "mortgage", "parenting", "legal", "exam"];
     for (let i = 0; i < order.length; i += 1) {
       const id = order[i];
       const arc = state.story.arcs[id];
@@ -3710,18 +3732,20 @@
     }
 
     const roll = random();
-    if (roll < 0.44) {
+    if (roll < 0.22) {
       turnLabel = "战斗回合";
       doEncounter(false);
-    } else if (roll < 0.74) {
+    } else if (roll < 0.62) {
       turnLabel = "移动回合";
       doTravel();
-    } else if (roll < 0.9) {
+    } else if (roll < 0.8) {
       turnLabel = "搜刮回合";
       doLoot();
     } else {
-      turnLabel = "混合回合";
-      doRestOrShop() || doTravel();
+      turnLabel = "关键推进";
+      if (!maybeRunStoryArc() && !maybeRandomEvent()) {
+        doTravel();
+      }
     }
 
     if (checkTerminalLines()) return;
