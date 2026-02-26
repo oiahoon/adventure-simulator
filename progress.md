@@ -131,3 +131,13 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Init flow now loads content packs before first reroll.
   - Added content observability in `render_game_to_text` (`event_meta_count`, `arc_order`).
 - Validation: `node --check public/src/idle-mud.js` passed.
+- Engine v2 phase-3 (true arc interpreter) completed:
+  - Added data pack `public/data/events/arc-events.json` with staged branch chains for unemployment/exam/mortgage/parenting.
+  - Added pack-driven arc executor in `public/src/idle-mud.js`:
+    - `evaluateEngineCondition` for declarative branch conditions (`all/any/not`, day/chapter/gold/debt/morale/fatigue/profession/family/statSum/random).
+    - `applyOutcomeSpec` for declarative outcomes (city/player deltas, rand/rate formulas, milestones/logs, queue/bias/flags).
+    - `runArcNodeFromPack` and pack-first `maybeRunStoryArc` flow, with fallback to legacy hardcoded arc functions when pack node is missing.
+  - Extended content observability in `render_game_to_text` (`arc_event_count`).
+- Validation:
+  - `node --check public/src/idle-mud.js` passed.
+  - Tried Playwright loop using `$WEB_GAME_CLIENT` with local static server; blocked in sandbox by Chromium launch permission (`MachPortRendezvousServer ... Permission denied (1100)`).

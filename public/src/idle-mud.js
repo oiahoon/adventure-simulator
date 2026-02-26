@@ -248,7 +248,8 @@
         mortgage: { minDay: 5, baseChance: 0.36, debtMin: 95, familyStages: ["已婚"] },
         parenting: { minDay: 7, baseChance: 0.48, familyStages: ["育儿中"], minChildCount: 1 }
       }
-    }
+    },
+    arcEvents: {}
   };
 
   function deepClone(obj) {
@@ -729,11 +730,16 @@
     return contentPacks().arcConfig || defaultContentPacks.arcConfig;
   }
 
+  function arcEventsConfig() {
+    return contentPacks().arcEvents || {};
+  }
+
   async function loadContentPacks() {
     const base = deepClone(defaultContentPacks);
     const targets = [
       { key: "eventMeta", url: "/data/events/event-meta.json" },
-      { key: "arcConfig", url: "/data/events/arc-config.json" }
+      { key: "arcConfig", url: "/data/events/arc-config.json" },
+      { key: "arcEvents", url: "/data/events/arc-events.json" }
     ];
     for (let i = 0; i < targets.length; i += 1) {
       const t = targets[i];
@@ -928,6 +934,154 @@
     arc.active = false;
     arc.completed = true;
     arc.ending = ending || "";
+  }
+
+  function sumStats(keys) {
+    const p = state.player;
+    if (!p) return 0;
+    return (keys || []).reduce((sum, key) => sum + (p.stats[key] || 0), 0);
+  }
+
+  function evaluateEngineCondition(cond) {
+    if (!cond || typeof cond !== "object") return true;
+    const p = state.player;
+    if (!p) return false;
+    if (Array.isArray(cond.all)) return cond.all.every((c) => evaluateEngineCondition(c));
+    if (Array.isArray(cond.any)) return cond.any.some((c) => evaluateEngineCondition(c));
+    if (cond.not) return !evaluateEngineCondition(cond.not);
+    if (typeof cond.dayMin === "number" && state.day < cond.dayMin) return false;
+    if (typeof cond.dayMax === "number" && state.day > cond.dayMax) return false;
+    if (typeof cond.chapterMin === "number" && state.story.chapterId < cond.chapterMin) return false;
+    if (typeof cond.goldGte === "number" && p.gold < cond.goldGte) return false;
+    if (typeof cond.goldLte === "number" && p.gold > cond.goldLte) return false;
+    if (typeof cond.debtGte === "number" && state.cityStatus.debt < cond.debtGte) return false;
+    if (typeof cond.moraleLte === "number" && state.cityStatus.morale > cond.moraleLte) return false;
+    if (typeof cond.fatigueGte === "number" && state.cityStatus.fatigue < cond.fatigueGte) return false;
+    if (Array.isArray(cond.professionIn) && !cond.professionIn.includes(p.profession.id)) return false;
+    if (Array.isArray(cond.familyStageIn) && !cond.familyStageIn.includes(state.story.familyStage)) return false;
+    if (typeof cond.childCountGte === "number" && state.story.childCount < cond.childCountGte) return false;
+    if (cond.statSumGte) {
+      const cfg = cond.statSumGte;
+      if (sumStats(cfg.keys || []) < (cfg.value || 0)) return false;
+    }
+    if (typeof cond.randomLt === "number") {
+      if (random() >= cond.randomLt) return false;
+    }
+    return true;
+  }
+
+  function resolveDynamicValue(spec, currentValue, maxValue) {
+    if (typeof spec === "number") return spec;
+    if (!spec || typeof spec !== "object") return 0;
+    if (spec.mode === "addRand") return randInt(spec.min || 0, spec.max || 0);
+    if (spec.mode === "subRand") return -randInt(spec.min || 0, spec.max || 0);
+    if (spec.mode === "subRate") return -Math.floor((currentValue || 0) * (spec.rate || 0));
+    if (spec.mode === "addRate") return Math.floor((currentValue || 0) * (spec.rate || 0));
+    if (spec.mode === "healRand") return Math.min(maxValue || 9999, (currentValue || 0) + randInt(spec.min || 0, spec.max || 0)) - (currentValue || 0);
+    return 0;
+  }
+
+  function applyOutcomeSpec(outcome, arcId, branch) {
+    if (!outcome) return;
+    const p = state.player;
+    if (!p) return;
+
+    if (outcome.city) {
+      updateCityStatus({
+        morale: outcome.city.morale || 0,
+        fatigue: outcome.city.fatigue || 0,
+        debt: outcome.city.debt || 0,
+        heat: outcome.city.heat || 0
+      });
+    }
+
+    if (outcome.player) {
+      if (typeof outcome.player.exp === "number" && outcome.player.exp > 0) {
+        gainExp(outcome.player.exp);
+      }
+      if (typeof outcome.player.gold === "number") {
+        p.gold = Math.max(0, p.gold + outcome.player.gold);
+      } else if (outcome.player.gold) {
+        p.gold = Math.max(0, p.gold + resolveDynamicValue(outcome.player.gold, p.gold, 99999));
+      }
+      if (typeof outcome.player.hp === "number") {
+        p.hp = clamp(p.hp + outcome.player.hp, 0, p.hpMax);
+      } else if (outcome.player.hp) {
+        p.hp = clamp(p.hp + resolveDynamicValue(outcome.player.hp, p.hp, p.hpMax), 0, p.hpMax);
+      }
+      if (outcome.player.stats && typeof outcome.player.stats === "object") {
+        const keys = Object.keys(outcome.player.stats);
+        for (let i = 0; i < keys.length; i += 1) {
+          const key = keys[i];
+          p.stats[key] = (p.stats[key] || 0) + (outcome.player.stats[key] || 0);
+        }
+      }
+    }
+
+    if (outcome.milestone) addMilestone(outcome.milestone);
+    if (outcome.log) addLog(outcome.log);
+
+    const setFlags = outcome.setFlags || [];
+    for (let i = 0; i < setFlags.length; i += 1) {
+      const f = setFlags[i];
+      setEngineFlag(f.key, f.value, f.ttl);
+    }
+
+    const bias = outcome.bias || [];
+    for (let i = 0; i < bias.length; i += 1) {
+      const b = bias[i];
+      addBias(b.key, b.mul, b.ttl);
+    }
+
+    const queue = outcome.enqueue || [];
+    for (let i = 0; i < queue.length; i += 1) {
+      const q = queue[i];
+      enqueueEvent(q.eventId, q.dueIn, q.priority, q.forced);
+    }
+
+    const arc = state.story.arcs[arcId];
+    if (arc) {
+      const baseNext = (branch && Number.isFinite(branch.nextDayOffset) ? branch.nextDayOffset : null);
+      const fallback = Number.isFinite(outcome.nextDayOffset) ? outcome.nextDayOffset : 1;
+      arc.nextDay = state.day + (baseNext == null ? fallback : baseNext);
+    }
+  }
+
+  function runArcNodeFromPack(arcId, arcState) {
+    const pack = arcEventsConfig()[arcId];
+    if (!pack) return false;
+    const node = pack[String(arcState.stage)];
+    if (!node) return false;
+    if (node.when && !evaluateEngineCondition(node.when)) return false;
+
+    const branches = Array.isArray(node.branches) && node.branches.length
+      ? node.branches
+      : [{ outcomes: node.outcomes || [], nextStage: node.nextStage, complete: node.complete, ending: node.ending, nextDayOffset: node.nextDayOffset }];
+
+    let chosen = null;
+    for (let i = 0; i < branches.length; i += 1) {
+      if (!branches[i].when || evaluateEngineCondition(branches[i].when)) {
+        chosen = branches[i];
+        break;
+      }
+    }
+    if (!chosen) return false;
+
+    const outcomes = Array.isArray(chosen.outcomes) ? chosen.outcomes : [];
+    for (let i = 0; i < outcomes.length; i += 1) {
+      applyOutcomeSpec(outcomes[i], arcId, chosen);
+    }
+
+    if (chosen.complete || node.complete) {
+      completeArc(arcId, chosen.ending || node.ending || "");
+      return true;
+    }
+
+    const nextStage = Number.isFinite(chosen.nextStage) ? chosen.nextStage : Number.isFinite(node.nextStage) ? node.nextStage : arcState.stage + 1;
+    arcState.stage = nextStage;
+    const nextOffset = Number.isFinite(chosen.nextDayOffset) ? chosen.nextDayOffset : Number.isFinite(node.nextDayOffset) ? node.nextDayOffset : 1;
+    arcState.nextDay = state.day + nextOffset;
+    return true;
   }
 
   function maybeActivateArcs() {
@@ -1160,11 +1314,13 @@
       const id = order[i];
       const arc = state.story.arcs[id];
       if (!arc || !arc.active || arc.completed || state.day < arc.nextDay) continue;
-      let progressed = false;
-      if (id === "unemployment") progressed = runUnemploymentArc(arc);
-      if (id === "exam") progressed = runExamArc(arc);
-      if (id === "mortgage") progressed = runMortgageArc(arc);
-      if (id === "parenting") progressed = runParentingArc(arc);
+      let progressed = runArcNodeFromPack(id, arc);
+      if (!progressed) {
+        if (id === "unemployment") progressed = runUnemploymentArc(arc);
+        if (id === "exam") progressed = runExamArc(arc);
+        if (id === "mortgage") progressed = runMortgageArc(arc);
+        if (id === "parenting") progressed = runParentingArc(arc);
+      }
       if (progressed) {
         updateCityStatus({ heat: random() < 0.3 ? 1 : 0 });
         return true;
@@ -3048,7 +3204,8 @@
       },
       content: {
         event_meta_count: Object.keys(eventMetaConfig()).length,
-        arc_order: (arcConfig().order || []).slice()
+        arc_order: (arcConfig().order || []).slice(),
+        arc_event_count: Object.keys(arcEventsConfig()).length
       },
       mainline_task: getCurrentMainlineTask() ? getCurrentMainlineTask().text : null,
       active_side_quest: state.story.activeSideQuest

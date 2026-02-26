@@ -1,0 +1,280 @@
+{
+  "unemployment": {
+    "1": {
+      "nextDayOffset": 1,
+      "outcomes": [
+        {
+          "city": { "morale": -7, "fatigue": 4, "heat": 3 },
+          "player": { "gold": { "mode": "subRand", "min": 8, "max": 22 } },
+          "milestone": "失业链启动：组织架构调整",
+          "log": "剧情链-失业：公司组织调整，你被转入待岗名单。",
+          "setFlags": [{ "key": "arc.unemployment.active", "value": true, "ttl": 8 }],
+          "bias": [{ "key": "tag:jobhunt", "mul": 1.3, "ttl": 8 }],
+          "enqueue": [{ "eventId": "queue:jobhunt-feedback", "dueIn": 2, "priority": 70 }]
+        }
+      ]
+    },
+    "2": {
+      "nextDayOffset": 1,
+      "branches": [
+        {
+          "when": {
+            "any": [
+              { "statSumGte": { "keys": ["int", "spi"], "value": 24 } },
+              { "goldGte": 120 }
+            ]
+          },
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "morale": 3, "fatigue": 2, "debt": -6 },
+              "player": { "gold": { "mode": "addRand", "min": 18, "max": 45 } },
+              "log": "剧情链-失业：你拿到补偿并接到两场面试。"
+            }
+          ]
+        },
+        {
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "morale": -6, "debt": 16, "fatigue": 3 },
+              "log": "剧情链-失业：面试连续失利，现金流进一步恶化。"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "branches": [
+        {
+          "when": { "statSumGte": { "keys": ["int", "agi"], "value": 30 } },
+          "complete": true,
+          "ending": "再就业",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "addRand", "min": 48, "max": 96 }, "exp": 34 },
+              "city": { "morale": 8, "debt": -10, "fatigue": -2 },
+              "milestone": "失业链收束：再就业落地",
+              "log": "剧情链-失业：你成功再就业，暂时稳住了节奏。"
+            }
+          ]
+        },
+        {
+          "complete": true,
+          "ending": "灵活用工",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "addRand", "min": 14, "max": 38 } },
+              "city": { "morale": -2, "debt": 8, "fatigue": 2 },
+              "milestone": "失业链收束：转入灵活用工",
+              "log": "剧情链-失业：你转入临时用工，收入恢复但稳定性较差。"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "exam": {
+    "1": {
+      "nextDayOffset": 1,
+      "outcomes": [
+        {
+          "city": { "fatigue": 6, "morale": -2, "debt": 6 },
+          "player": { "gold": { "mode": "subRand", "min": 10, "max": 24 } },
+          "milestone": "考编链启动：报名冲刺期",
+          "log": "剧情链-考编：报名、买课、刷题，作息开始失衡。",
+          "bias": [{ "key": "tag:exam", "mul": 1.35, "ttl": 10 }],
+          "enqueue": [{ "eventId": "queue:exam-result", "dueIn": 2, "priority": 75 }]
+        }
+      ]
+    },
+    "2": {
+      "nextDayOffset": 1,
+      "branches": [
+        {
+          "when": { "statSumGte": { "keys": ["int", "spi"], "value": 23 } },
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "player": { "exp": 28 },
+              "city": { "morale": 5, "fatigue": 2 },
+              "log": "剧情链-考编：模考排名上升，你进入面试阶段。"
+            }
+          ]
+        },
+        {
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "morale": -7, "fatigue": 3 },
+              "log": "剧情链-考编：模考失利，你陷入是否继续的焦虑。"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "branches": [
+        {
+          "when": { "statSumGte": { "keys": ["int", "spi", "luk"], "value": 34 } },
+          "complete": true,
+          "ending": "上岸",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "addRand", "min": 30, "max": 70 } },
+              "city": { "morale": 10, "debt": -8, "fatigue": -2 },
+              "milestone": "考编链收束：成功上岸",
+              "log": "剧情链-考编：你拿到录用通知，家庭压力明显缓和。"
+            }
+          ]
+        },
+        {
+          "complete": true,
+          "ending": "再战",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 8, "max": 26 } },
+              "city": { "morale": -4, "fatigue": 3 },
+              "milestone": "考编链收束：落榜再战",
+              "log": "剧情链-考编：本轮未上岸，你决定边工作边准备下一次。"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "mortgage": {
+    "1": {
+      "nextDayOffset": 1,
+      "outcomes": [
+        {
+          "city": { "debt": 18, "morale": -4, "fatigue": 2 },
+          "player": { "gold": { "mode": "subRand", "min": 12, "max": 28 } },
+          "milestone": "房贷链启动：月供压力上升",
+          "log": "剧情链-房贷：月供上涨与装修尾款同时到期。",
+          "enqueue": [{ "eventId": "queue:mortgage-followup", "dueIn": 2, "priority": 72 }]
+        }
+      ]
+    },
+    "2": {
+      "nextDayOffset": 1,
+      "branches": [
+        {
+          "when": { "any": [{ "goldGte": 80 }, { "statSumGte": { "keys": ["int", "spi"], "value": 24 } }] },
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 36, "max": 72 } },
+              "city": { "debt": -16, "morale": 3, "fatigue": 1 },
+              "log": "剧情链-房贷：你完成重组方案，现金流短期可控。"
+            }
+          ]
+        },
+        {
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "debt": 22, "morale": -7, "heat": 4, "fatigue": 3 },
+              "log": "剧情链-房贷：协商失败，逾期风险上升并影响征信。"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "branches": [
+        {
+          "when": { "statSumGte": { "keys": ["int", "luk"], "value": 26 } },
+          "complete": true,
+          "ending": "稳住月供",
+          "outcomes": [
+            {
+              "city": { "debt": -12, "morale": 5, "heat": -2 },
+              "milestone": "房贷链收束：断供风险解除",
+              "log": "剧情链-房贷：你保住了还款节奏，风险暂时解除。"
+            }
+          ]
+        },
+        {
+          "complete": true,
+          "ending": "资产调整",
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRate", "rate": 0.35 } },
+              "city": { "debt": 18, "morale": -6, "fatigue": 2, "heat": 3 },
+              "milestone": "房贷链收束：资产被迫调整",
+              "log": "剧情链-房贷：你被迫出售部分资产换取续命空间。"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "parenting": {
+    "1": {
+      "nextDayOffset": 1,
+      "outcomes": [
+        {
+          "city": { "fatigue": 7, "morale": -2, "debt": 6 },
+          "player": { "hp": { "mode": "subRand", "min": 2, "max": 7 } },
+          "milestone": "育儿链启动：托育排队",
+          "log": "剧情链-育儿：托育名额紧张，通勤与照护冲突加剧。",
+          "enqueue": [{ "eventId": "queue:parenting-support", "dueIn": 2, "priority": 78 }]
+        }
+      ]
+    },
+    "2": {
+      "nextDayOffset": 1,
+      "branches": [
+        {
+          "when": { "any": [{ "goldGte": 70 }, { "statSumGte": { "keys": ["spi", "int"], "value": 24 } }] },
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "player": { "gold": { "mode": "subRand", "min": 26, "max": 58 } },
+              "city": { "fatigue": -6, "morale": 4, "debt": 6 },
+              "log": "剧情链-育儿：你争取到临时托育支持，节奏稍有改善。"
+            }
+          ]
+        },
+        {
+          "nextStage": 3,
+          "outcomes": [
+            {
+              "city": { "fatigue": 9, "morale": -5, "debt": 10 },
+              "player": { "hp": { "mode": "subRand", "min": 3, "max": 8 } },
+              "log": "剧情链-育儿：无人接替夜间照护，你连续透支状态。"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "branches": [
+        {
+          "when": { "statSumGte": { "keys": ["spi", "vit"], "value": 22 } },
+          "complete": true,
+          "ending": "协作稳定",
+          "outcomes": [
+            {
+              "city": { "morale": 7, "fatigue": -5, "debt": -6 },
+              "milestone": "育儿链收束：家庭协作成型",
+              "log": "剧情链-育儿：家庭协作机制稳定，压力回落。"
+            }
+          ]
+        },
+        {
+          "complete": true,
+          "ending": "持续硬扛",
+          "outcomes": [
+            {
+              "city": { "morale": -4, "fatigue": 6, "debt": 10 },
+              "milestone": "育儿链收束：硬扛阶段",
+              "log": "剧情链-育儿：你进入长期硬扛模式，后续风险仍高。"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
