@@ -541,3 +541,18 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 分享文案中的链接切换为带预览能力的分享链接。
 - 前端资源版本升级：`v=20260227_9`。
 - 质量验证：`npm test` 20/20 通过。
+
+## Growth Causal Chain Upgrade（成长解锁 + 事件退场 + 重复控制）
+- 新增成长节点事件池 `GROWTH_EVENT_POOL`（4 条）：
+  - 债务生存术、边界感升级、舆论打法升级、稳定后经营。
+  - 通过里程碑解锁（`debt_veteran / burnout_veteran / public_figure / stability_reached`）。
+- 新增里程碑系统：按状态/压力/flags 自动标记成长阶段。
+- 新增事件退场规则 `EVENT_RETIRE_RULES`：
+  - 达到指定里程碑后，部分早期事件不再出现（实现“经历过后世界状态改变”）。
+- 新增重复控制策略：
+  - 事件级 `noRepeat / maxRepeats` 支持。
+  - 默认重复上限 + 按事件前缀（opening/incident/growth）限制。
+  - 事件选择优先 strict eligibility，不可用时才软回退，避免剧情池枯竭。
+- 运行时状态新增：`milestones / eventSeenCount / lastGrowthDay`。
+- 前端资源版本升级：`v=20260227_10`。
+- 质量验证：`npm test` 20/20 通过。

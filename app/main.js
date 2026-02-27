@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_9";
+import { createGameUI } from "../ui/game-ui.js?v=20260227_10";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -756,6 +756,71 @@ const CHAPTER_POOLS = {
   },
 };
 
+const EVENT_RETIRE_RULES = {
+  stable_branch_a: { milestonesAny: ["debt_veteran", "public_figure"] },
+  work_followup_a: { milestonesAny: ["burnout_veteran"] },
+  cash_branch_a: { milestonesAny: ["stability_reached"] },
+};
+
+const GROWTH_EVENT_POOL = [
+  {
+    id: "growth_debt_restructure",
+    chapter: "成长节点：债务生存术",
+    title: "你终于学会重排账单",
+    text: "连续吃过几次债务亏后，你开始用更系统的方法管理现金流。",
+    causeText: "由债务压力经历触发的新成长事件。",
+    noRepeat: true,
+    unlockWhen: { milestonesAny: ["debt_veteran"], minDay: 4 },
+    options: [
+      { id: "growth_debt_sheet", label: "做强制预算表", tag: "control", effects: { money: 1, mood: 1, heat: -1 }, setFlags: ["budget_rebuild"] },
+      { id: "growth_debt_hustle", label: "现金流优先策略", tag: "work", effects: { money: 2, energy: -1, mood: -1 }, setFlags: ["grind_path"] },
+      { id: "growth_debt_social", label: "人情债先清", tag: "network", effects: { reputation: 2, money: -1, mood: 1 }, setFlags: ["reputation_stable"] },
+    ],
+  },
+  {
+    id: "growth_burnout_boundary",
+    chapter: "成长节点：边界感觉醒",
+    title: "你不再什么都硬扛",
+    text: "透支过几轮后，你开始主动切工作边界，不再把自己当消耗品。",
+    causeText: "由过劳危机经历触发的新成长事件。",
+    noRepeat: true,
+    unlockWhen: { milestonesAny: ["burnout_veteran"], minDay: 5 },
+    options: [
+      { id: "growth_burnout_delegate", label: "任务拆解+委派", tag: "control", effects: { energy: 2, reputation: 1, money: -1 }, setFlags: ["delegation_path"] },
+      { id: "growth_burnout_rest", label: "固定恢复窗口", tag: "rest", effects: { energy: 2, mood: 1, heat: -1 }, setFlags: ["rest_recovery"] },
+      { id: "growth_burnout_push", label: "继续冲但更谨慎", tag: "work", effects: { money: 1, reputation: 1, energy: -1 }, setFlags: ["scope_control"] },
+    ],
+  },
+  {
+    id: "growth_public_strategy",
+    chapter: "成长节点：舆论打法升级",
+    title: "你学会和流量共处",
+    text: "几轮热搜翻车后，你开始按节奏发声，不再一上头就全盘梭哈。",
+    causeText: "由高热度舆论周期触发的新成长事件。",
+    noRepeat: true,
+    unlockWhen: { milestonesAny: ["public_figure"], minDay: 6 },
+    options: [
+      { id: "growth_public_schedule", label: "制定发声节奏", tag: "control", effects: { heat: -1, reputation: 2, mood: 1 }, setFlags: ["stabilized"] },
+      { id: "growth_public_team", label: "找朋友共管账号", tag: "network", effects: { reputation: 1, mood: 1, money: -1 }, setFlags: ["network_mode"] },
+      { id: "growth_public_meme", label: "继续玩梗但控频", tag: "content", effects: { heat: 1, money: 1, reputation: -1 }, setFlags: ["content_line"] },
+    ],
+  },
+  {
+    id: "growth_stability_upgrade",
+    chapter: "成长节点：稳定后升级",
+    title: "你从求生转向经营",
+    text: "撑过最难阶段后，你不再只想着活下去，开始布局更长线的选择。",
+    causeText: "由长期稳定生存触发的新成长事件。",
+    noRepeat: true,
+    unlockWhen: { milestonesAny: ["stability_reached"], minDay: 10 },
+    options: [
+      { id: "growth_upgrade_skill", label: "投入核心技能", tag: "work", effects: { reputation: 2, money: -1, energy: -1 }, setFlags: ["upgrade_route"] },
+      { id: "growth_upgrade_network", label: "经营关键关系", tag: "network", effects: { reputation: 2, heat: 1, mood: 1 }, setFlags: ["network_route"] },
+      { id: "growth_upgrade_balance", label: "稳步慢增", tag: "control", effects: { money: 1, mood: 1, heat: -1 }, setFlags: ["survival_route"] },
+    ],
+  },
+];
+
 function seededRandom(seed = 1) {
   let x = seed >>> 0;
   return () => {
@@ -1013,10 +1078,78 @@ function chooseOpening(archetype, random) {
   return OPENING_EVENTS[openingId] || OPENING_EVENTS.opening_rent_kpi;
 }
 
+function isConditionMatched(session, condition = null) {
+  if (!condition) return true;
+  const day = session.dayIndex + 1;
+  if (typeof condition.minDay === "number" && day < condition.minDay) return false;
+  if (typeof condition.maxDay === "number" && day > condition.maxDay) return false;
+
+  if (Array.isArray(condition.flagsAll) && condition.flagsAll.some((f) => !session.flags[f])) return false;
+  if (Array.isArray(condition.flagsAny) && condition.flagsAny.length && !condition.flagsAny.some((f) => session.flags[f])) return false;
+  if (Array.isArray(condition.milestonesAll) && condition.milestonesAll.some((m) => !session.milestones[m])) return false;
+  if (Array.isArray(condition.milestonesAny) && condition.milestonesAny.length && !condition.milestonesAny.some((m) => session.milestones[m])) return false;
+
+  return true;
+}
+
+function getEventRepeatLimit(event) {
+  if (typeof event.maxRepeats === "number") return event.maxRepeats;
+  if (event.id.startsWith("opening_")) return 1;
+  if (event.id.startsWith("incident_")) return 1;
+  if (event.id.startsWith("growth_")) return 1;
+  return 4;
+}
+
+function isEventSoftEligible(session, event) {
+  if (!event) return false;
+  if (!isConditionMatched(session, event.unlockWhen)) return false;
+  const retireRule = event.retireWhen || EVENT_RETIRE_RULES[event.id];
+  if (retireRule && isConditionMatched(session, retireRule)) return false;
+  if (event.noRepeat && (session.eventSeenCount[event.id] || 0) >= 1) return false;
+  return true;
+}
+
+function isEventStrictEligible(session, event) {
+  if (!isEventSoftEligible(session, event)) return false;
+  const seen = session.eventSeenCount[event.id] || 0;
+  return seen < getEventRepeatLimit(event);
+}
+
 function pickFromPool(session, pool, fallbackEvent) {
-  const unseen = pool.filter((event) => !session.usedEventIds.has(event.id));
-  const candidates = unseen.length ? unseen : pool;
-  return candidates.length ? randomPick(candidates, session.random) : fallbackEvent;
+  const strict = pool.filter((event) => isEventStrictEligible(session, event));
+  const soft = pool.filter((event) => isEventSoftEligible(session, event));
+  const eligible = strict.length ? strict : soft;
+  const unseen = eligible.filter((event) => !session.usedEventIds.has(event.id));
+  const candidates = unseen.length ? unseen : eligible;
+  if (candidates.length) return randomPick(candidates, session.random);
+  return isEventSoftEligible(session, fallbackEvent) ? fallbackEvent : null;
+}
+
+function updateMilestones(session) {
+  const s = session.stats;
+  const p = session.pressure;
+  const day = session.dayIndex + 1;
+
+  if (session.flags.debt_overhang || p.debt >= 4 || session.flags.debt_spiral) session.milestones.debt_veteran = true;
+  if (session.flags.burnout_risk || p.burnout >= 4 || s.energy <= 2) session.milestones.burnout_veteran = true;
+  if (session.flags.public_fight || session.flags.viral_path || s.heat >= 7) session.milestones.public_figure = true;
+  if (day >= 10 && s.money >= 5 && s.mood >= 5 && s.energy >= 5) session.milestones.stability_reached = true;
+}
+
+function resolveGrowthEvent(session, dayIndex) {
+  if (dayIndex <= 2) return null;
+  if (dayIndex - session.lastGrowthDay < 3) return null;
+  const pool = GROWTH_EVENT_POOL.filter((event) => isEventStrictEligible(session, event));
+  if (!pool.length) return null;
+
+  let chance = 0.14 + pool.length * 0.05;
+  if (session.pressure.debt >= 3 || session.pressure.burnout >= 3 || session.pressure.scrutiny >= 3) chance += 0.08;
+  chance = Math.min(0.56, chance);
+  if (session.random() > chance) return null;
+
+  const picked = randomPick(pool, session.random);
+  session.lastGrowthDay = dayIndex;
+  return picked;
 }
 
 function resolveCausalStageEvent(session, stageIndex) {
@@ -1096,6 +1229,9 @@ function resolveStateIncidentEvent(session, dayIndex) {
 
 function resolveEvent(session, dayIndex) {
   if (dayIndex === 0) return session.openingEvent;
+  updateMilestones(session);
+  const growth = resolveGrowthEvent(session, dayIndex);
+  if (growth) return growth;
   const incident = resolveStateIncidentEvent(session, dayIndex);
   if (incident) return incident;
   const loopStage = ((dayIndex - 1) % 5) + 1;
@@ -1314,6 +1450,8 @@ function createSession(seed = Date.now()) {
     },
     flags: {},
     pressure: { debt: 0, burnout: 0, scrutiny: 0 },
+    milestones: {},
+    eventSeenCount: {},
     tagUsage: {},
     pendingConsequences: [],
     usedEventIds: new Set([openingEvent.id]),
@@ -1325,6 +1463,7 @@ function createSession(seed = Date.now()) {
     history: [],
     sameTagCount: 0,
     lastIncidentDay: -10,
+    lastGrowthDay: -10,
     lastTag: null,
     result: null,
   };
@@ -1469,6 +1608,7 @@ function applyChoice(optionId) {
     delta: statsDelta(before, after),
   });
   session.usedEventIds.add(event.id);
+  session.eventSeenCount[event.id] = (session.eventSeenCount[event.id] || 0) + 1;
   updatePressureFromAction(session, option, finalEffects);
   scheduleDelayedConsequence(session, event, option);
   const chainEntries = applyEndOfDayConsequences(session);
