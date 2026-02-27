@@ -15,7 +15,7 @@
 ## 迁移策略结论
 
 - 不重开仓库。
-- 采用并行引擎迁移：保留 `v1` 作为稳定运行版本，增量建设 `v2`。
+- 已完成并行引擎迁移：`v2` 成为默认，`v1` 进入 `legacy` 兼容状态。
 - 每阶段可独立发布并回滚，避免一次性大切换风险。
 
 ## Phase 1（已开始）: V2 骨架落地
@@ -104,6 +104,13 @@
 - 所有入口默认走 v2
 - 文档、脚本、测试全部对齐
 
+当前进展：
+- API 默认版本切换为 `v2`（仍支持 `engineVersion=v1` 回退）。
+- CLI 默认版本切换为 `v2`（仍支持 `--engine v1` 回退）。
+- Web 默认页面切换为 `v2` 壳层：`/game/`。
+- 旧 Web 页面归档为 `public/game-legacy/index.html`（`/game-legacy/`）。
+- `README` 与 API 文档已更新默认版本说明。
+
 ## 提交策略
 
 - 每阶段至少 1 个独立 commit，commit message 包含阶段号。
@@ -117,4 +124,4 @@
 - Phase 2: 已完成（JSON 内容包 + content-loader + check-cards-v2）
 - Phase 3: 已完成（v2 独立 Web 壳层 + 结局/成就/分享）
 - Phase 4: 已完成（v2 回放校验 + 观测指标）
-- Phase 5: 待开始
+- Phase 5: 已完成（默认切换 + legacy 归档）

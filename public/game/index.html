@@ -1,145 +1,241 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>都市生存模拟器 - 卡牌决策 MUD</title>
-  <meta name="description" content="单机卡牌文字 MUD，每回合打牌做决策，推动人生事件链">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>都市生存模拟器 - 卡牌决策</title>
+  <meta name="description" content="都市生存模拟器：每回合抽牌出牌，推进现实题材剧情链并生成可分享战报。" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles/idle-mud.css">
+  <style>
+    :root {
+      --bg: #edf3fb;
+      --card: #ffffff;
+      --ink: #1a2633;
+      --line: #d2deef;
+      --brand: #1158c7;
+      --danger: #c2410c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 540px at -10% -10%, #d5e7ff, transparent 62%),
+        radial-gradient(900px 540px at 110% 0%, #d5f4ec, transparent 56%),
+        var(--bg);
+    }
+    .page {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: 0 10px 26px rgba(33, 67, 108, 0.1);
+      overflow: hidden;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px;
+      background: linear-gradient(135deg, #eef5ff, #f8fcff);
+    }
+    .hero h1 { margin: 0; font-size: 1.4rem; font-family: "ZCOOL XiaoWei", serif; }
+    .hero p { margin: 3px 0 0; color: #526579; font-size: 0.86rem; }
+    .badge {
+      align-self: start;
+      border-radius: 999px;
+      border: 1px solid #b6ceef;
+      color: #0f4da9;
+      background: #eaf2ff;
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .kpi > div {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      background: linear-gradient(145deg, #fff, #f4f8ff);
+      display: grid;
+      gap: 2px;
+    }
+    .kpi span { color: #607286; font-size: 0.74rem; }
+    .kpi strong { font-size: 1rem; }
+    .bar {
+      margin-top: 2px;
+      height: 8px;
+      background: #e6eef9;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #2563eb);
+      transition: width .22s ease;
+    }
+    .toolbar {
+      padding: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--line);
+    }
+    button {
+      border: 1px solid #b7c9e2;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .cards {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .card {
+      border: 1px solid #c2d5f0;
+      border-radius: 14px;
+      padding: 10px;
+      background: linear-gradient(160deg, #fff, #edf4ff);
+      display: grid;
+      gap: 5px;
+    }
+    .card h3 { margin: 0; font-size: 0.92rem; }
+    .card p { margin: 0; font-size: 0.78rem; color: #4f6173; min-height: 34px; }
+    .tag { font-size: 0.68rem; color: #0d4da8; background: #e7f1ff; border-radius: 999px; padding: 2px 7px; justify-self: start; }
+    .choice { margin-top: 4px; display: flex; gap: 6px; }
+    .choice button { flex: 1; font-size: 0.73rem; }
+    .info {
+      padding: 10px;
+      font-size: 0.82rem;
+      color: #334559;
+      border-top: 1px solid var(--line);
+      white-space: pre-wrap;
+      min-height: 56px;
+    }
+    .log {
+      padding: 10px;
+      border-top: 1px solid var(--line);
+      max-height: 280px;
+      overflow: auto;
+      background: #fbfdff;
+      white-space: pre-wrap;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .error { color: var(--danger); }
+    .ending {
+      margin: 10px;
+      border: 1px solid #ccd8ea;
+      border-radius: 12px;
+      background: linear-gradient(160deg, #fff, #f6fbff);
+      overflow: hidden;
+    }
+    .ending h3 {
+      margin: 0;
+      padding: 8px 10px;
+      font-size: .9rem;
+      border-bottom: 1px solid #d8e3f1;
+      background: #f2f7ff;
+    }
+    .ending pre {
+      margin: 0;
+      padding: 10px;
+      min-height: 84px;
+      white-space: pre-wrap;
+      font-size: .79rem;
+      line-height: 1.45;
+    }
+    .ending-tools {
+      padding: 10px;
+      border-top: 1px solid #d8e3f1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #share-canvas-v2 {
+      width: calc(100% - 20px);
+      margin: 0 10px 10px;
+      border-radius: 10px;
+      border: 1px solid #d7e2f0;
+      background: #faf5ea;
+      display: block;
+    }
+    .link-row {
+      padding: 0 10px 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: .8rem;
+    }
+    .link-row a {
+      color: #0f4da9;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 720px) {
+      .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cards { grid-template-columns: 1fr; }
+      .link-row { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
   <main class="page">
-    <nav class="top-nav panel">
-      <a class="home-link" href="/">← 项目主页</a>
-      <span>移动端建议：竖屏体验</span>
-    </nav>
-
-    <header class="hero panel">
+    <section class="panel hero">
       <div>
         <h1>都市生存模拟器</h1>
-        <p>城市生存卡牌决策 · 现代现实向文字游戏</p>
+        <p>Card/Event 引擎（默认）· 每回合抽牌与出牌</p>
       </div>
-      <div class="seed-pill" id="seed-pill">Seed: -</div>
-    </header>
-
-    <section class="kpi-strip">
-      <article class="kpi-card">
-        <span>生命</span>
-        <strong id="kpi-hp">-</strong>
-      </article>
-      <article class="kpi-card">
-        <span>精神</span>
-        <strong id="kpi-morale">-</strong>
-      </article>
-      <article class="kpi-card">
-        <span>疲劳</span>
-        <strong id="kpi-fatigue">-</strong>
-      </article>
-      <article class="kpi-card">
-        <span>债务</span>
-        <strong id="kpi-debt">-</strong>
-      </article>
-      <article class="kpi-card">
-        <span>热度</span>
-        <strong id="kpi-heat">-</strong>
-      </article>
-      <article class="kpi-card">
-        <span>章节</span>
-        <strong id="kpi-chapter">-</strong>
-      </article>
+      <div class="badge">engine=v2</div>
     </section>
 
-    <section class="panel killline-panel">
-      <h2>生存仪表</h2>
-      <div class="killline-grid">
-        <div class="killline-row">
-          <span>生命线</span>
-          <div class="killline-track"><i id="kill-hp"></i></div>
-          <em id="kill-hp-text">-</em>
-        </div>
-        <div class="killline-row">
-          <span>精神线</span>
-          <div class="killline-track"><i id="kill-morale"></i></div>
-          <em id="kill-morale-text">-</em>
-        </div>
-        <div class="killline-row">
-          <span>疲劳线</span>
-          <div class="killline-track"><i id="kill-fatigue"></i></div>
-          <em id="kill-fatigue-text">-</em>
-        </div>
-        <div class="killline-row">
-          <span>债务线</span>
-          <div class="killline-track"><i id="kill-debt"></i></div>
-          <em id="kill-debt-text">-</em>
-        </div>
-        <div class="killline-row">
-          <span>热度线</span>
-          <div class="killline-track"><i id="kill-heat"></i></div>
-          <em id="kill-heat-text">-</em>
-        </div>
+    <section class="panel">
+      <div class="kpi" id="kpi"></div>
+      <div class="toolbar">
+        <button id="new-btn">新开一局</button>
+        <button id="draw-btn">抽牌</button>
       </div>
-      <div class="turn-card">
-        <p id="turn-summary">回合反馈：待开始</p>
-        <p id="turn-delta">变化：-</p>
-        <p id="turn-risk">下回合风险：-</p>
+      <div class="cards" id="cards"></div>
+      <div class="info" id="info">等待初始化...</div>
+      <div class="log" id="log"></div>
+      <section class="ending">
+        <h3>结局与分享</h3>
+        <pre id="ending">本局尚未结束</pre>
+        <div class="ending-tools">
+          <button id="copy-share-btn" disabled>复制分享文案</button>
+          <button id="build-share-btn" disabled>生成战报图</button>
+          <a id="download-share-btn" class="hidden" download="card-v2-report.png">下载战报图</a>
+        </div>
+        <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
+      </section>
+      <div class="link-row">
+        <a href="/">← 返回主页</a>
+        <a href="/game-legacy/">进入 legacy 版本</a>
       </div>
-    </section>
-
-    <section class="layout">
-      <aside class="panel right-col">
-        <section class="panel card-panel">
-          <h2>决策卡组</h2>
-          <p class="card-tip">每回合从 3 张卡中打出 1 张，立即改变命运走向。</p>
-          <div id="hand-cards" class="hand-cards"></div>
-          <div id="card-feedback" class="card-feedback">等待开局发牌</div>
-        </section>
-
-        <h2>角色状态</h2>
-        <pre id="character-sheet">尚未生成角色</pre>
-        <section class="panel controls">
-          <h2>控制台</h2>
-          <div class="btn-row">
-            <button id="reroll-btn">掷骰角色</button>
-            <button id="start-btn" disabled>开始牌局</button>
-          </div>
-          <div class="btn-row">
-            <button id="share-card-btn" disabled>生成战报图</button>
-            <button id="copy-share-btn" disabled>复制分享文案</button>
-            <button id="copy-link-btn" disabled>复制挑战链接</button>
-          </div>
-          <div class="meta-row">
-            <span class="hint">每回合必须手动出牌；按 F 全屏，Esc 退出全屏</span>
-          </div>
-        </section>
-        <section class="panel log-panel">
-          <h2>生存日志</h2>
-          <div id="log"></div>
-        </section>
-        <section class="panel trace-panel">
-          <h2>事件轨迹</h2>
-          <div id="event-trace"></div>
-        </section>
-        <section class="ending-panel">
-          <h2>结局与分享</h2>
-          <pre id="ending-sheet">本局尚未结束</pre>
-          <canvas id="share-canvas" width="1080" height="1920" aria-label="share report"></canvas>
-          <a id="download-share-link" class="hidden" download="survival-report.png">下载战报图</a>
-        </section>
-      </aside>
     </section>
   </main>
 
-  <div id="choice-modal" class="choice-modal hidden" role="dialog" aria-modal="true" aria-live="polite">
-    <div class="choice-card">
-      <h3 id="choice-title"></h3>
-      <p id="choice-body"></p>
-      <div id="choice-options"></div>
-    </div>
-  </div>
-
-  <script src="/src/idle-mud.js"></script>
+  <script src="/src/card-runtime-v2.js"></script>
 </body>
 </html>

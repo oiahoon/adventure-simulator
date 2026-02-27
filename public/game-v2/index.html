@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>都市生存模拟器 V2 - 卡牌引擎</title>
-  <meta name="description" content="Card/Event V2 试验场，按抽牌与出牌协议运行" />
+  <title>都市生存模拟器 - 卡牌引擎兼容入口</title>
+  <meta name="description" content="Card/Event 默认引擎兼容入口，按抽牌与出牌协议运行" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
@@ -181,9 +181,22 @@
       display: block;
     }
     .hidden { display: none !important; }
+    .link-row {
+      padding: 0 10px 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: .8rem;
+    }
+    .link-row a {
+      color: #0f4da9;
+      text-decoration: none;
+      font-weight: 700;
+    }
     @media (max-width: 720px) {
       .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .cards { grid-template-columns: 1fr; }
+      .link-row { flex-direction: column; }
     }
   </style>
 </head>
@@ -192,9 +205,9 @@
     <section class="panel hero">
       <div>
         <h1>都市生存模拟器</h1>
-        <p>Card/Event V2 实验场（抽牌 / 出牌协议）</p>
+        <p>Card/Event 默认引擎兼容入口（抽牌 / 出牌协议）</p>
       </div>
-      <div class="v2-badge">engine=v2</div>
+      <div class="v2-badge">engine=v2 alias</div>
     </section>
 
     <section class="panel">
@@ -216,6 +229,10 @@
         </div>
         <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
       </section>
+      <div class="link-row">
+        <a href="/game/">进入默认入口</a>
+        <a href="/game-legacy/">进入 legacy 版本</a>
+      </div>
     </section>
   </main>
 

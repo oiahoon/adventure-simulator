@@ -14,7 +14,7 @@ function parseArgs(argv) {
     mode: "remote",
     baseUrl: DEFAULT_BASE_URL,
     name: "",
-    engine: "v1"
+    engine: "v2"
   };
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
@@ -108,7 +108,7 @@ async function main() {
   if (args.help) {
     console.log(`mud-cli 使用说明:
 
-  mud-cli [--mode remote|local] [--base-url URL] [--name NAME] [--engine v1|v2]
+  mud-cli [--mode remote|local] [--base-url URL] [--name NAME] [--engine v2|v1]
 
 卡牌协议动作: new/status/draw/play/choose`);
     return;

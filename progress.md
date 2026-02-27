@@ -402,3 +402,18 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `node --check scripts/check-replay-v2.js` passed.
   - `npm run check:replay:v2` passed (3/3).
 - Playwright loop attempt (develop-web-game skill): blocked by skill client module format mismatch in current runtime (`web_game_playwright_client.js` is ESM and direct `node` execution fails with `Cannot use import statement outside a module`).
+- Phase 5 completed (default switch + legacy archive):
+  - Web default route `/game/` switched to v2 shell (`public/src/card-runtime-v2.js`).
+  - Archived old web shell to `/game-legacy/` (`public/game-legacy/index.html`).
+  - Kept `/game-v2/` as v2 compatibility entry and added links to default/legacy routes.
+  - API default engine switched to `v2` (still supports `engineVersion=v1`).
+  - CLI default engine switched to `v2` (still supports `--engine v1`).
+  - Updated docs: `README.md`, `docs/api/cli-mud.md`, `docs/architecture/card-engine-v2-migration-plan.md`, `docs/architecture/system-architecture.md`.
+- Validation:
+  - `node --check api/index.js` passed.
+  - `node --check bin/mud-cli.js` passed.
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.

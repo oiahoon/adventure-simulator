@@ -5,12 +5,12 @@
 ## 当前状态
 
 - Web 游戏入口：`/game/`
-- Web V2 试验场：`/game-v2/`
+- Web 兼容入口：`/game-v2/`（等价于 v2）
+- Legacy 页面：`/game-legacy/`（旧 Web 壳层归档）
 - 项目主页：`/`
 - CLI：`mud-cli`（远程/本地模式）
 - 共享核心：`core/mud-engine.js`（API/CLI 共用）
 - Web 核心玩法：每回合 3 选 1 决策卡（手动推进）
-  - `game-v2` 已支持结局摘要与分享战报图（实验版）
 - 事件引擎：`Queue -> Arcs -> Decks`
 - 事件数据包：`public/data/events/*.json`
 - v2 卡牌数据包：`public/data/cards-v2/*.json`
@@ -19,6 +19,11 @@
   - `npm run check:events`
   - `npm run check:replay`
   - `npm run check:replay:v2`
+
+默认引擎版本：
+- API 默认 `v2`（可传 `engineVersion: "v1"` 回退）
+- CLI 默认 `v2`（可用 `--engine v1` 回退）
+- Web 默认 `v2`（`/game`）
 
 ## 快速开始
 
@@ -38,7 +43,8 @@ python3 -m http.server 8080
 
 - 主页：`http://localhost:8080/`
 - 游戏：`http://localhost:8080/game/`
-- V2 试验场：`http://localhost:8080/game-v2/`
+- 兼容入口：`http://localhost:8080/game-v2/`
+- legacy 页面：`http://localhost:8080/game-legacy/`
 
 ### 3) 本地命令行游玩
 
@@ -64,8 +70,8 @@ mud-cli --mode local
 
 CLI 与 API 现使用统一卡牌动作协议：`new / status / draw / play / choose`。
 可通过 `engineVersion` 切换引擎：
-- `v1`：当前稳定线（默认）
-- `v2`：重构中的 Card/Event 引擎（实验）
+- `v2`：当前默认线
+- `v1`：legacy 兼容线
 
 ## 事件引擎开发
 
@@ -114,6 +120,7 @@ core/                     # 共享核心（业务引擎/文本输出）
 bin/mud-cli.js            # CLI 入口
 public/index.html         # 主页
 public/game/index.html    # 游戏页面
+public/game-legacy/index.html # legacy 页面
 public/src/idle-mud.js    # 主引擎
 public/data/events/       # 事件数据包
 docs/                     # 架构与规则文档

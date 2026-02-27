@@ -1,4 +1,4 @@
-# 系统架构与分层（2026-02-26）
+# 系统架构与分层（2026-02-27）
 
 ## 目标
 
@@ -25,20 +25,23 @@
 
 - `api/index.js`（HTTP Adapter）
   - 仅处理路由、HTTP 状态码、JSON/文本响应
+  - 默认走 `v2` 引擎（可通过 `engineVersion=v1` 回退）
   - 通过 Core 处理业务动作，不再维护独立游戏规则
 
 - `bin/mud-cli.js`（Terminal Adapter）
   - 仅处理命令输入与界面刷新
+  - 默认走 `v2` 引擎（可通过 `--engine v1` 回退）
   - `local` 模式直接调用 Core
   - `remote` 模式调用 `/api/mud/run`
 
 ### 3) Frontend Layer（Web UI）
 
-- `public/game/index.html`
-- `public/assets/styles/idle-mud.css`
-- `public/src/idle-mud.js`
+- `public/game/index.html`（默认 v2 壳层）
+- `public/game-v2/index.html`（兼容入口）
+- `public/game-legacy/index.html`（旧壳层归档）
+- `public/src/card-runtime-v2.js`
 
-说明：Web 当前仍包含独立运行时与事件引擎逻辑（单机前端驱动）。UI 与逻辑在同文件，属于下一阶段拆分对象。
+说明：Web 默认壳层已切换到 API 驱动的 v2 运行时；legacy 壳层仍保留作回归与兼容参考。
 
 ### 4) Event Content & Quality Tooling
 

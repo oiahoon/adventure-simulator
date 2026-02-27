@@ -6,8 +6,8 @@
 
 该接口由共享核心 `core/mud-engine.js` 驱动，CLI 本地模式与远程 API 使用同一套动作语义。
 重构期可传 `engineVersion`：
-- `v1`（默认）
-- `v2`（新 Card/Event 引擎；读取 `public/data/cards-v2` 内容包）
+- `v2`（默认；读取 `public/data/cards-v2` 内容包）
+- `v1`（legacy 兼容）
 
 ## Actions
 

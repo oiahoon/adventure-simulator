@@ -58,7 +58,7 @@ app.get("/api/mud/status", (req, res) => {
 app.post("/api/mud/run", (req, res) => {
   try {
     const body = req.body || {};
-    const version = String(body.engineVersion || body.engine || "v1").toLowerCase();
+    const version = String(body.engineVersion || body.engine || "v2").toLowerCase();
     const service = version === "v2" ? mudV2 : mud;
     const result = service.runAction(body);
     if (!result.ok) {
