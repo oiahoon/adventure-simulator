@@ -432,6 +432,18 @@ const CHAPTER_POOLS = {
           { id: "delegate_friend", label: "让朋友代为沟通", tag: "network", effects: { reputation: 1, money: -1, mood: 0 }, setFlags: ["network_mode"] },
         ],
       },
+      {
+        id: "public_backlash_d",
+        chapter: "第三章：舆论起火",
+        title: "热搜反转现场",
+        text: "一段新视频冲上热榜，昨天还在站队的评论区今天集体掉头。",
+        causeText: "由高热度与公共舆情波动触发。",
+        options: [
+          { id: "backlash_follow_turn", label: "立刻改口顺风", tag: "social", effects: { reputation: -1, heat: 1, mood: -1 }, setFlags: ["public_fight"] },
+          { id: "backlash_post_apology", label: "发帖认错止损", tag: "control", effects: { reputation: 1, heat: -1, mood: -1 }, setFlags: ["stabilized"] },
+          { id: "backlash_keep_meme", label: "继续玩梗带节奏", tag: "content", effects: { heat: 2, money: 1, reputation: -2 }, setFlags: ["viral_path"] },
+        ],
+      },
     ],
     stable: [
       {
@@ -468,6 +480,18 @@ const CHAPTER_POOLS = {
           { id: "cash_out_fast", label: "趁热接推广", tag: "money", effects: { money: 2, reputation: -1, heat: 1 }, setFlags: ["content_line"] },
           { id: "quality_first", label: "慢慢打磨内容", tag: "control", effects: { reputation: 2, mood: 1, money: -1 }, setFlags: ["upgrade_route"] },
           { id: "keep_low_profile", label: "见好就收", tag: "rest", effects: { mood: 2, heat: -1 }, setFlags: ["silent_line"] },
+        ],
+      },
+      {
+        id: "stable_branch_d",
+        chapter: "第三章：短暂喘息",
+        title: "头条副业课刷屏",
+        text: "你刷到一堆“0基础副业翻倍”热帖，评论区全在晒收益截图。",
+        causeText: "由短暂稳定期与外部机会刺激触发。",
+        options: [
+          { id: "stable_try_small_course", label: "先小额试水", tag: "risk", effects: { money: -1, heat: 1, mood: 1 }, setFlags: ["grind_path"] },
+          { id: "stable_collect_free_info", label: "只看免费经验", tag: "control", effects: { mood: 1, reputation: 1 }, setFlags: ["scope_control"] },
+          { id: "stable_ignore_noise", label: "直接划走", tag: "rest", effects: { mood: 1, heat: -1, money: 0 }, setFlags: ["silent_line"] },
         ],
       },
     ],
@@ -536,6 +560,18 @@ const CHAPTER_POOLS = {
           { id: "trade_contact", label: "精准交换资源", tag: "network", effects: { money: 1, reputation: 1, heat: 1 }, setFlags: ["resource_swap"] },
         ],
       },
+      {
+        id: "relation_pull_d",
+        chapter: "第四章：身体与关系",
+        title: "贴吧内推排队帖",
+        text: "你在打工吧刷到一条“内推排队”热帖，留言区全是‘哥带带我’。",
+        causeText: "由关系线与就业焦虑触发。",
+        options: [
+          { id: "relation_post_resume", label: "发简历求带", tag: "network", effects: { reputation: 1, heat: 1, mood: -1 }, setFlags: ["network_mode"] },
+          { id: "relation_pay_consult", label: "花钱买咨询", tag: "money", effects: { money: -2, reputation: 1, mood: 1 }, setFlags: ["upgrade_route"] },
+          { id: "relation_self_study", label: "自己做作品集", tag: "work", effects: { reputation: 2, energy: -1, mood: 0 }, setFlags: ["upgrade_route"] },
+        ],
+      },
     ],
   },
   4: {
@@ -576,6 +612,18 @@ const CHAPTER_POOLS = {
           { id: "quit_social_day", label: "社媒休息日", tag: "rest", effects: { mood: 2, heat: -1, money: -1 }, setFlags: ["offline_day"] },
         ],
       },
+      {
+        id: "heat_branch_d",
+        chapter: "第五章：热度或现金",
+        title: "平台规则突改",
+        text: "平台更新推荐规则，昨天有效的玩法今天突然不灵了。",
+        causeText: "由高热度内容路线与平台波动触发。",
+        options: [
+          { id: "heat_adapt_fast", label: "连夜改打法", tag: "work", effects: { heat: 1, reputation: 1, energy: -2 }, setFlags: ["upgrade_route"] },
+          { id: "heat_buy_tool", label: "付费上工具", tag: "money", effects: { money: -2, heat: 1, mood: -1 }, setFlags: ["grind_path"] },
+          { id: "heat_pause_observe", label: "停更观察一天", tag: "control", effects: { heat: -1, mood: 1, reputation: 0 }, setFlags: ["scope_control"] },
+        ],
+      },
     ],
     cash: [
       {
@@ -612,6 +660,18 @@ const CHAPTER_POOLS = {
           { id: "move_cheaper_room", label: "搬去更便宜房", tag: "money", effects: { money: 2, mood: -1, reputation: -1 }, setFlags: ["survival_focus"] },
           { id: "ask_landlord_delay", label: "和房东谈延期", tag: "network", effects: { money: 1, reputation: 1, heat: 1 }, setFlags: ["rent_secured"] },
           { id: "consume_credit", label: "刷卡先顶住", tag: "risk", effects: { money: 2, mood: -1, reputation: -1 }, setFlags: ["debt_spiral"] },
+        ],
+      },
+      {
+        id: "cash_branch_d",
+        chapter: "第五章：热度或现金",
+        title: "兼职平台新门槛",
+        text: "新规上线后，很多原本能接的零活突然要补材料和资质。",
+        causeText: "由现金压力线与外部规则变化触发。",
+        options: [
+          { id: "cash_prepare_docs", label: "补资料硬过审", tag: "work", effects: { money: 1, energy: -1, reputation: 1 }, setFlags: ["work_focus"] },
+          { id: "cash_find_offline_job", label: "转线下零工", tag: "network", effects: { money: 1, reputation: 1, mood: -1 }, setFlags: ["grind_path"] },
+          { id: "cash_skip_risky_job", label: "放弃高风险单", tag: "control", effects: { money: -1, mood: 1, reputation: 1 }, setFlags: ["survival_focus"] },
         ],
       },
     ],
@@ -678,6 +738,18 @@ const CHAPTER_POOLS = {
           { id: "join_training_camp", label: "报班强行升级", tag: "work", effects: { money: -2, reputation: 2, energy: -1 }, setFlags: ["upgrade_route"] },
           { id: "small_business_try", label: "试水小买卖", tag: "risk", effects: { money: 1, heat: 1, mood: -1 }, setFlags: ["grind_path"] },
           { id: "slow_life_reset", label: "慢节奏重置", tag: "rest", effects: { mood: 2, energy: 1, money: -1 }, setFlags: ["survival_route"] },
+        ],
+      },
+      {
+        id: "pivot_end_d",
+        chapter: "第六章：摊牌或转型",
+        title: "热榜都在聊AI提效",
+        text: "微博和头条都在讨论“AI替代焦虑”，你也被催着立刻升级工具链。",
+        causeText: "由长期生存线与职业压力线叠加触发。",
+        options: [
+          { id: "pivot_ai_upgrade", label: "氪金上AI工具", tag: "money", effects: { money: -2, reputation: 2, energy: -1 }, setFlags: ["upgrade_route"] },
+          { id: "pivot_ai_collab", label: "找人组队共用", tag: "network", effects: { reputation: 1, money: -1, mood: 1 }, setFlags: ["network_route"] },
+          { id: "pivot_ai_wait", label: "先观察不跟风", tag: "control", effects: { mood: 1, money: 0, heat: -1 }, setFlags: ["survival_route"] },
         ],
       },
     ],
