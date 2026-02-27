@@ -20,3 +20,5 @@
 - 任何新需求先更新 `product` 文档，再落到 `architecture` 与 `engineering`。
 - 架构改动必须同步 `architecture/system-overview.md`。
 - 发布流程改动必须同步 `release/release-playbook.md`。
+
+- [微信传播导向重设计](./product/wechat-mobile-redesign.md)

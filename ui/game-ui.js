@@ -1,251 +1,132 @@
-function cardButton(card, idx, enabled) {
-  const disabled = enabled ? "" : "disabled";
-  const cycleDisabled = enabled ? "" : "disabled";
-  return `<div class="card-wrap">
-    <button class="card-btn" data-card-index="${idx}" ${disabled}>
-      <span class="name">${card.name}</span>
-      <span class="meta">Cost ${card.cost}</span>
-      <span class="text">${card.text}</span>
-    </button>
-    <button class="mini-btn" type="button" data-cycle-index="${idx}" ${cycleDisabled}>重抽此牌 (-1)</button>
-  </div>`;
+function statCard(label, value, tone) {
+  return `<div class="stat ${tone}"><span>${label}</span><strong>${value}</strong></div>`;
 }
 
-function renderStatusBadges(statuses) {
-  if (!statuses.length) {
-    return "<p class='status-empty'>No status</p>";
-  }
-  return `<div class='status-row'>${statuses
-    .map((entry) => `<span class='status'>${entry.name} ${entry.value}</span>`)
-    .join("")}</div>`;
+function optionCard(option) {
+  return `<button class="option-btn" data-option-id="${option.id}">
+    <span class="opt-title">${option.label}</span>
+    <span class="opt-impact">${option.impactText}</span>
+  </button>`;
 }
 
-function renderNodes(view) {
-  return `<div class='node-row'>${Array.from({ length: view.run.nodeTotal }, (_, idx) => {
-    const current = idx === view.run.nodeIndex;
-    const done = idx < view.run.nodeIndex;
-    const type = view.run.nodeTypes[idx] || "battle";
-    return `<span class='node ${current ? "current" : ""} ${done ? "done" : ""} ${type}'>${idx + 1}</span>`;
-  }).join("")}</div>`;
+function historyItem(item) {
+  return `<li>Day ${item.day}: ${item.optionLabel} <span>${item.impactText}</span></li>`;
 }
 
 export function createGameUI(root, actions) {
   root.innerHTML = `
-    <section class="layout">
-      <header class="hud">
+    <section class="shell">
+      <header class="topbar">
         <div>
-          <h1>Neon Deck</h1>
-          <p id="battle-status">Initializing...</p>
+          <h1>城市生存7天</h1>
+          <p id="subtitle">微信可分享的短局生存挑战</p>
         </div>
-        <div class="head-actions">
-          <button id="guide-toggle-btn" class="subtle">Show Guide</button>
-          <button id="restart-btn" class="subtle">New Run</button>
-        </div>
+        <button class="ghost" id="restart-btn">重开</button>
       </header>
-      <section class="panel" id="guide-panel"></section>
-      <section class="panel" id="run-panel"></section>
-      <main class="arena" id="arena-panel"></main>
+      <section id="main-panel"></section>
     </section>
   `;
 
   root.querySelector("#restart-btn").addEventListener("click", () => actions.onRestart());
 
-  function bindBattleActions() {
-    root.querySelectorAll("[data-card-index]").forEach((el) => {
-      el.addEventListener("click", () => actions.onPlayCard(Number(el.dataset.cardIndex)));
+  function bindEvents() {
+    root.querySelectorAll("[data-option-id]").forEach((el) => {
+      el.addEventListener("click", () => actions.onPickOption(el.dataset.optionId));
     });
-    root.querySelector("#end-turn-btn")?.addEventListener("click", () => actions.onEndTurn());
-    root.querySelectorAll("[data-cycle-index]").forEach((el) => {
-      el.addEventListener("click", (event) => {
-        event.stopPropagation();
-        actions.onCycleCard(Number(el.dataset.cycleIndex));
-      });
+    root.querySelectorAll("[data-skill-id]").forEach((el) => {
+      el.addEventListener("click", () => actions.onUseSkill(el.dataset.skillId));
     });
-    root.querySelector("#recommended-btn")?.addEventListener("click", () => actions.onPlayRecommended());
-  }
-
-  function bindRewardActions() {
-    root.querySelectorAll("[data-reward-card]").forEach((el) => {
-      el.addEventListener("click", () => actions.onChooseReward(el.dataset.rewardCard));
+    root.querySelector("#start-btn")?.addEventListener("click", () => actions.onStart());
+    root.querySelector("#copy-share-btn")?.addEventListener("click", () => actions.onCopyShare());
+    root.querySelector("#import-btn")?.addEventListener("click", () => actions.onImportChallenge());
+    root.querySelector("#challenge-input")?.addEventListener("input", (event) => {
+      actions.onImportCodeChange(event.target.value || "");
     });
-    root.querySelector("#skip-reward-btn")?.addEventListener("click", () => actions.onChooseReward(null));
-    root.querySelector("#remove-card-btn")?.addEventListener("click", () => {
-      const select = root.querySelector("#remove-card-select");
-      actions.onRemoveCard(select.value);
-    });
-    root.querySelector("#next-node-btn")?.addEventListener("click", () => actions.onNextNode());
-  }
-
-  function renderGuide(view, guidePanel) {
-    const toggleBtn = root.querySelector("#guide-toggle-btn");
-    if (!view.onboarding.visible) {
-      guidePanel.style.display = "none";
-      toggleBtn.textContent = "Show Guide";
-      toggleBtn.onclick = () => actions.onShowGuide();
-      return;
-    }
-
-    guidePanel.style.display = "block";
-    toggleBtn.textContent = "Hide Guide";
-    toggleBtn.onclick = () => actions.onHideGuide();
-    guidePanel.innerHTML = `
-      <h2>Starter Guide</h2>
-      <ol>
-        ${view.onboarding.steps.map((step) => `<li>${step}</li>`).join("")}
-      </ol>
-      <p class="shortcut-hint">Hotkeys: <code>Enter</code> End Turn, <code>C</code> Cycle first card, <code>N</code> Next Node, <code>1/2</code> Story Branch, <code>G</code> Guide, <code>R</code> New Run</p>
-    `;
   }
 
   return {
     render(view) {
-      const status = root.querySelector("#battle-status");
-      const runPanel = root.querySelector("#run-panel");
-      const arenaPanel = root.querySelector("#arena-panel");
-      const guidePanel = root.querySelector("#guide-panel");
+      const panel = root.querySelector("#main-panel");
 
-      const statusText = `Node ${view.run.nodeIndex + 1}/${view.run.nodeTotal} (${view.run.currentNodeType}) | HP ${view.run.playerHp}/${view.run.playerMaxHp} | Deck ${view.run.deckSize}`;
-      status.textContent = `${view.mode.toUpperCase()} | ${statusText}`;
+      if (view.mode === "intro") {
+        panel.innerHTML = `
+          <article class="card hero">
+            <p class="badge">3~5 分钟一局</p>
+            <h2>你只有 7 天在城市里稳住现金、体力、心态和人设。</h2>
+            <p>每天一个高压事件，三选一，结局可生成挑战码发微信群。</p>
+            <button id="start-btn" class="primary">开始新挑战</button>
+          </article>
+          <article class="card">
+            <h3>导入朋友挑战码</h3>
+            <div class="import-row">
+              <input id="challenge-input" placeholder="粘贴挑战码" value="${view.importCode || ""}" />
+              <button id="import-btn" class="ghost">复刻这局</button>
+            </div>
+          </article>
+        `;
+        bindEvents();
+        return;
+      }
 
-      renderGuide(view, guidePanel);
+      if (view.mode === "ended") {
+        panel.innerHTML = `
+          <article class="card hero end">
+            <p class="badge">结局</p>
+            <h2>${view.result.ending.title}</h2>
+            <p>${view.result.ending.subtitle}</p>
+            <p class="score">本局分数 ${view.result.score} | 历史最高 ${view.bestScore}</p>
+            <div class="action-grid">
+              <button class="primary" id="start-btn">再来一局</button>
+              <button class="ghost" id="copy-share-btn">复制分享文案</button>
+            </div>
+            <p class="code">挑战码：<code>${view.result.challengeCode}</code></p>
+          </article>
+          <article class="card">
+            <h3>最近决策</h3>
+            <ul class="history">${view.history.map(historyItem).join("")}</ul>
+          </article>
+        `;
+        bindEvents();
+        return;
+      }
 
-      runPanel.innerHTML = `
-        <h2>Run Path</h2>
-        ${renderNodes(view)}
-        <h3>Story Beat</h3>
-        <p><strong>${view.run.storyCurrent?.title || "Unknown"}</strong> <span class="tag">${view.run.storyCurrent?.source || "n/a"}</span></p>
-        <p>${view.run.storyCurrent?.text || "No story event."}</p>
-        ${view.run.storyCurrent?.branch ? `<p><span class="tag">branch</span> ${view.run.storyCurrent.branch.label}</p>` : ""}
-        <p class="story-chain">Chain: ${view.run.storyHistory
-          .slice(-4)
-          .map((item) => `#${item.node} ${item.title}${item.branch ? `(${item.branch.label})` : ""}`)
-          .join(" -> ")}</p>
+      panel.innerHTML = `
+        <article class="card status-card">
+          <div class="head-row">
+            <h2>Day ${view.day}/${view.dayTotal}</h2>
+            <p>当前分数 ${view.score}</p>
+          </div>
+          <div class="stats-grid">
+            ${statCard("现金", view.stats.money, "money")}
+            ${statCard("体力", view.stats.energy, "energy")}
+            ${statCard("心态", view.stats.mood, "mood")}
+            ${statCard("人设", view.stats.reputation, "rep")}
+            ${statCard("热度", view.stats.heat, "heat")}
+          </div>
+        </article>
+
+        <article class="card event-card">
+          <p class="badge">今日事件</p>
+          <h3>${view.event.title}</h3>
+          <p>${view.event.text}</p>
+          <div class="option-list">${view.event.options.map(optionCard).join("")}</div>
+        </article>
+
+        <article class="card tools-card">
+          <h3>临时技能（每局一次）</h3>
+          <div class="action-grid">
+            <button class="ghost" data-skill-id="powerNap" ${view.skills.powerNap ? "" : "disabled"}>打个盹 (+体力+心态)</button>
+            <button class="ghost" data-skill-id="borrowCash" ${view.skills.borrowCash ? "" : "disabled"}>找朋友借钱 (+现金-人设)</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>最近决策链</h3>
+          <ul class="history">${view.history.map(historyItem).join("") || "<li>暂无</li>"}</ul>
+        </article>
       `;
 
-      if (view.mode === "battle") {
-        const b = view.battle;
-        arenaPanel.innerHTML = `
-          <section class="panel" id="enemy-panel">
-            <h2>Enemy ${b.enemy.elite ? "(Elite)" : ""}</h2>
-            <p>${b.enemy.name}</p>
-            <p>HP ${b.enemy.hp}/${b.enemy.maxHp} | Block ${b.enemy.block}</p>
-            <p>Intent: ${b.enemy.intent.label}</p>
-            ${renderStatusBadges(b.enemy.statuses)}
-          </section>
-          <section class="panel" id="player-panel">
-            <h2>Player</h2>
-            <p>HP ${b.player.hp}/${b.player.maxHp} | Block ${b.player.block}</p>
-            <p>Draw ${b.player.drawPile} | Discard ${b.player.discardPile}</p>
-            <p>Energy ${b.player.energy}/${b.player.maxEnergy}</p>
-            <p>Cycle ${b.player.cycleUsed ? "Used" : "Ready"} (cost 1 energy, once/turn)</p>
-            ${renderStatusBadges(b.player.statuses)}
-            <div class="action-row">
-              <button id="end-turn-btn" ${b.phase !== "player" || b.winner ? "disabled" : ""}>结束回合</button>
-              <button id="recommended-btn" ${b.phase !== "player" || b.winner ? "disabled" : ""}>执行建议</button>
-            </div>
-            ${view.battleRecommendation ? `<p class="recommendation">${view.battleRecommendation.label}</p>` : ""}
-          </section>
-          <section class="panel" id="hand-panel">
-            <h2>Hand (${b.player.hand.length})</h2>
-            <div class="hand-grid">
-              ${b.player.hand
-                .map((card, idx) => cardButton(card, idx, b.phase === "player" && !b.winner && card.cost <= b.player.energy))
-                .join("")}
-            </div>
-          </section>
-          <section class="panel log" id="log-panel">
-            <h2>Battle Log</h2>
-            ${b.logs.map((line) => `<p>${line}</p>`).join("")}
-          </section>
-        `;
-        bindBattleActions();
-        return;
-      }
-
-      if (view.mode === "story") {
-        arenaPanel.innerHTML = `
-          <section class="panel" id="story-choice-panel">
-            <h2>Story Decision</h2>
-            <p>${view.run.storyCurrent?.text || ""}</p>
-            <div class="reward-grid">
-              ${(view.run.pendingStoryChoice?.options || [])
-                .map(
-                  (option, idx) => `<button class="card-btn" data-story-branch="${option.id}">
-                    <span class="name">Option ${idx + 1}: ${option.label}</span>
-                    <span class="text">${option.text}</span>
-                    ${option.impactText ? `<span class="meta">${option.impactText}</span>` : ""}
-                  </button>`
-                )
-                .join("")}
-            </div>
-            <p class="shortcut-hint">Hotkeys: <code>1</code>/<code>2</code> choose branch</p>
-          </section>
-        `;
-        root.querySelectorAll("[data-story-branch]").forEach((el) => {
-          el.addEventListener("click", () => actions.onChooseStoryBranch(el.dataset.storyBranch));
-        });
-        return;
-      }
-
-      if (view.mode === "reward") {
-        arenaPanel.innerHTML = `
-          <section class="panel" id="reward-panel">
-            <h2>Reward: Pick 1 Card</h2>
-            <div class="reward-grid">
-              ${view.run.rewardOptions
-                .map(
-                  (card) => `<button class="card-btn" data-reward-card="${card.id}">
-                    <span class="name">${card.name}</span>
-                    <span class="meta">Cost ${card.cost}</span>
-                    <span class="text">${card.text}</span>
-                  </button>`
-                )
-                .join("")}
-            </div>
-            <button id="skip-reward-btn" class="subtle">Skip Reward</button>
-            <h3>Deck Tuning (Remove 1)</h3>
-            <div class="tune-row">
-              <select id="remove-card-select">
-                ${view.run.deckCounts
-                  .map((entry) => `<option value="${entry.id}">${entry.id} x${entry.count}</option>`)
-                  .join("")}
-              </select>
-              <button id="remove-card-btn" class="subtle">Remove Card</button>
-            </div>
-          </section>
-        `;
-        bindRewardActions();
-        return;
-      }
-
-      if (view.mode === "map") {
-        arenaPanel.innerHTML = `
-          <section class="panel">
-            <h2>Node Cleared</h2>
-            <p>Ready for next encounter.</p>
-            <button id="next-node-btn" class="subtle">继续剧情</button>
-          </section>
-        `;
-        bindRewardActions();
-        return;
-      }
-
-      if (view.mode === "victory") {
-        arenaPanel.innerHTML = `
-          <section class="panel">
-            <h2>Run Victory</h2>
-            <p>You cleared all nodes.</p>
-          </section>
-        `;
-        return;
-      }
-
-      arenaPanel.innerHTML = `
-        <section class="panel">
-          <h2>Run Defeat</h2>
-          <p>The run has ended. Start a new run to continue.</p>
-        </section>
-      `;
+      bindEvents();
     },
   };
 }

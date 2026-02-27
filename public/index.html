@@ -1,249 +1,226 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Neon Deck</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>城市生存7天</title>
     <link rel="icon" href="./favicon.ico" />
     <style>
       :root {
-        --sand: #f4efe3;
-        --ink: #17223b;
-        --panel: #fffaf0;
-        --line: #c5b493;
-        --accent: #006d77;
+        --bg: #f8f6ef;
+        --ink: #1d2638;
+        --muted: #5f6573;
+        --card: #fffdf8;
+        --line: #d8cfba;
+        --primary: #ef6a3a;
+        --primary-ink: #ffffff;
+        --money: #3d8b4d;
+        --energy: #3a7ae0;
+        --mood: #9b4de0;
+        --rep: #d3527e;
+        --heat: #e08a1f;
+      }
+      * {
+        box-sizing: border-box;
       }
       html,
       body {
         margin: 0;
-        background: radial-gradient(circle at 10% 10%, #fff7e7, var(--sand));
         color: var(--ink);
-        font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+        background:
+          radial-gradient(circle at 15% -5%, #ffe6cf 0%, transparent 45%),
+          radial-gradient(circle at 85% -10%, #ffeecf 0%, transparent 45%),
+          var(--bg);
+        font-family: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
       }
       #app {
-        max-width: 980px;
+        max-width: 640px;
         margin: 0 auto;
-        padding: 14px;
+        padding: 12px 12px 28px;
       }
-      .hud {
+      .topbar {
         display: flex;
         justify-content: space-between;
-        align-items: start;
+        align-items: flex-start;
         gap: 10px;
       }
-      .head-actions {
-        display: flex;
-        gap: 6px;
-      }
-      h1,
-      h2,
-      h3 {
-        margin: 0 0 8px;
-      }
-      ol {
+      h1 {
         margin: 0;
-        padding-left: 18px;
+        font-size: 24px;
+        letter-spacing: 0.5px;
       }
-      code {
-        background: #f5ecd8;
-        border-radius: 4px;
-        padding: 1px 4px;
-      }
-      .subtle,
-      #end-turn-btn,
-      #recommended-btn,
-      select {
-        border: 2px solid var(--line);
-        background: var(--panel);
-        border-radius: 10px;
-        padding: 8px 12px;
-        cursor: pointer;
-      }
-      .arena {
-        display: grid;
-        gap: 10px;
-      }
-      .panel {
-        border: 2px solid var(--line);
-        background: var(--panel);
-        border-radius: 12px;
-        padding: 10px;
-      }
-      .node-row {
-        display: flex;
-        gap: 6px;
-      }
-      .node {
-        width: 26px;
-        height: 26px;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-      }
-      .node.current {
-        background: #ffe9b7;
-        font-weight: 700;
-      }
-      .node.done {
-        background: #d7f6de;
-      }
-      .node.elite {
-        border-color: #aa5e1e;
-      }
-      .tag {
-        display: inline-block;
-        font-size: 11px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 1px 6px;
-        margin-left: 6px;
-        background: #fff4dd;
-      }
-      .story-chain {
-        font-size: 12px;
-        opacity: 0.9;
-      }
-      .status-row {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin: 6px 0;
-      }
-      .status {
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 2px 8px;
-        font-size: 12px;
-        background: #fff4dd;
-      }
-      .status-empty {
-        opacity: 0.7;
-        font-size: 12px;
-      }
-      .hand-grid,
-      .reward-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-      }
-      .card-btn {
-        border: 2px solid var(--line);
-        border-radius: 10px;
-        background: linear-gradient(180deg, #fffefb, #fff7ea);
-        text-align: left;
-        padding: 8px;
-        cursor: pointer;
-        min-height: 88px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .card-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-      .card-btn .name {
-        font-weight: 700;
-      }
-      .card-btn .meta {
-        color: var(--accent);
-        font-size: 12px;
-      }
-      .card-btn .text {
+      #subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
         font-size: 13px;
       }
-      .card-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+      #main-panel {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
       }
-      .mini-btn {
+      .card {
+        border: 2px solid var(--line);
+        border-radius: 14px;
+        background: var(--card);
+        padding: 12px;
+      }
+      .hero {
+        padding: 16px;
+      }
+      .hero h2 {
+        margin: 8px 0;
+        font-size: 22px;
+        line-height: 1.35;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 12px;
+        color: #8b5d26;
+        background: #ffe6bf;
+        border-radius: 999px;
+        padding: 3px 10px;
+      }
+      .head-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .head-row h2 {
+        margin: 0;
+      }
+      .head-row p {
+        margin: 0;
+        font-weight: 600;
+      }
+      .stats-grid {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .stat {
+        border-radius: 10px;
         border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 6px 8px;
-        background: #fff2d7;
-        cursor: pointer;
+        padding: 8px 6px;
+        display: grid;
+        gap: 3px;
+        text-align: center;
         font-size: 12px;
       }
-      .mini-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
+      .stat strong {
+        font-size: 18px;
       }
-      .action-row {
+      .stat.money strong { color: var(--money); }
+      .stat.energy strong { color: var(--energy); }
+      .stat.mood strong { color: var(--mood); }
+      .stat.rep strong { color: var(--rep); }
+      .stat.heat strong { color: var(--heat); }
+      .event-card h3,
+      .tools-card h3,
+      .card h3 {
+        margin: 8px 0;
+      }
+      .event-card p {
+        margin: 0 0 8px;
+        line-height: 1.45;
+      }
+      .option-list {
+        display: grid;
+        gap: 8px;
+      }
+      .option-btn {
+        border: 2px solid #d7c5aa;
+        border-radius: 12px;
+        padding: 11px;
+        text-align: left;
+        background: linear-gradient(180deg, #fffefb 0%, #fff6e8 100%);
+        cursor: pointer;
+        display: grid;
+        gap: 4px;
+      }
+      .option-btn:active {
+        transform: scale(0.99);
+      }
+      .opt-title {
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .opt-impact {
+        font-size: 12px;
+        color: #7a5d34;
+      }
+      .action-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin: 8px 0 4px;
       }
-      #end-turn-btn {
-        background: #fdf1d6;
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
       }
-      #recommended-btn {
-        background: #daf1e1;
+      .primary {
+        background: var(--primary);
+        color: var(--primary-ink);
       }
-      .recommendation {
-        margin: 6px 0 0;
-        font-size: 13px;
-        color: #214a37;
-        background: #edf9f1;
-        border: 1px solid #b8dec6;
-        border-radius: 8px;
-        padding: 6px 8px;
+      .ghost {
+        border: 1px solid #cbbda4;
+        background: #fff8ec;
+        color: var(--ink);
       }
-      .log p {
-        margin: 0 0 4px;
-        font-size: 13px;
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
       }
-      .tune-row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+      .history {
+        margin: 0;
+        padding-left: 16px;
+        color: var(--muted);
+        display: grid;
+        gap: 6px;
       }
-      .shortcut-hint {
-        margin: 8px 0 0;
+      .history span {
+        color: #8c6a3b;
+      }
+      .score {
+        margin: 8px 0;
+        font-weight: 700;
+      }
+      .code {
+        margin: 10px 0 0;
         font-size: 12px;
-        opacity: 0.85;
       }
-      @media (max-width: 699px) {
-        #app {
-          padding: 10px;
+      code {
+        word-break: break-all;
+        background: #f5ebd8;
+        border-radius: 6px;
+        padding: 1px 5px;
+      }
+      .import-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+      }
+      input {
+        border: 1px solid #d4c4a9;
+        border-radius: 10px;
+        padding: 10px;
+      }
+      @media (max-width: 540px) {
+        .stats-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
-        .hud {
-          flex-direction: column;
-          align-items: stretch;
-        }
-        .head-actions {
-          width: 100%;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
-        .hand-grid,
-        .reward-grid {
-          grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
-        .action-row {
+        .action-grid,
+        .import-row {
           grid-template-columns: 1fr;
         }
-        .tune-row {
-          flex-direction: column;
-          align-items: stretch;
-        }
-      }
-      @media (min-width: 900px) {
-        .arena {
-          grid-template-columns: 1fr 1fr;
-        }
-        #hand-panel,
-        #log-panel,
-        #reward-panel {
-          grid-column: span 2;
-        }
-        .hand-grid,
-        .reward-grid {
-          grid-template-columns: repeat(5, minmax(0, 1fr));
+        h1 {
+          font-size: 22px;
         }
       }
     </style>
