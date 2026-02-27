@@ -157,3 +157,32 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 质量结果：
   - `npm test` 16/16 通过。
   - Playwright 冒烟通过（`output/web-game-phaseB-content`）。
+
+## Phase C + D 完成（分支奖励联动 + 工具链）
+- 内容整合：
+  - 合并额外中文都市剧情包：`content/story-pack-zh.js` 并接入 `content/story-events.js`。
+  - 事件总量扩至 40，Deck 扩至 30。
+- 系统联动：
+  - 卡牌新增语义标签（attack/defense/survival/risk/career/utility）。
+  - 运行时新增 `rewardBias` 累积，分支效果可通过 `effects.rewardBias` 影响奖励三选一权重。
+  - 关键分支后续改为 `branchQueue` 驱动，强化“分支影响后续剧情”。
+- 工程与质量：
+  - 新增路径统计脚本：`scripts/story-path-metrics.js`。
+  - 新增内容 lint：`scripts/lint-story-content.js`。
+  - 新增回归测试：`tests/story-regression.test.js`（固定种子 + 固定分支序列）。
+  - `package.json` 新增：
+    - `check:story:paths`
+    - `check:story:lint`
+    - `check:story`
+- 验证结果：
+  - `npm test`：17/17 通过。
+  - `npm run check:story` 通过：
+    - unique_story_paths: 326
+    - avg_branch_nodes_per_run: 8.515
+    - branch_exclusive_event_ratio: 0.621
+    - top10_event_repeat_ratio: 0.96（仍高，后续需继续优化中后期事件去重策略）
+  - Playwright 冒烟：`output/web-game-phaseCD-final`（截图与 state 输出一致）。
+
+## 后续建议
+- 优先优化 Deck 段重复率（尤其是中后期高频事件），将 `top10_event_repeat_ratio` 压至 <= 0.45。
+- 引入“剧情段落权重衰减/冷却”，降低同主题短期重复出现。

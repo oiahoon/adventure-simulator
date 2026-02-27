@@ -86,3 +86,16 @@
 ## 当前下一步
 
 先执行 Phase A：扩展运行时分支机制和节点长度，再跑路径统计基线。
+
+## 进度更新（2026-02-27）
+
+- Phase A：完成
+- Phase B：完成（事件总量 40，Deck 30）
+- Phase C：完成（分支 `rewardBias` 接入奖励池加权）
+- Phase D：完成（路径统计脚本、内容 lint、回归测试）
+
+当前基线（`npm run check:story`）：
+- `unique_story_paths` = 326（>= 300）
+- `avg_branch_nodes_per_run` = 8.515（>= 5）
+- `branch_exclusive_event_ratio` = 0.621（>= 0.35）
+- `top10_event_repeat_ratio` = 0.96（未达 <= 0.45 目标，需继续做 Deck 段去重复与中后期事件分流）
