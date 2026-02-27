@@ -358,3 +358,12 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   - 新增事件节点：`work_followup_c / public_backlash_c / stable_branch_c / relation_pull_c / heat_branch_c / cash_branch_c / pivot_end_c`。
   - 仍由既有 flags + 属性门槛进入对应章节分支，因果链不破坏。
 - 验证：`npm test` 20/20 通过。
+
+## Copy Tone Upgrade（结局总结口语化）
+- 调整结局成因文案映射：`buildEndingReason()` 不再输出“现金/体力/心态/人设”，改为“兜里余额/精力槽/情绪值/口碑面子”等生活化表达。
+- 调整疲劳惩罚提示语：由“心态/人设下降”改为“情绪值/口碑面子下降”。
+- 更新 DeepSeek 总结提示词：
+  - 新增硬性要求，禁止直接使用“现金/体力/心态/人设/热度”术语。
+  - 引导统一使用贴吧语境更自然的替代表达。
+  - `最终属性` 改为 `最终状态` 并使用口语化别名。
+- 质量验证：`npm test` 20/20 通过。

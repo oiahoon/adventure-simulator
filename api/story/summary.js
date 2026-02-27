@@ -11,6 +11,8 @@ function buildPrompt(payload = {}) {
     )
     .join("\n");
 
+  const colloquialStats = `兜里余额${stats.money ?? "?"} 精力槽${stats.energy ?? "?"} 情绪值${stats.mood ?? "?"} 口碑面子${stats.reputation ?? "?"} 围观热度${stats.heat ?? "?"}`;
+
   return [
     "你是都市生存题材剧情文案编辑。",
     "请把以下7天决策记录改写成一段120-220字的中文小故事，第一人称，语气参考贴吧老哥：有点调侃、有点刺激、但不低俗。",
@@ -20,8 +22,9 @@ function buildPrompt(payload = {}) {
     "3) 结尾给一句可分享的“复盘句”；",
     "4) 要有轻微阴阳怪气和自嘲感，但不能攻击具体人群；",
     "5) 不要使用 Markdown，不要分点。",
+    "6) 禁止直接使用“现金/体力/心态/人设/热度”这组游戏术语，改用生活化表达：现金=兜里余额，体力=精力槽，心态=情绪值，人设=口碑面子，热度=围观热度。",
     `结局：${ending.title || "未知结局"}；结局说明：${ending.subtitle || ""}`,
-    `最终属性：现金${stats.money ?? "?"} 体力${stats.energy ?? "?"} 心态${stats.mood ?? "?"} 人设${stats.reputation ?? "?"} 热度${stats.heat ?? "?"}`,
+    `最终状态：${colloquialStats}`,
     `成因摘要：${reasonBullets.join("；") || "无"}`,
     "时间线：",
     timeline || "无记录",

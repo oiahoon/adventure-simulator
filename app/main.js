@@ -737,13 +737,24 @@ function computeScore(session) {
 
 function weakestStat(stats) {
   const entries = [
-    ["现金", stats.money],
-    ["体力", stats.energy],
-    ["心态", stats.mood],
-    ["人设", stats.reputation],
+    ["money", stats.money],
+    ["energy", stats.energy],
+    ["mood", stats.mood],
+    ["reputation", stats.reputation],
   ];
   entries.sort((a, b) => a[1] - b[1]);
   return entries[0];
+}
+
+function colloquialStatName(key) {
+  const map = {
+    money: "兜里余额",
+    energy: "精力槽",
+    mood: "情绪值",
+    reputation: "口碑面子",
+    heat: "围观热度",
+  };
+  return map[key] || key;
 }
 
 function endingByScore(score, alive) {
@@ -777,7 +788,8 @@ function buildEndingReason(session, alive) {
     }
   });
 
-  const [weakName, weakValue] = weakestStat(session.stats);
+  const [weakStatKey, weakValue] = weakestStat(session.stats);
+  const weakName = colloquialStatName(weakStatKey);
   const riskChoices = session.history.filter((entry) => entry.tag === "risk").length;
   const bullets = [];
 
@@ -788,20 +800,20 @@ function buildEndingReason(session, alive) {
   }
 
   const losses = [
-    ["现金", totals.money],
-    ["体力", totals.energy],
-    ["心态", totals.mood],
-    ["人设", totals.reputation],
+    ["money", totals.money],
+    ["energy", totals.energy],
+    ["mood", totals.mood],
+    ["reputation", totals.reputation],
   ]
     .sort((a, b) => a[1] - b[1])
     .slice(0, 2)
-    .map((item) => `${item[0]}${item[1] > 0 ? "+" : ""}${item[1]}`)
+    .map((item) => `${colloquialStatName(item[0])}${item[1] > 0 ? "+" : ""}${item[1]}`)
     .join("、");
   bullets.push(`整局主要损耗：${losses}。`);
 
   if (riskChoices >= 2) bullets.push(`你本局做了 ${riskChoices} 次高风险选择，波动明显变大。`);
   if (worstDay) bullets.push(`关键转折：Day ${worstDay.day}「${worstDay.eventTitle}」选择「${worstDay.optionLabel}」。`);
-  if (session.sameTagCount >= 3) bullets.push("连续同风格决策触发疲劳惩罚（心态/人设下降）。");
+  if (session.sameTagCount >= 3) bullets.push("连续同风格决策触发疲劳惩罚（情绪值/口碑面子下降）。");
 
   return { weakest: { name: weakName, value: weakValue }, keyDay: worstDay ? worstDay.day : null, bullets };
 }
