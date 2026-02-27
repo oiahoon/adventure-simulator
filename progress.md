@@ -435,3 +435,16 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:replay:v2` passed.
 - Playwright status:
   - `develop-web-game` client run remains blocked by module-format mismatch in current environment (`web_game_playwright_client.js` ESM parse error under current runtime setup).
+- Card UI/UX Phase 3-4 continuation delivered:
+  - Added `/game` layout toggle (`布局：自动/single/hand`) and URL variant support (`?uiVariant=single|hand`) for lightweight A/B.
+  - Upgraded mini-hand in `hand` variant with direct left/right play buttons.
+  - Added ending timeline summary sourced from `eventLog` (`arc_activate/arc_step/draw_forced/end`) and integrated into ending text + share card.
+  - Added `ui_variant` and `ux_metrics` export in `render_game_to_text`.
+  - README updated with UI variant URLs.
+- Validation:
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `node --check core/card-v2/engine.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.

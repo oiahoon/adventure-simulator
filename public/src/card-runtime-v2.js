@@ -17,7 +17,9 @@
       queueHintsSeen: 0,
       shareCopy: 0,
       shareBuild: 0
-    }
+    },
+    uiVariantRequested: "",
+    uiVariantResolved: "single"
   };
 
   const els = {
@@ -29,6 +31,7 @@
     log: document.getElementById("log"),
     newBtn: document.getElementById("new-btn"),
     drawBtn: document.getElementById("draw-btn"),
+    layoutBtn: document.getElementById("layout-btn"),
     ending: document.getElementById("ending"),
     copyShareBtn: document.getElementById("copy-share-btn"),
     buildShareBtn: document.getElementById("build-share-btn"),
@@ -58,6 +61,20 @@
     if (hit) return hit;
     state.activeCardId = hand[0].id;
     return hand[0];
+  }
+
+  function readRequestedVariant() {
+    const q = new URLSearchParams(window.location.search);
+    const v = String(q.get("uiVariant") || "").toLowerCase();
+    if (v === "single" || v === "hand") return v;
+    return "";
+  }
+
+  function resolveVariant() {
+    if (state.uiVariantRequested === "single" || state.uiVariantRequested === "hand") {
+      return state.uiVariantRequested;
+    }
+    return window.matchMedia("(max-width: 720px)").matches ? "single" : "hand";
   }
 
   function nextForcedHint(run) {
@@ -176,8 +193,12 @@
       els.handMini.innerHTML = "";
       return;
     }
+    const variant = state.uiVariantResolved;
     els.handMini.innerHTML = list
       .map((card) => {
+        const handActions = variant === "hand"
+          ? `<div class="actions"><button data-play-mini=\"${card.id}\" data-choice=\"left\">${card.leftLabel || "左选"}</button><button data-play-mini=\"${card.id}\" data-choice=\"right\">${card.rightLabel || "右选"}</button></div>`
+          : "";
         return `<article class="mini-card">
           <h4>${card.title || card.id}</h4>
           <p>${card.text ? String(card.text).slice(0, 36) : card.id}</p>
@@ -185,6 +206,7 @@
             <span class="tag">${card.tag || "card"}</span>
             ${card.forced ? '<span class="forced-tag">强制</span>' : ""}
           </div>
+          ${handActions}
           <button data-focus="${card.id}">设为主卡</button>
         </article>`;
       })
@@ -196,6 +218,17 @@
         if (!cardId) return;
         state.activeCardId = cardId;
         renderMainCard();
+      });
+    });
+    els.handMini.querySelectorAll("button[data-play-mini]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cardId = btn.getAttribute("data-play-mini");
+        const choiceId = btn.getAttribute("data-choice");
+        state.uxMetrics.buttonPlays += 1;
+        play(cardId, choiceId).catch((e) => {
+          state.lastError = e.message;
+          render();
+        });
       });
     });
   }
@@ -305,6 +338,7 @@
     const obs = run.observability || {};
     const basic = [
       `状态: ${run.mode}`,
+      `布局: ${state.uiVariantResolved}${state.uiVariantRequested ? ` (manual:${state.uiVariantRequested})` : " (auto)"}`,
       `阶段: ${stage}`,
       `玩家: ${run.player.name} (${run.player.profession})`,
       `出牌: ${run.metrics.cardPlays} | 多样性: ${obs.cardDiversity || 0} | 重复率: ${obs.repeatRate || 0}`,
@@ -344,6 +378,21 @@
       .map((id) => `${id} x${map[id]}`);
   }
 
+  function recentTimeline(run, limit) {
+    const list = Array.isArray(run && run.eventLog) ? run.eventLog.slice(-80) : [];
+    const out = [];
+    for (let i = list.length - 1; i >= 0; i -= 1) {
+      const e = list[i] || {};
+      if (!e.type) continue;
+      if (e.type === "arc_activate") out.push(`D${e.day} 激活链路 ${e.arcId}`);
+      else if (e.type === "arc_step") out.push(`D${e.day} 链路推进 ${e.arcId}-S${e.stage}`);
+      else if (e.type === "draw_forced") out.push(`D${e.day} 强制后续 ${e.cardId}`);
+      else if (e.type === "end") out.push(`D${e.day} 结局 ${e.reason || "-"}`);
+      if (out.length >= (limit || 4)) break;
+    }
+    return out.reverse();
+  }
+
   function computeAchievements(run) {
     const stats = run.stats || {};
     const arcs = run.activeArcs || {};
@@ -374,6 +423,7 @@
       .join(" / ");
     const ach = computeAchievements(run);
     const keys = topCards(run, 3);
+    const timeline = recentTimeline(run, 4);
     const title = run.day >= 36 ? "终盘幸存" : "阶段倒下";
     const text = [
       `结局: ${title}`,
@@ -382,6 +432,7 @@
       `决策数: ${run.metrics.cardPlays} 关键事件: ${run.metrics.keyEvents}`,
       `剧情链: ${arcSummary || "无显著收束"}`,
       `关键牌: ${keys.length ? keys.join("、") : "暂无"}`,
+      `轨迹: ${timeline.length ? timeline.join(" | ") : "暂无"}`,
       `成就: ${ach.join("、")}`
     ].join("\n");
 
@@ -390,10 +441,11 @@
       `坚持到 D${run.day}/T${run.turn}，决策 ${run.metrics.cardPlays} 次，关键事件 ${run.metrics.keyEvents} 次`,
       `状态：生命${stats.hp} 精神${stats.san} 疲劳${stats.fatigue} 债务${stats.debt} 热度${stats.heat} 现金${stats.cash}`,
       `关键牌：${keys.length ? keys.join("、") : "暂无"}`,
+      `轨迹：${timeline.length ? timeline.join("；") : "暂无"}`,
       `成就：${ach.join("、")}`
     ].join("\n");
 
-    return { text, shareText, achievements: ach, title, keyCards: keys };
+    return { text, shareText, achievements: ach, title, keyCards: keys, timeline };
   }
 
   function renderShareCard(run, ending) {
@@ -428,6 +480,11 @@
     const recent = (run.log || []).slice(-6);
     shareCtx.fillText("剧情片段：", 70, 760);
     recent.forEach((line, i) => shareCtx.fillText(`- ${String(line).slice(0, 36)}`, 70, 820 + i * 52));
+    const timeline = Array.isArray(ending.timeline) ? ending.timeline : [];
+    if (timeline.length) {
+      shareCtx.fillText("关键轨迹：", 70, 1180);
+      timeline.slice(0, 3).forEach((line, i) => shareCtx.fillText(`- ${String(line).slice(0, 36)}`, 70, 1240 + i * 52));
+    }
 
     els.downloadShareBtn.href = els.shareCanvas.toDataURL("image/png");
     els.downloadShareBtn.classList.remove("hidden");
@@ -547,6 +604,15 @@
         render();
       });
     });
+    els.layoutBtn.addEventListener("click", () => {
+      if (state.uiVariantRequested === "") state.uiVariantRequested = state.uiVariantResolved === "single" ? "hand" : "single";
+      else if (state.uiVariantRequested === "single") state.uiVariantRequested = "hand";
+      else if (state.uiVariantRequested === "hand") state.uiVariantRequested = "";
+      state.uiVariantResolved = resolveVariant();
+      const label = state.uiVariantRequested || "自动";
+      els.layoutBtn.textContent = `布局：${label}`;
+      render();
+    });
     els.copyShareBtn.addEventListener("click", () => {
       copyShare().then(render).catch((e) => {
         state.lastError = e.message;
@@ -572,6 +638,7 @@
       stats: state.run ? state.run.stats : {},
       hand: state.run ? state.run.handMeta : [],
       active_card: state.activeCardId,
+      ui_variant: state.uiVariantResolved,
       log_tail: state.run && state.run.log ? state.run.log.slice(-8) : [],
       info: state.info,
       error: state.lastError,
@@ -583,6 +650,18 @@
   window.advanceTime = function advanceTime(_) {
     render();
   };
+
+  state.uiVariantRequested = readRequestedVariant();
+  state.uiVariantResolved = resolveVariant();
+  if (els.layoutBtn) {
+    els.layoutBtn.textContent = `布局：${state.uiVariantRequested || "自动"}`;
+  }
+  window.addEventListener("resize", () => {
+    if (!state.uiVariantRequested) {
+      state.uiVariantResolved = resolveVariant();
+      render();
+    }
+  });
 
   bind();
   newRun().catch((e) => {

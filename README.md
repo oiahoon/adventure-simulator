@@ -46,6 +46,10 @@ python3 -m http.server 8080
 - 兼容入口：`http://localhost:8080/game-v2/`
 - legacy 页面：`http://localhost:8080/game-legacy/`
 
+UI 变体参数（便于 A/B）：
+- `http://localhost:8080/game/?uiVariant=single`
+- `http://localhost:8080/game/?uiVariant=hand`
+
 ### 3) 本地命令行游玩
 
 ```bash
