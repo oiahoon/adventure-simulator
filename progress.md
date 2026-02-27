@@ -94,3 +94,9 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 删除过期与重复文档（旧 MUD/v2、重复计划、历史 schema/API 示例）。
 - 新文档核心统一为：面向中国玩家、都市生存题材、移动端优先卡牌 Web Game。
 - 文档入口：`docs/README.md`。
+
+## Docs Addendum: 内容设计补强
+- 新增事件因果链设计文档：`docs/product/event-causal-chain-design.md`。
+- 新增贴吧内容引入策略文档（含弱智吧语感来源与风控边界）：`docs/product/tieba-content-integration.md`。
+- 更新 `docs/README.md`，将上述两份文档列为关键内容设计文档。
+- 更新 `docs/architecture/event-content-strategy.md`，补充因果回收与贴吧素材流水线目标。
