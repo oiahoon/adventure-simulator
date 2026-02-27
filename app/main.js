@@ -680,19 +680,35 @@ async function generateStoryNarrative() {
   };
 
   try {
-    const response = await fetch("/api/story/summary", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (data?.ok && data.story) {
-      result.storyNarrative = data.story;
+    const endpoints = ["/api/story/summary", "/api/story-summary"];
+    let okData = null;
+    let lastError = "story_unavailable";
+
+    for (const endpoint of endpoints) {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        lastError = `http_${response.status}`;
+        continue;
+      }
+      const data = await response.json();
+      if (data?.ok && data.story) {
+        okData = data;
+        break;
+      }
+      lastError = data?.error || "story_unavailable";
+    }
+
+    if (okData?.story) {
+      result.storyNarrative = okData.story;
       result.storyLoading = false;
       result.storyError = "";
     } else {
       result.storyLoading = false;
-      result.storyError = data?.error || "story_unavailable";
+      result.storyError = lastError;
     }
   } catch {
     result.storyLoading = false;

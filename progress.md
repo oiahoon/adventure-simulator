@@ -247,6 +247,7 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   - 新增“后续事件触发链”与“属性上下文事件”（如低现金/低体力/高热度触发专属事件）。
 - 新增 AI 结局叙事：
   - 新增 API：`POST /api/story/summary`（`api/story/summary.js`）。
+  - 新增兜底 API：`POST /api/story-summary`（用于兼容不同路由部署场景）。
   - 结局时将 7 天决策链发送到 Deepseek 生成 120~220 字小故事。
   - 支持环境变量：
     - `DEEPSEEK_API_KEY`（必填）
