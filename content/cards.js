@@ -65,37 +65,30 @@ export const CARD_LIBRARY = {
     text: "Gain 1 energy.",
     effects: [{ type: "energy", value: 1 }],
   },
-  barrier: {
-    id: "barrier",
-    name: "Barrier",
+  poison_dart: {
+    id: "poison_dart",
+    name: "Poison Dart",
     cost: 1,
-    text: "Gain 8 block.",
-    effects: [{ type: "block", value: 8 }],
+    text: "Apply 4 Poison.",
+    effects: [{ type: "status", target: "enemy", status: "poison", value: 4 }],
   },
-  combo: {
-    id: "combo",
-    name: "Combo",
+  expose: {
+    id: "expose",
+    name: "Expose",
     cost: 1,
-    text: "Deal 4 damage twice.",
-    effects: [
-      { type: "damage", value: 4 },
-      { type: "damage", value: 4 },
-    ],
+    text: "Apply 2 Vulnerable.",
+    effects: [{ type: "status", target: "enemy", status: "vulnerable", value: 2 }],
   },
-  meditate: {
-    id: "meditate",
-    name: "Meditate",
+  rally: {
+    id: "rally",
+    name: "Rally",
     cost: 1,
-    text: "Gain 4 block and draw 1.",
-    effects: [
-      { type: "block", value: 4 },
-      { type: "draw", value: 1 },
-    ],
+    text: "Gain 2 Strength.",
+    effects: [{ type: "status", target: "player", status: "strength", value: 2 }],
   },
 };
 
 export const STARTER_DECK = [
-  "strike",
   "strike",
   "strike",
   "strike",
@@ -105,14 +98,15 @@ export const STARTER_DECK = [
   "guard",
   "fortify",
   "jab",
-  "jab",
   "focus",
   "focus",
   "ration",
   "assault",
   "tactic",
-  "barrier",
-  "barrier",
-  "combo",
-  "meditate",
+  "poison_dart",
+  "poison_dart",
+  "expose",
+  "expose",
+  "rally",
+  "rally",
 ];

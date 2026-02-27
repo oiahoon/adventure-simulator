@@ -7,6 +7,15 @@ function cardButton(card, idx, enabled) {
   </button>`;
 }
 
+function renderStatusBadges(statuses) {
+  if (!statuses.length) {
+    return "<p class='status-empty'>No status</p>";
+  }
+  return `<div class='status-row'>${statuses
+    .map((entry) => `<span class='status'>${entry.name} ${entry.value}</span>`)
+    .join("")}</div>`;
+}
+
 export function createGameUI(root, actions) {
   root.innerHTML = `
     <section class="layout">
@@ -50,12 +59,14 @@ export function createGameUI(root, actions) {
         <p>${view.enemy.name}</p>
         <p>HP ${view.enemy.hp}/${view.enemy.maxHp} | Block ${view.enemy.block}</p>
         <p>Intent: ${view.enemy.intent.label}</p>
+        ${renderStatusBadges(view.enemy.statuses)}
       `;
 
       playerPanel.innerHTML = `
         <h2>Player</h2>
         <p>HP ${view.player.hp}/${view.player.maxHp} | Block ${view.player.block}</p>
         <p>Draw ${view.player.drawPile} | Discard ${view.player.discardPile}</p>
+        ${renderStatusBadges(view.player.statuses)}
         <button id="end-turn-btn" ${view.phase !== "player" || view.winner ? "disabled" : ""}>End Turn</button>
       `;
 

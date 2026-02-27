@@ -18,6 +18,62 @@ function shuffle(list, random) {
   return next;
 }
 
+function createBaseStatuses() {
+  return {
+    poison: 0,
+    vulnerable: 0,
+    weak: 0,
+    strength: 0,
+  };
+}
+
+function positiveStatuses(statuses) {
+  return Object.entries(statuses)
+    .filter(([, value]) => value > 0)
+    .map(([name, value]) => ({ name, value }));
+}
+
+function computeDamage(base, attackerStatuses, defenderStatuses) {
+  let value = base + (attackerStatuses.strength || 0);
+  if ((attackerStatuses.weak || 0) > 0) {
+    value = Math.floor(value * 0.75);
+  }
+  if ((defenderStatuses.vulnerable || 0) > 0) {
+    value = Math.floor(value * 1.5);
+  }
+  return Math.max(0, value);
+}
+
+function tickPoison(unit, unitLabel, addLog) {
+  if (unit.statuses.poison <= 0) {
+    return;
+  }
+  const amount = unit.statuses.poison;
+  unit.statuses.poison = Math.max(0, unit.statuses.poison - 1);
+  unit.hp = Math.max(0, unit.hp - amount);
+  addLog(`${unitLabel} takes ${amount} poison.`);
+}
+
+function decayTurnStatuses(unit) {
+  unit.statuses.vulnerable = Math.max(0, unit.statuses.vulnerable - 1);
+  unit.statuses.weak = Math.max(0, unit.statuses.weak - 1);
+}
+
+function chooseEnemyIntent(state) {
+  const intents = state.enemy.intents;
+  const blockIntent = intents.find((intent) => intent.type === "block");
+  const debuffIntent = intents.find((intent) => intent.type === "debuff");
+
+  if (state.enemy.hp / state.enemy.maxHp <= 0.4 && blockIntent) {
+    return blockIntent;
+  }
+  if (state.player.block === 0 && debuffIntent && state.turn % 2 === 1) {
+    return debuffIntent;
+  }
+  const idx = state.enemy.intentIndex % intents.length;
+  return intents[idx];
+}
+
 export function createSeededRandom(seed = 1) {
   let x = seed >>> 0;
   return () => {
@@ -50,18 +106,20 @@ export function createBattle({ seed = Date.now() } = {}) {
       drawPile: shuffle(STARTER_DECK, random),
       discardPile: [],
       exhaustPile: [],
+      statuses: createBaseStatuses(),
     },
     enemy: {
       ...enemyTemplate,
       hp: enemyTemplate.maxHp,
       block: 0,
       intentIndex: 0,
+      statuses: createBaseStatuses(),
     },
   };
 
   function addLog(text) {
     state.logs.push(text);
-    if (state.logs.length > 30) {
+    if (state.logs.length > 40) {
       state.logs.shift();
     }
   }
@@ -89,27 +147,9 @@ export function createBattle({ seed = Date.now() } = {}) {
     return { blocked, hpLoss };
   }
 
-  function applyCardEffect(effect) {
-    if (effect.type === "damage") {
-      const result = takeDamage(state.enemy, effect.value);
-      addLog(`Player deals ${effect.value} (${result.hpLoss} HP).`);
-    } else if (effect.type === "block") {
-      state.player.block += effect.value;
-      addLog(`Player gains ${effect.value} block.`);
-    } else if (effect.type === "draw") {
-      drawCards(effect.value);
-      addLog(`Player draws ${effect.value}.`);
-    } else if (effect.type === "heal") {
-      const prev = state.player.hp;
-      state.player.hp = Math.min(state.player.maxHp, state.player.hp + effect.value);
-      addLog(`Player heals ${state.player.hp - prev}.`);
-    } else if (effect.type === "energy") {
-      state.player.energy += effect.value;
-      addLog(`Player gains ${effect.value} energy.`);
-    } else if (effect.type === "self_block") {
-      state.player.block = Math.max(0, state.player.block + effect.value);
-      addLog(`Player block ${effect.value >= 0 ? "+" : ""}${effect.value}.`);
-    }
+  function applyStatus(target, status, value, sourceText) {
+    target.statuses[status] = (target.statuses[status] || 0) + value;
+    addLog(`${sourceText} applies ${value} ${status}.`);
   }
 
   function checkResult() {
@@ -130,6 +170,45 @@ export function createBattle({ seed = Date.now() } = {}) {
     return false;
   }
 
+  function resolveCardEffect(effect) {
+    if (effect.type === "damage") {
+      const value = computeDamage(effect.value, state.player.statuses, state.enemy.statuses);
+      const result = takeDamage(state.enemy, value);
+      addLog(`Player deals ${value} (${result.hpLoss} HP).`);
+      return;
+    }
+    if (effect.type === "block") {
+      state.player.block += effect.value;
+      addLog(`Player gains ${effect.value} block.`);
+      return;
+    }
+    if (effect.type === "draw") {
+      drawCards(effect.value);
+      addLog(`Player draws ${effect.value}.`);
+      return;
+    }
+    if (effect.type === "heal") {
+      const prev = state.player.hp;
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + effect.value);
+      addLog(`Player heals ${state.player.hp - prev}.`);
+      return;
+    }
+    if (effect.type === "energy") {
+      state.player.energy += effect.value;
+      addLog(`Player gains ${effect.value} energy.`);
+      return;
+    }
+    if (effect.type === "self_block") {
+      state.player.block = Math.max(0, state.player.block + effect.value);
+      addLog(`Player block ${effect.value >= 0 ? "+" : ""}${effect.value}.`);
+      return;
+    }
+    if (effect.type === "status") {
+      const target = effect.target === "enemy" ? state.enemy : state.player;
+      applyStatus(target, effect.status, effect.value, "Player");
+    }
+  }
+
   function playCard(handIndex) {
     if (state.phase !== "player" || state.mode !== "battle") {
       return { ok: false, reason: "not_player_phase" };
@@ -147,22 +226,29 @@ export function createBattle({ seed = Date.now() } = {}) {
     state.player.discardPile.push(card.id);
     addLog(`Play ${card.name}.`);
 
-    card.effects.forEach((effect) => applyCardEffect(effect));
-    checkResult();
+    card.effects.forEach((effect) => {
+      resolveCardEffect(effect);
+      checkResult();
+    });
+
     return { ok: true };
   }
 
   function runEnemyTurn() {
-    const intent = state.enemy.intents[state.enemy.intentIndex % state.enemy.intents.length];
+    const intent = chooseEnemyIntent(state);
     state.enemy.intentIndex += 1;
 
     if (intent.type === "attack") {
-      const result = takeDamage(state.player, intent.value);
-      addLog(`${state.enemy.name} attacks ${intent.value} (${result.hpLoss} HP).`);
+      const value = computeDamage(intent.value, state.enemy.statuses, state.player.statuses);
+      const result = takeDamage(state.player, value);
+      addLog(`${state.enemy.name} attacks ${value} (${result.hpLoss} HP).`);
     }
     if (intent.type === "block") {
       state.enemy.block += intent.value;
       addLog(`${state.enemy.name} gains ${intent.value} block.`);
+    }
+    if (intent.type === "debuff") {
+      applyStatus(state.player, intent.status, intent.value, state.enemy.name);
     }
   }
 
@@ -173,15 +259,26 @@ export function createBattle({ seed = Date.now() } = {}) {
     state.phase = "enemy";
     state.player.hand.forEach((card) => state.player.discardPile.push(card.id));
     state.player.hand = [];
-    state.player.block = Math.max(0, state.player.block);
+
+    decayTurnStatuses(state.player);
+    tickPoison(state.enemy, state.enemy.name, addLog);
+    if (checkResult()) {
+      return;
+    }
 
     runEnemyTurn();
     if (checkResult()) {
       return;
     }
 
-    state.enemy.block = 0;
+    decayTurnStatuses(state.enemy);
+    tickPoison(state.player, "Player", addLog);
+    if (checkResult()) {
+      return;
+    }
+
     state.player.block = 0;
+    state.enemy.block = 0;
     state.turn += 1;
     state.player.energy = state.player.maxEnergy;
     drawCards(5);
@@ -190,8 +287,7 @@ export function createBattle({ seed = Date.now() } = {}) {
   }
 
   function getNextEnemyIntent() {
-    const idx = state.enemy.intentIndex % state.enemy.intents.length;
-    return state.enemy.intents[idx];
+    return chooseEnemyIntent(state);
   }
 
   drawCards(5);
@@ -203,5 +299,12 @@ export function createBattle({ seed = Date.now() } = {}) {
     playCard,
     endTurn,
     getNextEnemyIntent,
+    chooseEnemyIntent: () => chooseEnemyIntent(state),
+    summaryStatuses() {
+      return {
+        player: positiveStatuses(state.player.statuses),
+        enemy: positiveStatuses(state.enemy.statuses),
+      };
+    },
   };
 }

@@ -8,7 +8,8 @@ const appState = {
 const root = document.querySelector("#app");
 
 function buildView() {
-  const { state, getNextEnemyIntent } = appState.battle;
+  const { state, getNextEnemyIntent, summaryStatuses } = appState.battle;
+  const statuses = summaryStatuses();
   return {
     phase: state.phase,
     turn: state.turn,
@@ -22,6 +23,7 @@ function buildView() {
       drawPile: state.player.drawPile.length,
       discardPile: state.player.discardPile.length,
       hand: state.player.hand,
+      statuses: statuses.player,
     },
     enemy: {
       name: state.enemy.name,
@@ -29,8 +31,9 @@ function buildView() {
       maxHp: state.enemy.maxHp,
       block: state.enemy.block,
       intent: getNextEnemyIntent(),
+      statuses: statuses.enemy,
     },
-    logs: state.logs.slice(-10),
+    logs: state.logs.slice(-12),
   };
 }
 
@@ -55,10 +58,7 @@ const ui = createGameUI(root, {
   onEndTurn: () => endTurn(),
 });
 
-window.advanceTime = (ms) => {
-  if (ms > 0) {
-    // deterministic no-op for turn-based game
-  }
+window.advanceTime = () => {
   ui.render(buildView());
 };
 
@@ -74,6 +74,7 @@ window.render_game_to_text = () => {
       maxHp: v.player.maxHp,
       block: v.player.block,
       energy: v.player.energy,
+      statuses: v.player.statuses,
       hand: v.player.hand.map((c) => ({ id: c.id, cost: c.cost })),
       draw: v.player.drawPile,
       discard: v.player.discardPile,
@@ -82,6 +83,7 @@ window.render_game_to_text = () => {
       name: v.enemy.name,
       hp: v.enemy.hp,
       block: v.enemy.block,
+      statuses: v.enemy.statuses,
       intent: v.enemy.intent,
     },
     logs: v.logs,

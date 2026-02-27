@@ -33,3 +33,28 @@ test("ending turn triggers enemy action", () => {
   assert.equal(battle.state.turn, 2);
   assert.ok(battle.state.player.hp <= hpBefore);
 });
+
+test("vulnerable increases incoming damage", () => {
+  const battle = createBattle({ seed: 2 });
+  battle.state.enemy.statuses.vulnerable = 2;
+  const hpBefore = battle.state.enemy.hp;
+  battle.state.player.hand = [{ id: "strike", name: "Strike", cost: 1, effects: [{ type: "damage", value: 6 }] }];
+  battle.playCard(0);
+  assert.equal(hpBefore - battle.state.enemy.hp, 9);
+});
+
+test("poison ticks down on end turn", () => {
+  const battle = createBattle({ seed: 9 });
+  battle.state.enemy.statuses.poison = 3;
+  const hpBefore = battle.state.enemy.hp;
+  battle.endTurn();
+  assert.equal(hpBefore - battle.state.enemy.hp, 3);
+  assert.equal(battle.state.enemy.statuses.poison, 2);
+});
+
+test("enemy chooses block when hp is low", () => {
+  const battle = createBattle({ seed: 4 });
+  battle.state.enemy.hp = Math.floor(battle.state.enemy.maxHp * 0.35);
+  const intent = battle.chooseEnemyIntent();
+  assert.equal(intent.type, "block");
+});
