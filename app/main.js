@@ -1,42 +1,91 @@
-import { createLogger } from "../core/logger.js";
+import { createBattle } from "../core/battle/engine.js";
 import { createGameUI } from "../ui/game-ui.js";
 
-const state = {
-  mode: "boot",
-  tick: 0,
+const appState = {
+  battle: null,
 };
 
-const logger = createLogger();
 const root = document.querySelector("#app");
-const ui = createGameUI(root, logger);
 
-function update(dtSec) {
-  state.tick += dtSec;
+function buildView() {
+  const { state, getNextEnemyIntent } = appState.battle;
+  return {
+    phase: state.phase,
+    turn: state.turn,
+    winner: state.winner,
+    player: {
+      hp: state.player.hp,
+      maxHp: state.player.maxHp,
+      block: state.player.block,
+      energy: state.player.energy,
+      maxEnergy: state.player.maxEnergy,
+      drawPile: state.player.drawPile.length,
+      discardPile: state.player.discardPile.length,
+      hand: state.player.hand,
+    },
+    enemy: {
+      name: state.enemy.name,
+      hp: state.enemy.hp,
+      maxHp: state.enemy.maxHp,
+      block: state.enemy.block,
+      intent: getNextEnemyIntent(),
+    },
+    logs: state.logs.slice(-10),
+  };
 }
 
-function render() {
-  ui.refresh();
+function restartBattle(seed = Date.now()) {
+  appState.battle = createBattle({ seed });
+  ui.render(buildView());
 }
+
+function playCard(index) {
+  appState.battle.playCard(index);
+  ui.render(buildView());
+}
+
+function endTurn() {
+  appState.battle.endTurn();
+  ui.render(buildView());
+}
+
+const ui = createGameUI(root, {
+  onRestart: () => restartBattle(Date.now()),
+  onPlayCard: (idx) => playCard(idx),
+  onEndTurn: () => endTurn(),
+});
 
 window.advanceTime = (ms) => {
-  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
-  const dt = ms / 1000 / steps;
-  for (let i = 0; i < steps; i += 1) {
-    update(dt);
+  if (ms > 0) {
+    // deterministic no-op for turn-based game
   }
-  render();
+  ui.render(buildView());
 };
 
 window.render_game_to_text = () => {
+  const v = buildView();
   return JSON.stringify({
-    coordinateSystem: "UI only in M0; origin top-left, +x right, +y down",
-    mode: state.mode,
-    tick: Number(state.tick.toFixed(3)),
-    logs: logger.list().slice(-5).map((entry) => entry.message),
+    coordinateSystem: "UI board only; no world coordinates. top-left origin for layout.",
+    mode: v.winner ? "finished" : "battle",
+    turn: v.turn,
+    phase: v.phase,
+    player: {
+      hp: v.player.hp,
+      maxHp: v.player.maxHp,
+      block: v.player.block,
+      energy: v.player.energy,
+      hand: v.player.hand.map((c) => ({ id: c.id, cost: c.cost })),
+      draw: v.player.drawPile,
+      discard: v.player.discardPile,
+    },
+    enemy: {
+      name: v.enemy.name,
+      hp: v.enemy.hp,
+      block: v.enemy.block,
+      intent: v.enemy.intent,
+    },
+    logs: v.logs,
   });
 };
 
-logger.info("M0 boot complete");
-state.mode = "idle";
-ui.setPhase("M0 skeleton ready");
-render();
+restartBattle(20260227);
