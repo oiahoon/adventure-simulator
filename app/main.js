@@ -617,6 +617,145 @@ function randomPick(list, random) {
   return list[Math.floor(random() * list.length)];
 }
 
+function addPressure(session, key, delta) {
+  session.pressure[key] = clamp((session.pressure[key] || 0) + delta, 0, 8);
+}
+
+function updatePressureFromAction(session, option) {
+  const effects = option.effects || {};
+  if (option.tag === "risk") {
+    addPressure(session, "debt", 2);
+    addPressure(session, "scrutiny", 1);
+  }
+  if (option.tag === "work") addPressure(session, "burnout", 2);
+  if (option.tag === "content" || option.tag === "social") addPressure(session, "scrutiny", 2);
+  if ((effects.money || 0) <= -2) addPressure(session, "debt", 1);
+  if ((effects.energy || 0) <= -2) addPressure(session, "burnout", 1);
+  if ((effects.heat || 0) >= 2) addPressure(session, "scrutiny", 1);
+  if (session.sameTagCount >= 3) {
+    addPressure(session, "burnout", 1);
+    addPressure(session, "scrutiny", 1);
+  }
+}
+
+function scheduleDelayedConsequence(session, event, option) {
+  const currentDay = session.dayIndex + 1;
+  const byTag = {
+    risk: [
+      { delay: 1, effects: { money: -1, reputation: -1 }, text: "前面的激进操作开始回吐，账上和口碑都被反咬。" },
+      { delay: 2, effects: { mood: -1, heat: 1 }, text: "旧选择被翻出来讨论，情绪下滑，围观反而上来了。" },
+    ],
+    work: [
+      { delay: 1, effects: { energy: -1, mood: -1 }, text: "连续硬扛的后劲上来，精力和情绪一起掉线。" },
+      { delay: 2, effects: { reputation: 1, energy: -1 }, text: "活干出来了但人快散架，体面和消耗同时结算。" },
+    ],
+    social: [
+      { delay: 1, effects: { reputation: -1, mood: -1 }, text: "社交场的后坐力来了，关系账开始反噬。" },
+      { delay: 2, effects: { heat: 1, reputation: -1 }, text: "讨论没停，风评却开始偏航。" },
+    ],
+    network: [
+      { delay: 1, effects: { reputation: -1, money: 1 }, text: "人情账兑现：资源到手，但口碑要还一点。" },
+      { delay: 2, effects: { mood: -1, reputation: -1 }, text: "关系维护成本补票，心情和体面同时缩水。" },
+    ],
+    content: [
+      { delay: 1, effects: { heat: 1, reputation: -1 }, text: "热度继续涨，但评论区开始反噬口碑。" },
+      { delay: 2, effects: { mood: -1, money: -1 }, text: "流量红利退潮，情绪和收益都回撤。" },
+    ],
+  };
+  const templates = byTag[option.tag] || [];
+  if (!templates.length) return;
+  const chance = option.tag === "risk" ? 0.75 : 0.45;
+  if (session.random() > chance) return;
+  const picked = randomPick(templates, session.random);
+  session.pendingConsequences.push({
+    dueDay: currentDay + picked.delay,
+    effects: picked.effects,
+    text: picked.text,
+    source: `Day ${currentDay} ${event.title}`,
+  });
+}
+
+function collectDueConsequences(session, currentDay) {
+  const due = [];
+  const rest = [];
+  session.pendingConsequences.forEach((item) => {
+    if (item.dueDay <= currentDay) due.push(item);
+    else rest.push(item);
+  });
+  session.pendingConsequences = rest;
+  return due;
+}
+
+function applyPressurePenalty(session) {
+  const effects = { money: 0, energy: 0, mood: 0, reputation: 0, heat: 0 };
+  const notes = [];
+  if (session.pressure.debt >= 4) {
+    effects.money -= 1;
+    effects.mood -= 1;
+    session.pressure.debt = clamp(session.pressure.debt - 2, 0, 8);
+    session.flags.debt_overhang = true;
+    notes.push("债务压力溢出");
+  }
+  if (session.pressure.burnout >= 4) {
+    effects.energy -= 1;
+    effects.mood -= 1;
+    session.pressure.burnout = clamp(session.pressure.burnout - 2, 0, 8);
+    session.flags.burnout_risk = true;
+    notes.push("过劳压力溢出");
+  }
+  if (session.pressure.scrutiny >= 4) {
+    effects.reputation -= 1;
+    effects.heat += 1;
+    session.pressure.scrutiny = clamp(session.pressure.scrutiny - 2, 0, 8);
+    session.flags.trust_break = true;
+    notes.push("舆论压力溢出");
+  }
+
+  addPressure(session, "debt", -1);
+  addPressure(session, "burnout", -1);
+  addPressure(session, "scrutiny", -1);
+
+  return {
+    effects,
+    text: notes.length ? `${notes.join("、")}，系统性损耗生效。` : "",
+  };
+}
+
+function applyEndOfDayConsequences(session) {
+  const day = session.dayIndex + 1;
+  const applied = [];
+  const due = collectDueConsequences(session, day);
+  due.forEach((item) => {
+    const before = cloneStats(session.stats);
+    applyEffects(session.stats, item.effects);
+    const delta = statsDelta(before, session.stats);
+    if (effectToText(delta)) {
+      applied.push({
+        day,
+        optionLabel: `延迟后果：${item.text}`,
+        impactText: effectToText(delta),
+        delta,
+      });
+    }
+  });
+
+  const pressurePenalty = applyPressurePenalty(session);
+  if (effectToText(pressurePenalty.effects)) {
+    const before = cloneStats(session.stats);
+    applyEffects(session.stats, pressurePenalty.effects);
+    const delta = statsDelta(before, session.stats);
+    if (effectToText(delta)) {
+      applied.push({
+        day,
+        optionLabel: pressurePenalty.text || "隐性压力触发连锁损耗。",
+        impactText: effectToText(delta),
+        delta,
+      });
+    }
+  }
+  return applied;
+}
+
 function buildAvatarConfig(random, seed) {
   const styles = ["adventurer", "adventurer-neutral", "avataaars"];
   const style = randomPick(styles, random);
@@ -674,23 +813,24 @@ function pickFromPool(session, pool, fallbackEvent) {
 function resolveCausalStageEvent(session, stageIndex) {
   const flags = session.flags;
   const s = session.stats;
+  const pressure = session.pressure;
 
   if (stageIndex === 1) {
-    if (flags.debt_line) {
+    if (flags.debt_line || pressure.debt >= 3) {
       return pickFromPool(session, CHAPTER_POOLS[1].debt, CHAPTER_POOLS[1].debt[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[1].work, CHAPTER_POOLS[1].work[0]);
   }
 
   if (stageIndex === 2) {
-    if (flags.quality_risk || flags.debt_overhang || s.heat >= 6) {
+    if (flags.quality_risk || flags.debt_overhang || s.heat >= 6 || pressure.scrutiny >= 3) {
       return pickFromPool(session, CHAPTER_POOLS[2].backlash, CHAPTER_POOLS[2].backlash[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[2].stable, CHAPTER_POOLS[2].stable[0]);
   }
 
   if (stageIndex === 3) {
-    if (s.energy <= 3 || flags.overwork_line || flags.burnout_risk) {
+    if (s.energy <= 3 || flags.overwork_line || flags.burnout_risk || pressure.burnout >= 3) {
       return pickFromPool(session, CHAPTER_POOLS[3].health, CHAPTER_POOLS[3].health[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[3].relation, CHAPTER_POOLS[3].relation[0]);
@@ -703,7 +843,7 @@ function resolveCausalStageEvent(session, stageIndex) {
     return pickFromPool(session, CHAPTER_POOLS[4].cash, CHAPTER_POOLS[4].cash[0]);
   }
 
-  if (flags.debt_spiral || s.money <= 2 || flags.trust_break) {
+  if (flags.debt_spiral || s.money <= 2 || flags.trust_break || pressure.debt >= 3) {
     return pickFromPool(session, CHAPTER_POOLS[5].debt, CHAPTER_POOLS[5].debt[0]);
   }
   return pickFromPool(session, CHAPTER_POOLS[5].pivot, CHAPTER_POOLS[5].pivot[0]);
@@ -791,6 +931,7 @@ function buildEndingReason(session, alive) {
   const [weakStatKey, weakValue] = weakestStat(session.stats);
   const weakName = colloquialStatName(weakStatKey);
   const riskChoices = session.history.filter((entry) => entry.tag === "risk").length;
+  const chainHits = session.history.filter((entry) => entry.tag === "chain").length;
   const bullets = [];
 
   if (!alive) {
@@ -812,6 +953,7 @@ function buildEndingReason(session, alive) {
   bullets.push(`整局主要损耗：${losses}。`);
 
   if (riskChoices >= 2) bullets.push(`你本局做了 ${riskChoices} 次高风险选择，波动明显变大。`);
+  if (chainHits >= 3) bullets.push(`累计触发 ${chainHits} 次延迟连锁后果，节奏被不断反噬。`);
   if (worstDay) bullets.push(`关键转折：Day ${worstDay.day}「${worstDay.eventTitle}」选择「${worstDay.optionLabel}」。`);
   if (session.sameTagCount >= 3) bullets.push("连续同风格决策触发疲劳惩罚（情绪值/口碑面子下降）。");
 
@@ -850,6 +992,8 @@ function createSession(seed = Date.now()) {
       heat: clamp(base.heat + (random() < 0.5 ? 0 : 1), 0, 10),
     },
     flags: {},
+    pressure: { debt: 0, burnout: 0, scrutiny: 0 },
+    pendingConsequences: [],
     usedEventIds: new Set([openingEvent.id]),
     skillOffers,
     skillCooldownIds: skillOffers.map((item) => item.id),
@@ -988,6 +1132,21 @@ function applyChoice(optionId) {
     delta: statsDelta(before, after),
   });
   session.usedEventIds.add(event.id);
+  updatePressureFromAction(session, option);
+  scheduleDelayedConsequence(session, event, option);
+  const chainEntries = applyEndOfDayConsequences(session);
+  chainEntries.forEach((item) => {
+    session.history.push({
+      day: item.day,
+      eventId: "chain_effect",
+      eventTitle: "因果链回收",
+      optionId: "chain_auto",
+      optionLabel: item.optionLabel,
+      tag: "chain",
+      impactText: item.impactText,
+      delta: item.delta,
+    });
+  });
 
   const dead = [session.stats.money, session.stats.energy, session.stats.mood, session.stats.reputation].some((v) => v <= 0);
   if (dead) {
