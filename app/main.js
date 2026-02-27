@@ -818,23 +818,10 @@ function buildEndingReason(session, alive) {
   return { weakest: { name: weakName, value: weakValue }, keyDay: worstDay ? worstDay.day : null, bullets };
 }
 
-function encodeChallenge(payload) {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/=/g, "").slice(0, 120);
-}
-
-function decodeChallenge(code) {
-  try {
-    const json = decodeURIComponent(escape(atob(code)));
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
-
-function buildShareLink(challengeCode) {
-  if (!challengeCode || typeof window === "undefined") return "";
+function buildShareLink() {
+  if (typeof window === "undefined") return "";
   const url = new URL(window.location.href);
-  url.searchParams.set("challenge", challengeCode);
+  url.search = "";
   return url.toString();
 }
 
@@ -878,7 +865,6 @@ function createSession(seed = Date.now()) {
 
 const state = {
   session: createSession(20260227),
-  importCode: "",
   bestScore: Number(localStorage.getItem(STORAGE_KEY) || 0),
 };
 
@@ -938,13 +924,6 @@ function finishSession(alive) {
   const ending = endingByScore(score, alive);
   const reason = buildEndingReason(state.session, alive);
   const daysSurvived = state.session.dayIndex + 1;
-  const challengeCode = encodeChallenge({
-    seed: state.session.seed,
-    daysSurvived,
-    score,
-    ending: ending.id,
-    days: state.session.history.map((item) => `${item.eventId}.${item.optionId}`).slice(0, 10),
-  });
 
   state.session.mode = "ended";
   state.session.result = {
@@ -953,7 +932,6 @@ function finishSession(alive) {
     score,
     ending,
     reason,
-    challengeCode,
     storyNarrative: "",
     storyLoading: true,
     storyError: "",
@@ -1060,25 +1038,12 @@ function startNew(seed = Date.now()) {
 function shareText() {
   const result = state.session.result;
   if (!result) return "";
-  const shareLink = buildShareLink(result.challengeCode);
+  const shareLink = buildShareLink();
   return [
     `我在《是男人就坚持100天》坚持了 ${result.daysSurvived} 天，分数 ${result.score}，结局：${result.ending.title}`,
     `结局成因：${result.reason?.bullets?.[0] || "稳住了主要属性"}`,
-    `挑战码：${result.challengeCode}`,
-    shareLink ? `挑战链接：${shareLink}` : "打开同链接输入挑战码就能复刻我的局。",
+    shareLink ? `游戏链接：${shareLink}` : "游戏链接生成失败",
   ].join("\n");
-}
-
-function importChallengeFromUrl() {
-  if (typeof window === "undefined") return false;
-  const params = new URLSearchParams(window.location.search || "");
-  const code = (params.get("challenge") || "").trim();
-  if (!code) return false;
-  state.importCode = code;
-  const parsed = decodeChallenge(code);
-  if (!parsed || !parsed.seed) return false;
-  startNew(Number(parsed.seed));
-  return true;
 }
 
 function buildView() {
@@ -1118,7 +1083,6 @@ function buildView() {
     },
     history: session.history.slice(-6),
     result: session.result,
-    importCode: state.importCode,
     shareText: shareText(),
   };
 }
@@ -1153,15 +1117,6 @@ const ui = createGameUI(root, {
     refresh();
   },
   onCopyShare: () => copyShare(),
-  onImportCodeChange: (value) => {
-    state.importCode = value.trim();
-  },
-  onImportChallenge: () => {
-    const parsed = decodeChallenge(state.importCode);
-    if (!parsed || !parsed.seed) return;
-    startNew(Number(parsed.seed));
-    refresh();
-  },
 });
 
 window.render_game_to_text = () => {
@@ -1192,5 +1147,4 @@ window.render_game_to_text = () => {
 
 window.advanceTime = () => refresh();
 
-importChallengeFromUrl();
 refresh();

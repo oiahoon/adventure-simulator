@@ -48,10 +48,6 @@ export function createGameUI(root, actions) {
     });
     root.querySelector("#start-btn")?.addEventListener("click", () => actions.onStart());
     root.querySelector("#copy-share-btn")?.addEventListener("click", () => actions.onCopyShare());
-    root.querySelector("#import-btn")?.addEventListener("click", () => actions.onImportChallenge());
-    root.querySelector("#challenge-input")?.addEventListener("input", (event) => {
-      actions.onImportCodeChange(event.target.value || "");
-    });
   }
 
   return {
@@ -63,15 +59,8 @@ export function createGameUI(root, actions) {
           <article class="card hero">
             <p class="badge">100天目标挑战</p>
             <h2>这局只看一件事：你能不能坚持 100 天。</h2>
-            <p>每天一个高压事件，三选一，直到属性崩盘才会结算并生成挑战码。</p>
+            <p>每天一个高压事件，三选一，直到属性崩盘才会结算并生成分享文案。</p>
             <button id="start-btn" class="primary">开始新挑战</button>
-          </article>
-          <article class="card">
-            <h3>导入朋友挑战码</h3>
-            <div class="import-row">
-              <input id="challenge-input" placeholder="粘贴挑战码" value="${view.importCode || ""}" />
-              <button id="import-btn" class="ghost">复刻这局</button>
-            </div>
           </article>
         `;
         bindEvents();
@@ -105,7 +94,6 @@ export function createGameUI(root, actions) {
               <button class="primary" id="start-btn">再来一局</button>
               <button class="ghost" id="copy-share-btn">复制分享文案</button>
             </div>
-            <p class="code">挑战码：<code>${view.result.challengeCode}</code></p>
           </article>
           <article class="card">
             <h3>最近决策</h3>
