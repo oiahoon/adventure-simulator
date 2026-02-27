@@ -6,6 +6,7 @@
 
 - Web 游戏入口：`/game/`
 - Web 兼容入口：`/game-v2/`（等价于 v2）
+- 经典页面：`/game-classic/`（重构前卡牌壳）
 - Legacy 页面：`/game-legacy/`（旧 Web 壳层归档）
 - 项目主页：`/`
 - CLI：`mud-cli`（远程/本地模式）
@@ -44,6 +45,7 @@ python3 -m http.server 8080
 - 主页：`http://localhost:8080/`
 - 游戏：`http://localhost:8080/game/`
 - 兼容入口：`http://localhost:8080/game-v2/`
+- 经典页面：`http://localhost:8080/game-classic/`
 - legacy 页面：`http://localhost:8080/game-legacy/`
 
 UI 变体参数（便于 A/B）：
@@ -129,8 +131,9 @@ core/                     # 共享核心（业务引擎/文本输出）
 bin/mud-cli.js            # CLI 入口
 public/index.html         # 主页
 public/game/index.html    # 游戏页面
+public/game-classic/index.html # 经典卡牌页面
 public/game-legacy/index.html # legacy 页面
-public/src/idle-mud.js    # 主引擎
+public/src/card-runtime-v3.js # 重构版前端运行时
 public/data/events/       # 事件数据包
 docs/                     # 架构与规则文档
 docs/architecture/system-architecture.md  # 当前分层与维护边界

@@ -3,329 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>都市生存模拟器 - 卡牌决策</title>
-  <meta name="description" content="都市生存模拟器：每回合抽牌出牌，推进现实题材剧情链并生成可分享战报。" />
+  <title>都市生存卡牌 - 全新重构版</title>
+  <meta name="description" content="全新重构的都市生存卡牌 Web Game：主卡滑动、机会手牌、策略偏好、复盘分享。" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #edf3fb;
-      --card: #ffffff;
-      --ink: #1a2633;
-      --line: #d2deef;
-      --brand: #1158c7;
-      --danger: #c2410c;
-      --warn: #b91c1c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Noto Sans SC", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(900px 540px at -10% -10%, #d5e7ff, transparent 62%),
-        radial-gradient(900px 540px at 110% 0%, #d5f4ec, transparent 56%),
-        var(--bg);
-    }
-    .page {
-      width: min(980px, 100%);
-      margin: 0 auto;
-      padding: 14px;
-      display: grid;
-      gap: 10px;
-    }
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--card);
-      box-shadow: 0 10px 26px rgba(33, 67, 108, 0.1);
-      overflow: hidden;
-    }
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 14px;
-      background: linear-gradient(135deg, #eef5ff, #f8fcff);
-    }
-    .hero h1 { margin: 0; font-size: 1.4rem; font-family: "ZCOOL XiaoWei", serif; }
-    .hero p { margin: 3px 0 0; color: #526579; font-size: 0.86rem; }
-    .badge {
-      align-self: start;
-      border-radius: 999px;
-      border: 1px solid #b6ceef;
-      color: #0f4da9;
-      background: #eaf2ff;
-      padding: 4px 10px;
-      font-size: 0.74rem;
-      font-weight: 700;
-    }
-    .kpi {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      padding: 10px;
-    }
-    .kpi > div {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 8px;
-      background: linear-gradient(145deg, #fff, #f4f8ff);
-      display: grid;
-      gap: 2px;
-    }
-    .kpi span { color: #607286; font-size: 0.74rem; }
-    .kpi strong { font-size: 1rem; }
-    .bar { margin-top: 2px; height: 8px; background: #e6eef9; border-radius: 999px; overflow: hidden; }
-    .bar > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e, #2563eb); transition: width .22s ease; }
-    .kpi > div.pulse { animation: kpi-pulse .34s ease; }
-    .toolbar {
-      padding: 10px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-    }
-    button {
-      border: 1px solid #b7c9e2;
-      background: #f8fbff;
-      border-radius: 10px;
-      padding: 8px 11px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-
-    .play-zone {
-      padding: 10px;
-      display: grid;
-      gap: 10px;
-    }
-    .queue-hint {
-      border: 1px solid #f5c2c7;
-      background: #fff5f6;
-      color: #8a1c2f;
-      border-radius: 10px;
-      padding: 7px 9px;
-      font-size: .78rem;
-      display: none;
-    }
-    .queue-hint.show { display: block; }
-
-    .main-card-wrap {
-      border: 1px dashed #ccd8ea;
-      border-radius: 12px;
-      background: #f7fbff;
-      padding: 8px;
-      min-height: 250px;
-      display: grid;
-      align-items: center;
-    }
-    .main-card {
-      position: relative;
-      border: 1px solid #bfd1ea;
-      border-radius: 14px;
-      background: linear-gradient(160deg, #fff, #edf4ff);
-      padding: 12px;
-      display: grid;
-      gap: 7px;
-      transition: transform .2s ease;
-      touch-action: pan-y;
-      user-select: none;
-      animation: card-enter .28s ease both;
-    }
-    .main-card h3 { margin: 0; font-size: 1rem; }
-    .main-card p { margin: 0; font-size: .85rem; color: #42566a; line-height: 1.45; min-height: 56px; opacity: 0; animation: text-enter .28s ease .09s forwards; }
-    .row { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
-    .tag { font-size: 0.68rem; color: #0d4da8; background: #e7f1ff; border-radius: 999px; padding: 2px 7px; }
-    .forced-tag { font-size: .68rem; color: #fff; background: var(--warn); border-radius: 999px; padding: 2px 7px; }
-    .preview {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      font-size: .76rem;
-    }
-    .preview i {
-      display: block;
-      font-style: normal;
-      border: 1px solid #c8d9ec;
-      border-radius: 10px;
-      padding: 6px;
-      background: #fff;
-      color: #35506a;
-      min-height: 44px;
-    }
-    .preview i.active-left { border-color: #16a34a; background: #f0fdf4; }
-    .preview i.active-right { border-color: #2563eb; background: #eff6ff; }
-
-    .actions { display: flex; gap: 7px; }
-    .actions button { flex: 1; }
-
-    .hand {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .mini-card {
-      border: 1px solid #c2d5f0;
-      border-radius: 12px;
-      background: #fff;
-      padding: 7px;
-      display: grid;
-      gap: 5px;
-    }
-    .mini-card h4 { margin: 0; font-size: .8rem; }
-    .mini-card p { margin: 0; font-size: .72rem; color: #5a6f85; min-height: 30px; }
-    .mini-card button { font-size: .72rem; padding: 5px 7px; }
-
-    .info {
-      padding: 10px;
-      font-size: 0.82rem;
-      color: #334559;
-      border-top: 1px solid var(--line);
-      white-space: pre-wrap;
-      min-height: 56px;
-    }
-    .log {
-      padding: 10px;
-      border-top: 1px solid var(--line);
-      max-height: 220px;
-      overflow: auto;
-      background: #fbfdff;
-      white-space: pre-wrap;
-      font-size: 0.82rem;
-      line-height: 1.45;
-    }
-    .error { color: var(--danger); }
-
-    .ending {
-      margin: 10px;
-      border: 1px solid #ccd8ea;
-      border-radius: 12px;
-      background: linear-gradient(160deg, #fff, #f6fbff);
-      overflow: hidden;
-    }
-    .ending h3 { margin: 0; padding: 8px 10px; font-size: .9rem; border-bottom: 1px solid #d8e3f1; background: #f2f7ff; }
-    .ending pre { margin: 0; padding: 10px; min-height: 84px; white-space: pre-wrap; font-size: .79rem; line-height: 1.45; }
-    .ending-tools { padding: 10px; border-top: 1px solid #d8e3f1; display: flex; gap: 8px; flex-wrap: wrap; }
-    #share-canvas-v2 { width: calc(100% - 20px); margin: 0 10px 10px; border-radius: 10px; border: 1px solid #d7e2f0; background: #faf5ea; display: block; }
-    .analytics {
-      margin: 10px;
-      border: 1px solid #ccd8ea;
-      border-radius: 12px;
-      background: linear-gradient(160deg, #fff, #f4f8ff);
-      overflow: hidden;
-    }
-    .analytics h3 {
-      margin: 0;
-      padding: 8px 10px;
-      font-size: .9rem;
-      border-bottom: 1px solid #d8e3f1;
-      background: #eef5ff;
-    }
-    .analytics pre {
-      margin: 0;
-      padding: 10px;
-      min-height: 88px;
-      white-space: pre-wrap;
-      font-size: .78rem;
-      line-height: 1.45;
-    }
-    .analytics-tools {
-      padding: 8px 10px;
-      border-top: 1px solid #d8e3f1;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .link-row { padding: 0 10px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; }
-    .link-row a { color: #0f4da9; text-decoration: none; font-weight: 700; }
-    .hidden { display: none !important; }
-    @keyframes card-enter {
-      from { transform: translateY(8px) scale(.98); opacity: .4; }
-      to { transform: translateY(0) scale(1); opacity: 1; }
-    }
-    @keyframes text-enter {
-      from { opacity: 0; transform: translateY(3px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes kpi-pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-      100% { transform: scale(1); }
-    }
-
-    @media (max-width: 720px) {
-      .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .hand { grid-template-columns: 1fr; }
-      .link-row { flex-direction: column; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles/card-v3.css" />
 </head>
 <body>
-  <main class="page">
-    <section class="panel hero">
+  <main class="app-shell">
+    <header class="app-head">
       <div>
-        <h1>都市生存模拟器</h1>
-        <p>Card/Event 引擎（默认）· 移动端单卡决策</p>
+        <p class="kicker">CARD STORY ENGINE</p>
+        <h1>都市生存卡牌</h1>
+        <p class="subtitle">重构版 · 主卡滑动 + 机会手牌 + 因果复盘</p>
       </div>
-      <div class="badge">engine=v2</div>
-    </section>
+      <a class="home-link" href="/">返回主页</a>
+    </header>
 
-    <section class="panel">
-      <div class="kpi" id="kpi"></div>
-      <div class="toolbar">
-        <button id="new-btn">新开一局</button>
-        <button id="draw-btn">补牌</button>
-        <button id="layout-btn">布局：自动</button>
-        <select id="pref-select" aria-label="opportunity preference">
-          <option value="balanced">机会偏好：均衡</option>
-          <option value="survival">机会偏好：求稳</option>
-          <option value="growth">机会偏好：成长</option>
-          <option value="debt">机会偏好：债务防线</option>
-        </select>
-        <button id="pref-btn">应用偏好</button>
-      </div>
+    <section class="hud" id="kpi"></section>
 
-      <div class="play-zone">
+    <section class="board">
+      <article class="main-zone card-panel">
+        <section class="decision-toolbar">
+          <button id="new-btn">新开一局</button>
+          <button id="draw-btn">补牌</button>
+          <label for="pref-select">偏好</label>
+          <select id="pref-select">
+            <option value="balanced">均衡</option>
+            <option value="survival">求稳</option>
+            <option value="growth">成长</option>
+            <option value="debt">债务防线</option>
+          </select>
+          <button id="pref-btn">应用</button>
+          <button id="layout-btn">布局：自动</button>
+        </section>
         <div id="queue-hint" class="queue-hint"></div>
         <div class="main-card-wrap">
           <div id="main-card-host"></div>
         </div>
-        <div id="hand-mini" class="hand"></div>
-      </div>
 
-      <div class="info" id="info">等待初始化...</div>
-      <div class="log" id="log"></div>
+        <div class="narrative-grid">
+          <section class="inline-panel">
+            <h2>回合状态</h2>
+            <pre id="info" class="info">等待初始化...</pre>
+          </section>
+          <section class="inline-panel">
+            <h2>事件轨迹</h2>
+            <pre id="log" class="log">日志为空</pre>
+          </section>
+        </div>
+      </article>
 
-      <section class="ending">
-        <h3>结局与分享</h3>
-        <pre id="ending">本局尚未结束</pre>
-        <div class="ending-tools">
-          <button id="copy-share-btn" disabled>复制分享文案</button>
-          <button id="build-share-btn" disabled>生成战报图</button>
-          <a id="download-share-btn" class="hidden" download="card-v2-report.png">下载战报图</a>
-        </div>
-        <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
-      </section>
-      <section class="analytics">
-        <h3>实验指标（A/B）</h3>
-        <pre id="analytics-box">等待数据...</pre>
-        <div class="analytics-tools">
-          <button id="copy-analytics-btn">复制实验摘要</button>
-          <button id="export-analytics-btn">导出指标JSON</button>
-          <button id="reset-analytics-btn">重置累计指标</button>
-        </div>
-      </section>
-      <div class="link-row">
-        <a href="/">← 返回主页</a>
-        <a href="/game-legacy/">进入 legacy 版本</a>
-      </div>
+      <aside class="side-zone">
+        <section class="card-panel">
+          <h2>机会手牌</h2>
+          <div id="hand-mini" class="hand"></div>
+        </section>
+
+        <section class="card-panel">
+          <h2>实验指标</h2>
+          <pre id="analytics-box" class="analytics-box">等待数据...</pre>
+          <div class="analytics-tools">
+            <button id="copy-analytics-btn">复制实验摘要</button>
+            <button id="export-analytics-btn">导出JSON</button>
+            <button id="reset-analytics-btn">重置</button>
+          </div>
+        </section>
+      </aside>
     </section>
+
+    <section class="ending card-panel">
+      <h2>结局与分享</h2>
+      <pre id="ending">本局尚未结束</pre>
+      <div class="ending-tools">
+        <button id="copy-share-btn" disabled>复制分享文案</button>
+        <button id="build-share-btn" disabled>生成战报图</button>
+        <a id="download-share-btn" class="hidden" download="card-v3-report.png">下载战报图</a>
+      </div>
+      <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
+    </section>
+
+    <footer class="foot-links">
+      <a href="/game-classic/">进入经典版</a>
+      <a href="/game-legacy/">进入 legacy 旧版本</a>
+    </footer>
   </main>
 
-  <script src="/src/card-runtime-v2.js"></script>
+  <script src="/src/card-runtime-v3.js"></script>
 </body>
 </html>

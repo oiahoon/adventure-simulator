@@ -544,3 +544,18 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - `npm run check:replay:v2` passed (golden hashes updated for opportunity policy changes).
+- 全新卡牌 Web 重构（本轮）:
+  - `/game/` 完成结构重排：将“决策工具条 + 主卡 + 回合状态 + 事件轨迹”收拢在主区域，减少日志/状态与操作分离。
+  - 新增 `decision-toolbar`，把 `新开/补牌/偏好/布局` 放到主卡上方，移动端改为 sticky 底部工具条，提高单手操作效率。
+  - 侧栏收敛为“机会手牌 + 实验指标”，主叙事内容集中到主卡区，降低信息跳转成本。
+  - 完成 `card-v3.css` 视觉升级：玻璃感面板、分层背景、强化卡牌可读性、移动端断点重排与触控尺寸优化。
+  - 更新重构计划文档：Phase B 标记完成，Phase C/E 标记为受限项跟进中。
+- Validation:
+  - `node --check public/src/card-runtime-v3.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.
+  - 线上 API 可达性复核: `POST https://adventure-simulator.vercel.app/api/mud/run` 当前返回 200（CLI 文本结果），未复现 404。
+- Playwright status:
+  - 技能脚本需要 ESM 入口（已通过 `.mjs` 规避）但 Chromium 在沙箱内启动失败（MachPortRendezvous 权限 1100），本轮无法完成自动截图回归。
