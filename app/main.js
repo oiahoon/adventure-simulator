@@ -246,6 +246,87 @@ const OPENING_EVENTS = {
   },
 };
 
+const STATE_INCIDENT_POOLS = {
+  moneyLow: [
+    {
+      id: "incident_money_street_show",
+      chapter: "临时插曲：现金告急",
+      title: "地铁口开麦讨赏",
+      text: "你卡里只剩两位数，路过地铁口时突然想靠才艺顶一晚饭钱。",
+      causeText: "由低现金状态触发的临时事件。",
+      options: [
+        { id: "show_safe", label: "老实唱两首", tag: "work", effects: { money: 1, mood: 1, reputation: -1 } },
+        { id: "show_hype", label: "整活博眼球", tag: "content", effects: { money: 2, heat: 2, reputation: -2, mood: -1 }, setFlags: ["public_fight"] },
+        { id: "show_abort", label: "算了先回去", tag: "control", effects: { mood: -1, energy: 1 }, setFlags: ["budget_mode"] },
+      ],
+    },
+    {
+      id: "incident_money_night_shift",
+      chapter: "临时插曲：现金告急",
+      title: "夜班零工弹窗",
+      text: "一个“现结零工”群拉你进来，今晚去就能拿钱。",
+      causeText: "由低现金和债务压力触发。",
+      options: [
+        { id: "gig_accept", label: "咬牙接了", tag: "work", effects: { money: 2, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
+        { id: "gig_bargain", label: "先谈价再去", tag: "network", effects: { money: 1, reputation: 1, mood: -1 } },
+        { id: "gig_skip", label: "先保状态", tag: "rest", effects: { money: -1, energy: 1, mood: 1 }, setFlags: ["survival_route"] },
+      ],
+    },
+  ],
+  moodLow: [
+    {
+      id: "incident_mood_drink",
+      chapter: "临时插曲：心态下坠",
+      title: "夜宵摊买醉",
+      text: "你心态快见底，朋友发来定位说‘来两杯先别想了’。",
+      causeText: "由低心态触发的情绪事件。",
+      options: [
+        { id: "drink_release", label: "喝两杯散散压", tag: "rest", effects: { mood: 2, money: -1, energy: -1 } },
+        { id: "drink_livestream", label: "边喝边开播", tag: "content", effects: { mood: 1, heat: 2, reputation: -1, money: 1 } },
+        { id: "drink_refuse", label: "拒绝，去散步", tag: "control", effects: { mood: 1, energy: 1, heat: -1 } },
+      ],
+    },
+    {
+      id: "incident_mood_river_walk",
+      chapter: "临时插曲：心态下坠",
+      title: "河堤夜风局",
+      text: "你想清空脑子，一个人去河堤吹风，手机里消息还在炸。",
+      causeText: "由低心态与舆论压力触发。",
+      options: [
+        { id: "river_offline", label: "彻底断网1小时", tag: "control", effects: { mood: 2, heat: -1, reputation: -1 } },
+        { id: "river_call_friend", label: "打给老友吐槽", tag: "network", effects: { mood: 1, reputation: 1, money: -1 } },
+        { id: "river_post", label: "发条深夜长文", tag: "content", effects: { mood: 1, heat: 2, reputation: -2 }, setFlags: ["content_line"] },
+      ],
+    },
+  ],
+  energyLow: [
+    {
+      id: "incident_energy_powernap",
+      chapter: "临时插曲：体力见底",
+      title: "工位十分钟断片",
+      text: "你眼睛一闭就开始点头，会议纪要还没写完。",
+      causeText: "由低体力与过劳线触发。",
+      options: [
+        { id: "nap_short", label: "抢十分钟补眠", tag: "rest", effects: { energy: 2, reputation: -1, mood: 1 } },
+        { id: "nap_coffee", label: "咖啡硬顶", tag: "work", effects: { energy: 1, money: -1, mood: -1 } },
+        { id: "nap_delegate", label: "找同事帮顶一下", tag: "network", effects: { energy: 1, reputation: 1, money: -1 } },
+      ],
+    },
+    {
+      id: "incident_energy_missed_stop",
+      chapter: "临时插曲：体力见底",
+      title: "地铁坐过站",
+      text: "你在地铁上直接睡过去，醒来已经多坐了好几站。",
+      causeText: "由低体力状态触发。",
+      options: [
+        { id: "stop_take_ride", label: "打车补救", tag: "money", effects: { money: -2, energy: 1, reputation: 1 } },
+        { id: "stop_run_back", label: "跑回去赶上", tag: "work", effects: { energy: -1, mood: -1, reputation: 1 } },
+        { id: "stop_accept_delay", label: "认栽慢一点", tag: "control", effects: { mood: 1, reputation: -1, energy: 1 } },
+      ],
+    },
+  ],
+};
+
 const CHAPTER_POOLS = {
   1: {
     debt: [
@@ -905,8 +986,46 @@ function resolveCausalStageEvent(session, stageIndex) {
   return pickFromPool(session, CHAPTER_POOLS[5].pivot, CHAPTER_POOLS[5].pivot[0]);
 }
 
+function resolveStateIncidentEvent(session, dayIndex) {
+  if (dayIndex <= 0) return null;
+  if (dayIndex - session.lastIncidentDay < 2) return null;
+
+  const s = session.stats;
+  const pressure = session.pressure;
+  const pool = [];
+  let riskCount = 0;
+
+  if (s.money <= 3) {
+    pool.push(...STATE_INCIDENT_POOLS.moneyLow);
+    riskCount += 1;
+  }
+  if (s.mood <= 3) {
+    pool.push(...STATE_INCIDENT_POOLS.moodLow);
+    riskCount += 1;
+  }
+  if (s.energy <= 3) {
+    pool.push(...STATE_INCIDENT_POOLS.energyLow);
+    riskCount += 1;
+  }
+
+  if (!pool.length) return null;
+
+  let chance = 0.12 + riskCount * 0.12;
+  if (pressure.debt >= 3 || pressure.burnout >= 3 || pressure.scrutiny >= 3) chance += 0.08;
+  chance = Math.min(0.58, chance);
+  if (session.random() > chance) return null;
+
+  const fallback = pool[0];
+  const incident = pickFromPool(session, pool, fallback);
+  if (!incident) return null;
+  session.lastIncidentDay = dayIndex;
+  return incident;
+}
+
 function resolveEvent(session, dayIndex) {
   if (dayIndex === 0) return session.openingEvent;
+  const incident = resolveStateIncidentEvent(session, dayIndex);
+  if (incident) return incident;
   const loopStage = ((dayIndex - 1) % 5) + 1;
   return resolveCausalStageEvent(session, loopStage);
 }
@@ -1109,6 +1228,7 @@ function createSession(seed = Date.now()) {
     cachedEventDayIndex: -1,
     history: [],
     sameTagCount: 0,
+    lastIncidentDay: -10,
     lastTag: null,
     result: null,
   };
