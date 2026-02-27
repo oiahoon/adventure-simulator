@@ -75,6 +75,22 @@ export function createGameUI(root, actions) {
             <h2>${view.result.ending.title}</h2>
             <p>${view.result.ending.subtitle}</p>
             <p class="score">本局分数 ${view.result.score} | 历史最高 ${view.bestScore}</p>
+            <article class="reason-block">
+              <h3>结局成因</h3>
+              <ul class="history">
+                ${(view.result.reason?.bullets || []).map((line) => `<li>${line}</li>`).join("")}
+              </ul>
+            </article>
+            <article class="reason-block">
+              <h3>整局故事</h3>
+              ${
+                view.result.storyLoading
+                  ? "<p>正在生成本局剧情总结...</p>"
+                  : view.result.storyNarrative
+                    ? `<p>${view.result.storyNarrative}</p>`
+                    : `<p>暂未生成（${view.result.storyError || "unknown"}）</p>`
+              }
+            </article>
             <div class="action-grid">
               <button class="primary" id="start-btn">再来一局</button>
               <button class="ghost" id="copy-share-btn">复制分享文案</button>

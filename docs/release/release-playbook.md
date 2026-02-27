@@ -18,4 +18,14 @@
 
 - GitHub Actions 最近 run 成功
 - Vercel commit status 为 success
-- 生产域名返回 200 且页面标题为 `Neon Deck`
+- 生产域名返回 200 且页面标题为 `城市生存7天`
+
+## Deepseek 结局叙事（Vercel 环境变量）
+
+- 必填：`DEEPSEEK_API_KEY`
+- 可选：`DEEPSEEK_MODEL`（默认 `deepseek-chat`）
+- 可选：`DEEPSEEK_BASE_URL`（默认 `https://api.deepseek.com/v1`）
+
+说明：
+- 结局页会请求 `POST /api/story/summary` 生成“整局故事”。
+- 若未配置 `DEEPSEEK_API_KEY`，页面会显示“暂未生成”。

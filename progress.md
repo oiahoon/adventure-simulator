@@ -239,3 +239,19 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 质量结果：
   - `npm test` 20/20 通过。
   - Playwright 冒烟通过：`output/web-game-reboot-v3`。
+
+## V3.1 改进：结局成因解释 + 剧情扩容 + Deepseek 结局故事
+- 针对用户反馈优化：
+  - 结局页新增“结局成因”模块（短板属性、主要损耗、关键转折日、风险风格提示）。
+  - 事件池显著扩容，加入更多都市热点与贴吧语感事件类型（职场、消费、平台纠纷、饭圈、AI焦虑等）。
+  - 新增“后续事件触发链”与“属性上下文事件”（如低现金/低体力/高热度触发专属事件）。
+- 新增 AI 结局叙事：
+  - 新增 API：`POST /api/story/summary`（`api/story/summary.js`）。
+  - 结局时将 7 天决策链发送到 Deepseek 生成 120~220 字小故事。
+  - 支持环境变量：
+    - `DEEPSEEK_API_KEY`（必填）
+    - `DEEPSEEK_MODEL`（可选，默认 `deepseek-chat`）
+    - `DEEPSEEK_BASE_URL`（可选，默认 `https://api.deepseek.com/v1`）
+  - 若未配置 Key，结局页优雅降级显示“暂未生成”。
+- 文档同步：
+  - `docs/release/release-playbook.md` 增加 Deepseek 环境变量配置说明。
