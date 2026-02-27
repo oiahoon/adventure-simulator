@@ -72,6 +72,57 @@ const STARTER_ARCHETYPES = [
   },
 ];
 
+const TEMP_SKILL_POOL = [
+  {
+    id: "sprint_transfer",
+    name: "地铁冲刺换乘",
+    text: "多跑两站省钱省时间，但体力和心态会被挤压。",
+    effects: { money: 1, heat: 1, energy: -1, mood: -1 },
+  },
+  {
+    id: "late_night_gig",
+    name: "深夜接急单",
+    text: "现金立刻回血，但睡眠被硬切掉一块。",
+    effects: { money: 2, reputation: 1, energy: -2, mood: -1 },
+  },
+  {
+    id: "borrow_face",
+    name: "借面子走关系",
+    text: "办事效率提升，但要付出人设和热度代价。",
+    effects: { reputation: 2, money: 1, heat: 1, mood: -1 },
+  },
+  {
+    id: "silent_mode",
+    name: "全平台静音",
+    text: "心态稳住了，但热度和关系会掉一截。",
+    effects: { mood: 2, heat: -2, reputation: -1, money: -1 },
+  },
+  {
+    id: "coupon_hunt",
+    name: "全网薅券",
+    text: "现金省下来，但精力被琐碎事务消耗。",
+    effects: { money: 2, mood: 1, energy: -2, reputation: -1 },
+  },
+  {
+    id: "hot_take_post",
+    name: "发条狠活热评",
+    text: "热度和现金有机会起飞，但人设可能掉。",
+    effects: { heat: 2, money: 1, reputation: -2, mood: -1 },
+  },
+  {
+    id: "group_cleanup",
+    name: "群聊断舍离",
+    text: "心态和体力恢复，但部分关系会受损。",
+    effects: { mood: 2, energy: 1, reputation: -2, heat: -1 },
+  },
+  {
+    id: "credit_roll",
+    name: "信用卡缓冲",
+    text: "先拿到现金缓冲，但后续压力更高。",
+    effects: { money: 3, heat: 1, reputation: -2, mood: -1 },
+  },
+];
+
 const OPENING_EVENTS = {
   opening_rent_kpi: {
     id: "opening_rent_kpi",
@@ -446,6 +497,18 @@ function randomPick(list, random) {
   return list[Math.floor(random() * list.length)];
 }
 
+function drawTempSkills(random, count = 2) {
+  const pool = [...TEMP_SKILL_POOL];
+  const picks = [];
+  const drawCount = Math.min(count, pool.length);
+  for (let i = 0; i < drawCount; i += 1) {
+    const idx = Math.floor(random() * pool.length);
+    picks.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return picks;
+}
+
 function chooseOpening(archetype, random) {
   const openingId = randomPick(archetype.openingIds, random);
   return OPENING_EVENTS[openingId] || OPENING_EVENTS.opening_rent_kpi;
@@ -629,7 +692,8 @@ function createSession(seed = Date.now()) {
     },
     flags: {},
     usedEventIds: new Set([openingEvent.id]),
-    skills: { powerNap: 1, borrowCash: 1 },
+    skillOffers: drawTempSkills(random, 2),
+    skillUsedDay: false,
     history: [],
     sameTagCount: 0,
     lastTag: null,
@@ -778,31 +842,31 @@ function applyChoice(optionId) {
   session.dayIndex += 1;
   if (session.dayIndex >= DAY_TOTAL) {
     finishSession(true);
+    return;
   }
+
+  session.skillOffers = drawTempSkills(session.random, 2);
+  session.skillUsedDay = false;
 }
 
 function useSkill(skillId) {
   const session = state.session;
   if (session.mode !== "playing") return;
-  if (!session.skills[skillId]) return;
+  if (session.skillUsedDay) return;
+  const skill = session.skillOffers.find((item) => item.id === skillId);
+  if (!skill) return;
 
   const before = cloneStats(session.stats);
-  if (skillId === "powerNap") {
-    session.skills.powerNap = 0;
-    applyEffects(session.stats, { energy: 2, mood: 1, heat: -1 });
-  }
-  if (skillId === "borrowCash") {
-    session.skills.borrowCash = 0;
-    applyEffects(session.stats, { money: 3, reputation: -2, heat: 1 });
-  }
+  applyEffects(session.stats, skill.effects);
+  session.skillUsedDay = true;
   const after = cloneStats(session.stats);
 
   session.history.push({
     day: session.dayIndex + 1,
     eventId: "skill_use",
-    eventTitle: "临时技能",
-    optionId: skillId,
-    optionLabel: skillId === "powerNap" ? "打个盹" : "找朋友借钱",
+    eventTitle: `临时技能：${skill.name}`,
+    optionId: skill.id,
+    optionLabel: skill.name,
     tag: "skill",
     impactText: effectToText(statsDelta(before, after)),
     delta: statsDelta(before, after),
@@ -852,8 +916,16 @@ function buildView() {
             options: event.options.map((option) => ({ ...option, impactText: effectToText(option.effects) })),
           }
         : null,
-    skills: { ...session.skills },
-    history: session.history.filter((item) => item.eventId !== "skill_use").slice(-5),
+    skills: {
+      usedToday: session.skillUsedDay,
+      offers: session.skillOffers.map((item) => ({
+        id: item.id,
+        name: item.name,
+        text: item.text,
+        impactText: effectToText(item.effects),
+      })),
+    },
+    history: session.history.slice(-6),
     result: session.result,
     importCode: state.importCode,
     shareText: shareText(),
@@ -919,6 +991,7 @@ window.render_game_to_text = () => {
           options: v.event.options.map((item) => ({ id: item.id, label: item.label, impactText: item.impactText })),
         }
       : null,
+    currentSkills: v.skills,
     history: v.history,
     result: v.result,
   });

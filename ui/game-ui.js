@@ -13,6 +13,12 @@ function historyItem(item) {
   return `<li>Day ${item.day}: ${item.optionLabel} <span>${item.impactText}</span></li>`;
 }
 
+function tempSkillCard(skill, disabled) {
+  return `<button class="ghost" data-skill-id="${skill.id}" ${disabled ? "disabled" : ""}>
+    ${skill.name} (${skill.impactText})
+  </button>`;
+}
+
 export function createGameUI(root, actions) {
   root.innerHTML = `
     <section class="shell">
@@ -132,10 +138,10 @@ export function createGameUI(root, actions) {
         </article>
 
         <article class="card tools-card">
-          <h3>临时技能（每局一次）</h3>
+          <h3>临时技能（每日刷新，限用一次）</h3>
+          <p class="opt-impact">${view.skills.usedToday ? "本回合已使用，明天刷新新技能。" : "本回合可用 1 次，技能同时包含收益与代价。"}</p>
           <div class="action-grid">
-            <button class="ghost" data-skill-id="powerNap" ${view.skills.powerNap ? "" : "disabled"}>打个盹 (+体力+心态)</button>
-            <button class="ghost" data-skill-id="borrowCash" ${view.skills.borrowCash ? "" : "disabled"}>找朋友借钱 (+现金-人设)</button>
+            ${view.skills.offers.map((item) => tempSkillCard(item, view.skills.usedToday)).join("")}
           </div>
         </article>
 
