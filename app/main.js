@@ -831,6 +831,13 @@ function decodeChallenge(code) {
   }
 }
 
+function buildShareLink(challengeCode) {
+  if (!challengeCode || typeof window === "undefined") return "";
+  const url = new URL(window.location.href);
+  url.searchParams.set("challenge", challengeCode);
+  return url.toString();
+}
+
 function createSession(seed = Date.now()) {
   const random = seededRandom(seed);
   const archetype = randomPick(STARTER_ARCHETYPES, random);
@@ -1053,12 +1060,25 @@ function startNew(seed = Date.now()) {
 function shareText() {
   const result = state.session.result;
   if (!result) return "";
+  const shareLink = buildShareLink(result.challengeCode);
   return [
     `我在《是男人就坚持100天》坚持了 ${result.daysSurvived} 天，分数 ${result.score}，结局：${result.ending.title}`,
     `结局成因：${result.reason?.bullets?.[0] || "稳住了主要属性"}`,
     `挑战码：${result.challengeCode}`,
-    "打开同链接输入挑战码就能复刻我的局。",
+    shareLink ? `挑战链接：${shareLink}` : "打开同链接输入挑战码就能复刻我的局。",
   ].join("\n");
+}
+
+function importChallengeFromUrl() {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search || "");
+  const code = (params.get("challenge") || "").trim();
+  if (!code) return false;
+  state.importCode = code;
+  const parsed = decodeChallenge(code);
+  if (!parsed || !parsed.seed) return false;
+  startNew(Number(parsed.seed));
+  return true;
 }
 
 function buildView() {
@@ -1172,4 +1192,5 @@ window.render_game_to_text = () => {
 
 window.advanceTime = () => refresh();
 
+importChallengeFromUrl();
 refresh();
