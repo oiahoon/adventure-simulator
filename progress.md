@@ -462,3 +462,11 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - `npm run check:replay:v2` passed.
+- Added design-progress audit doc:
+  - `docs/architecture/card-uiux-progress-audit.md`
+  - Includes requirement-by-requirement mapping to `cards-play-deep-research-report` and quantified completion/gaps.
+- UX continuation delivered:
+  - In-game A/B analytics panel now supports local cumulative stats, variant buckets (`single/hand/auto`), JSON export/reset.
+  - `render_game_to_text` now exports `ux_analytics_totals` for automation.
+- Current audit conclusion:
+  - UI/UX completion ~72%, A/B operability ~68%, main remaining gaps are strategy depth (discard/defer), motion polish, and server-side metrics pipeline.
