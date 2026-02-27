@@ -1,7 +1,3 @@
-function statCard(label, value, tone) {
-  return `<div class="stat ${tone}"><span>${label}</span><strong>${value}</strong></div>`;
-}
-
 function optionCard(option) {
   return `<button class="option-btn" data-option-id="${option.id}">
     <span class="opt-title">${option.label}</span>
@@ -17,6 +13,14 @@ function tempSkillCard(skill, disabled) {
   return `<button class="ghost" data-skill-id="${skill.id}" ${disabled ? "disabled" : ""}>
     ${skill.name} (${skill.impactText})
   </button>`;
+}
+
+function statBar(label, value, tone) {
+  const percent = Math.max(0, Math.min(100, Math.round((value / 10) * 100)));
+  return `<div class="hud-bar ${tone}">
+    <div class="hud-label"><span>${label}</span><span>${value}/10</span></div>
+    <div class="hud-track"><div class="hud-fill" style="width:${percent}%"></div></div>
+  </div>`;
 }
 
 export function createGameUI(root, actions) {
@@ -119,13 +123,18 @@ export function createGameUI(root, actions) {
             <p>当前分数 ${view.score}</p>
           </div>
           ${view.reachedTarget ? `<p class="badge">已达成100天目标，可继续挑战</p>` : ""}
-          <p class="opt-impact">开局角色：${view.profileName}</p>
-          <div class="stats-grid">
-            ${statCard("现金", view.stats.money, "money")}
-            ${statCard("体力", view.stats.energy, "energy")}
-            ${statCard("心态", view.stats.mood, "mood")}
-            ${statCard("人设", view.stats.reputation, "rep")}
-            ${statCard("热度", view.stats.heat, "heat")}
+          <div class="hud-layout">
+            <div class="avatar-card">
+              <img class="avatar-img" src="${view.avatar.url}" alt="角色头像" />
+              <p class="opt-impact">开局角色：${view.profileName}</p>
+            </div>
+            <div class="hud-panel">
+              ${statBar("现金", view.stats.money, "money")}
+              ${statBar("体力", view.stats.energy, "energy")}
+              ${statBar("心态", view.stats.mood, "mood")}
+              ${statBar("人设", view.stats.reputation, "rep")}
+              ${statBar("热度", view.stats.heat, "heat")}
+            </div>
           </div>
         </article>
 

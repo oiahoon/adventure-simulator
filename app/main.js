@@ -497,6 +497,17 @@ function randomPick(list, random) {
   return list[Math.floor(random() * list.length)];
 }
 
+function buildAvatarConfig(random, seed) {
+  const styles = ["adventurer", "adventurer-neutral", "avataaars"];
+  const style = randomPick(styles, random);
+  const avatarSeed = `${seed}-${Math.floor(random() * 100000)}`;
+  return {
+    style,
+    seed: avatarSeed,
+    url: `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(avatarSeed)}&backgroundType=gradientLinear`,
+  };
+}
+
 function drawTempSkills(random, count = 2) {
   const pool = [...TEMP_SKILL_POOL];
   const picks = [];
@@ -662,12 +673,14 @@ function createSession(seed = Date.now()) {
   const random = seededRandom(seed);
   const archetype = randomPick(STARTER_ARCHETYPES, random);
   const openingEvent = chooseOpening(archetype, random);
+  const avatar = buildAvatarConfig(random, seed);
   const base = archetype.baseStats;
 
   const jitter = () => (random() < 0.5 ? -1 : 1);
   return {
     seed,
     random,
+    avatar,
     archetypeName: archetype.name,
     openingEvent,
     dayIndex: 0,
@@ -890,6 +903,7 @@ function buildView() {
     dayTarget: TARGET_DAY,
     reachedTarget: session.dayIndex + 1 >= TARGET_DAY,
     profileName: session.archetypeName,
+    avatar: session.avatar,
     bestScore: state.bestScore,
     score,
     stats: { ...session.stats },
@@ -969,6 +983,7 @@ window.render_game_to_text = () => {
     day: `${v.day}/${v.dayTarget}`,
     reachedTarget: v.reachedTarget,
     profileName: v.profileName,
+    avatar: v.avatar,
     score: v.score,
     stats: v.stats,
     currentEvent: v.event

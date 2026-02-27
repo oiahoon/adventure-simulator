@@ -94,29 +94,61 @@
         margin: 0;
         font-weight: 600;
       }
-      .stats-grid {
+      .hud-layout {
         margin-top: 10px;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: 120px 1fr;
+        gap: 12px;
+        align-items: start;
       }
-      .stat {
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        padding: 8px 6px;
+      .avatar-card {
         display: grid;
-        gap: 3px;
-        text-align: center;
+        gap: 8px;
+        align-content: start;
+      }
+      .avatar-img {
+        width: 112px;
+        height: 112px;
+        border-radius: 12px;
+        border: 2px solid var(--line);
+        background: #f7f1e4;
+      }
+      .hud-panel {
+        justify-self: end;
+        width: min(420px, 100%);
+        display: grid;
+        gap: 7px;
+      }
+      .hud-bar {
+        border: 1px solid #cebfa2;
+        border-radius: 10px;
+        padding: 6px 8px;
+        background: #fff8ec;
+      }
+      .hud-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-size: 12px;
+        margin-bottom: 4px;
+        color: var(--ink);
       }
-      .stat strong {
-        font-size: 18px;
+      .hud-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #eadfca;
+        overflow: hidden;
       }
-      .stat.money strong { color: var(--money); }
-      .stat.energy strong { color: var(--energy); }
-      .stat.mood strong { color: var(--mood); }
-      .stat.rep strong { color: var(--rep); }
-      .stat.heat strong { color: var(--heat); }
+      .hud-fill {
+        height: 100%;
+        border-radius: inherit;
+        transition: width 180ms ease;
+      }
+      .hud-bar.money .hud-fill { background: linear-gradient(90deg, #2f6f3c, #4db064); }
+      .hud-bar.energy .hud-fill { background: linear-gradient(90deg, #2e63b6, #4d91ff); }
+      .hud-bar.mood .hud-fill { background: linear-gradient(90deg, #7b33bf, #ad67ef); }
+      .hud-bar.rep .hud-fill { background: linear-gradient(90deg, #b13e69, #e26595); }
+      .hud-bar.heat .hud-fill { background: linear-gradient(90deg, #ba6c11, #f4a331); }
       .event-card h3,
       .tools-card h3,
       .card h3 {
@@ -223,8 +255,20 @@
         padding: 10px;
       }
       @media (max-width: 540px) {
-        .stats-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+        .hud-layout {
+          grid-template-columns: 1fr;
+        }
+        .avatar-card {
+          grid-template-columns: 76px 1fr;
+          align-items: center;
+          gap: 10px;
+        }
+        .avatar-img {
+          width: 72px;
+          height: 72px;
+        }
+        .hud-panel {
+          width: 100%;
         }
         .action-grid,
         .import-row {
