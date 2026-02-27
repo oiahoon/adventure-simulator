@@ -19,6 +19,7 @@ function forceWinCurrentBattle(run) {
 function simulateRunWithDecisions({ seed, nodeTotal, decisions }) {
   const run = createRun({ seed, nodeTotal });
   const events = [];
+  const eventRecords = [];
   const sourceCounts = { arc: 0, queue: 0, branchQueue: 0, deck: 0 };
   let branchNodeCount = 0;
   let cursor = 0;
@@ -31,6 +32,7 @@ function simulateRunWithDecisions({ seed, nodeTotal, decisions }) {
       const current = run.state.story.current;
       if (current) {
         events.push(`${current.id}${current.branch ? `:${current.branch.id}` : ""}`);
+        eventRecords.push({ id: current.id, source: current.source });
         if (sourceCounts[current.source] !== undefined) sourceCounts[current.source] += 1;
       }
       const options = run.state.pendingStoryChoice?.options || [];
@@ -70,6 +72,7 @@ function simulateRunWithDecisions({ seed, nodeTotal, decisions }) {
   return {
     status: run.state.mode === "victory" ? "complete" : "incomplete",
     events,
+    eventRecords,
     branchNodeCount,
     sourceCounts,
     usedDecisions: decisions.slice(0, cursor),
@@ -113,9 +116,11 @@ function parseNumberFlag(name, fallback) {
 
 function computeMetrics(paths) {
   const pathSet = new Set(paths.map((entry) => entry.events.join("->")));
-  const allEvents = paths.flatMap((entry) => entry.events.map((item) => item.split(":")[0]));
+  const nonArcEvents = paths.flatMap((entry) =>
+    entry.eventRecords.filter((record) => record.source !== "arc").map((record) => record.id)
+  );
   const frequency = new Map();
-  allEvents.forEach((eventId) => {
+  nonArcEvents.forEach((eventId) => {
     frequency.set(eventId, (frequency.get(eventId) || 0) + 1);
   });
 
@@ -125,6 +130,10 @@ function computeMetrics(paths) {
     .reduce((sum, value) => sum + value, 0);
 
   const totalNodes = paths.reduce((sum, entry) => sum + entry.events.length, 0);
+  const nonArcTotalNodes = paths.reduce(
+    (sum, entry) => sum + entry.eventRecords.filter((record) => record.source !== "arc").length,
+    0
+  );
   const branchQueueNodes = paths.reduce((sum, entry) => sum + entry.sourceCounts.branchQueue, 0);
   const avgBranchNodes =
     paths.length === 0 ? 0 : paths.reduce((sum, entry) => sum + entry.branchNodeCount, 0) / paths.length;
@@ -134,7 +143,7 @@ function computeMetrics(paths) {
     unique_story_paths: pathSet.size,
     avg_branch_nodes_per_run: Number(avgBranchNodes.toFixed(3)),
     branch_exclusive_event_ratio: totalNodes ? Number((branchQueueNodes / totalNodes).toFixed(3)) : 0,
-    top10_event_repeat_ratio: totalNodes ? Number((top10Count / totalNodes).toFixed(3)) : 0,
+    top10_event_repeat_ratio: nonArcTotalNodes ? Number((top10Count / nonArcTotalNodes).toFixed(3)) : 0,
   };
 }
 

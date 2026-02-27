@@ -33,14 +33,24 @@ function pickFromPool(pool, random) {
   return pool[Math.floor(random() * pool.length)];
 }
 
-function chooseDeckEvent(planner, random) {
+function chooseDeckEvent(planner, random, recentStoryIds = []) {
+  const recentSet = new Set(recentStoryIds.slice(-4));
+
   const candidates = STORY_DECK.filter((eventId) => {
+    const event = STORY_EVENTS[eventId];
+    if (event.requiresFlags?.some((flag) => !planner.flags[flag])) return false;
+    if (event.forbidFlags?.some((flag) => planner.flags[flag])) return false;
+    if ((planner.eventCounts[eventId] || 0) >= 2) return false;
+    if (recentSet.has(eventId)) return false;
+    return true;
+  });
+  const fallbackPool = STORY_DECK.filter((eventId) => {
     const event = STORY_EVENTS[eventId];
     if (event.requiresFlags?.some((flag) => !planner.flags[flag])) return false;
     if (event.forbidFlags?.some((flag) => planner.flags[flag])) return false;
     return true;
   });
-  const pool = candidates.length ? candidates : STORY_DECK;
+  const pool = candidates.length ? candidates : fallbackPool.length ? fallbackPool : STORY_DECK;
 
   const weighted = pool.map((eventId) => {
     const event = STORY_EVENTS[eventId];
@@ -70,7 +80,14 @@ function chooseStoryEvent(planner, random) {
     planner.arcIndex += 1;
     return { event: STORY_EVENTS[arcEventId], source: "arc" };
   }
-  return { event: chooseDeckEvent(planner, random), source: "deck" };
+  return {
+    event: chooseDeckEvent(
+      planner,
+      random,
+      planner.storyHistory.map((entry) => entry.id)
+    ),
+    source: "deck",
+  };
 }
 
 function applyStoryEffects(planner, state, effects = {}) {
@@ -122,6 +139,8 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
     flags: {},
     bias: {},
     rewardBias: {},
+    eventCounts: {},
+    storyHistory: [],
   };
 
   const state = {
@@ -178,6 +197,8 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
       node: state.nodeIndex + 1,
       ...state.story.current,
     });
+    planner.storyHistory.push({ id: node.story.id, source: node.story.source });
+    planner.eventCounts[node.story.id] = (planner.eventCounts[node.story.id] || 0) + 1;
 
     applyStoryEffects(planner, state, node.story.preEffects);
     applyStoryEffects(planner, state, node.story.runtimeEffects);
