@@ -1,6 +1,26 @@
 {
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/public/favicon.ico"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/public/app/:path*"
+    },
+    {
+      "source": "/core/:path*",
+      "destination": "/public/core/:path*"
+    },
+    {
+      "source": "/content/:path*",
+      "destination": "/public/content/:path*"
+    },
+    {
+      "source": "/ui/:path*",
+      "destination": "/public/ui/:path*"
+    },
+    {
       "source": "/",
       "destination": "/public/index.html"
     }
