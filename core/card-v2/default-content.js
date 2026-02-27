@@ -5,6 +5,7 @@ const DECK_RULES = {
   baseHandSize: 3,
   maxHandSize: 3,
   drawPerTurn: 3,
+  opportunitySlots: 1,
   preventDuplicatesInHand: true,
   discardCooldownTurns: 4,
   deferCooldownTurns: 2

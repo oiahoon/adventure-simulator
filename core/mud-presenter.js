@@ -39,6 +39,7 @@ function summarizeRun(run) {
     "- play                出牌（传 cardId）",
     "- discard             弃置手牌（传 cardId）",
     "- defer               延后手牌（传 cardId）",
+    "- prefer              设置机会偏好（balanced/survival/growth/debt）",
     "- choose              处理关键抉择（传 option）"
   ].join("\n");
 }

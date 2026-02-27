@@ -27,7 +27,8 @@
     analytics: null,
     runStartCounters: null,
     lastRecordedEndKey: "",
-    lastQueueHintText: ""
+    lastQueueHintText: "",
+    prevStats: null
   };
 
   const els = {
@@ -40,7 +41,10 @@
     newBtn: document.getElementById("new-btn"),
     drawBtn: document.getElementById("draw-btn"),
     layoutBtn: document.getElementById("layout-btn"),
+    prefSelect: document.getElementById("pref-select"),
+    prefBtn: document.getElementById("pref-btn"),
     analyticsBox: document.getElementById("analytics-box"),
+    copyAnalyticsBtn: document.getElementById("copy-analytics-btn"),
     exportAnalyticsBtn: document.getElementById("export-analytics-btn"),
     resetAnalyticsBtn: document.getElementById("reset-analytics-btn"),
     ending: document.getElementById("ending"),
@@ -264,9 +268,26 @@
       ["天数", run.day, 36, false],
       ["回合", run.turn, 80, false]
     ];
+    const prev = state.prevStats || {};
+    const keyMap = ["hp", "san", "fatigue", "debt", "heat", "cash", "day", "turn"];
     els.kpi.innerHTML = items
-      .map((it) => `<div><span>${it[0]}</span><strong>${Number.isFinite(it[1]) ? it[1] : 0}</strong><div class="bar"><i style="width:${ratio(it[1], it[2], it[3]).toFixed(1)}%"></i></div></div>`)
+      .map((it, idx) => {
+        const v = Number.isFinite(it[1]) ? it[1] : 0;
+        const k = keyMap[idx];
+        const pulse = Number.isFinite(prev[k]) && prev[k] !== v ? " pulse" : "";
+        return `<div class="${pulse.trim()}"><span>${it[0]}</span><strong>${v}</strong><div class="bar"><i style="width:${ratio(it[1], it[2], it[3]).toFixed(1)}%"></i></div></div>`;
+      })
       .join("");
+    state.prevStats = {
+      hp: Number(stats.hp || 0),
+      san: Number(stats.san || 0),
+      fatigue: Number(stats.fatigue || 0),
+      debt: Number(stats.debt || 0),
+      heat: Number(stats.heat || 0),
+      cash: Number(stats.cash || 0),
+      day: Number(run.day || 0),
+      turn: Number(run.turn || 0)
+    };
   }
 
   function renderQueueHint() {
@@ -304,7 +325,7 @@
         <h3>${card.title || card.id}</h3>
         <p>${card.text || card.id}</p>
         <div class="row">
-          <span class="tag">${card.tag || "card"}</span>
+          <span class="tag">${card.deckType === "opportunity" ? "opportunity" : (card.tag || "card")}</span>
           ${card.forced ? '<span class="forced-tag">强制后续</span>' : ""}
         </div>
         <div class="preview">
@@ -345,7 +366,7 @@
           <h4>${card.title || card.id}</h4>
           <p>${card.text ? String(card.text).slice(0, 36) : card.id}</p>
           <div class="row">
-            <span class="tag">${card.tag || "card"}</span>
+            <span class="tag">${card.deckType === "opportunity" ? "opportunity" : (card.tag || "card")}</span>
             ${card.forced ? '<span class="forced-tag">强制</span>' : ""}
           </div>
           ${handActions}
@@ -500,6 +521,15 @@
     const bSingle = (a.byVariant && a.byVariant.single) || { runs: 0, wins: 0, plays: 0, turns: 0 };
     const bHand = (a.byVariant && a.byVariant.hand) || { runs: 0, wins: 0, plays: 0, turns: 0 };
     const bAuto = (a.byVariant && a.byVariant.auto) || { runs: 0, wins: 0, plays: 0, turns: 0 };
+    const start = state.runStartCounters || snapshotUx();
+    const session = {
+      plays: Math.max(0, state.uxMetrics.plays - start.plays),
+      swipePlays: Math.max(0, state.uxMetrics.swipePlays - start.swipePlays),
+      discards: Math.max(0, state.uxMetrics.discards - start.discards),
+      defers: Math.max(0, state.uxMetrics.defers - start.defers),
+      shares: Math.max(0, state.uxMetrics.shareCopy - start.shareCopy) + Math.max(0, state.uxMetrics.shareBuild - start.shareBuild)
+    };
+    const sessionSwipe = session.plays > 0 ? Math.round((session.swipePlays / session.plays) * 1000) / 1000 : 0;
     const last = Array.isArray(a.recentRuns) ? a.recentRuns.slice(0, 3) : [];
     const lastText = last.length
       ? last.map((x) => `${x.at.slice(0, 16)} ${x.variant} D${x.day}/T${x.turn} plays=${x.plays} discard=${x.discards} defer=${x.defers} swipe=${x.swipeRate}`).join("\n")
@@ -512,9 +542,26 @@
       `single: runs=${bSingle.runs} wins=${bSingle.wins} plays=${bSingle.plays} turns=${bSingle.turns}`,
       `hand: runs=${bHand.runs} wins=${bHand.wins} plays=${bHand.plays} turns=${bHand.turns}`,
       `auto: runs=${bAuto.runs} wins=${bAuto.wins} plays=${bAuto.plays} turns=${bAuto.turns}`,
+      `会话: plays=${session.plays} swipe=${sessionSwipe} discard=${session.discards} defer=${session.defers} shares=${session.shares}`,
+      "目标差距: 策略深度约7% / 动效质感约9% / 数据闭环约5%",
       "",
       "最近3局：",
       lastText
+    ].join("\n");
+  }
+
+  function buildAnalyticsSummaryText() {
+    const a = state.analytics || newAnalyticsStore();
+    const t = a.totals || {};
+    const runs = Number(t.runs || 0);
+    const plays = Number(t.totalPlays || 0);
+    const swipeRate = plays > 0 ? Math.round((Number(t.swipePlays || 0) / plays) * 1000) / 1000 : 0;
+    const winRate = runs > 0 ? Math.round((Number(t.wins || 0) / runs) * 1000) / 1000 : 0;
+    return [
+      `实验摘要`,
+      `runs=${runs} winRate=${winRate} totalPlays=${plays} swipeRate=${swipeRate}`,
+      `discards=${t.discards || 0} defers=${t.defers || 0} shareCopies=${t.shareCopies || 0} shareBuilds=${t.shareBuilds || 0}`,
+      `variant(single/hand/auto)=${(a.byVariant.single && a.byVariant.single.runs) || 0}/${(a.byVariant.hand && a.byVariant.hand.runs) || 0}/${(a.byVariant.auto && a.byVariant.auto.runs) || 0}`
     ].join("\n");
   }
 
@@ -571,6 +618,23 @@
       .map((id) => `${id} x${map[id]}`);
   }
 
+  function impactfulCards(run, limit) {
+    const events = Array.isArray(run && run.eventLog) ? run.eventLog : [];
+    const rows = events.filter((e) => e && e.type === "play" && e.cardId);
+    const map = {};
+    rows.forEach((e) => {
+      const k = e.cardId;
+      const cur = map[k] || { score: 0, count: 0 };
+      cur.score += Number(e.impactScore || 0);
+      cur.count += 1;
+      map[k] = cur;
+    });
+    return Object.keys(map)
+      .sort((a, b) => map[b].score - map[a].score)
+      .slice(0, limit || 3)
+      .map((id) => `${id}(${map[id].score}/${map[id].count})`);
+  }
+
   function recentTimeline(run, limit) {
     const list = Array.isArray(run && run.eventLog) ? run.eventLog.slice(-80) : [];
     const out = [];
@@ -616,7 +680,13 @@
       .join(" / ");
     const ach = computeAchievements(run);
     const keys = topCards(run, 3);
+    const impact = impactfulCards(run, 3);
     const timeline = recentTimeline(run, 4);
+    const highlights = [];
+    if (run.metrics && run.metrics.defers > 0) highlights.push(`延后策略触发 ${run.metrics.defers} 次`);
+    if (run.metrics && run.metrics.discards > 0) highlights.push(`弃置策略触发 ${run.metrics.discards} 次`);
+    if (timeline.length) highlights.push(timeline[0]);
+    if (!highlights.length) highlights.push("稳态推进");
     const title = run.day >= 36 ? "终盘幸存" : "阶段倒下";
     const text = [
       `结局: ${title}`,
@@ -625,7 +695,9 @@
       `决策数: ${run.metrics.cardPlays} 关键事件: ${run.metrics.keyEvents}`,
       `剧情链: ${arcSummary || "无显著收束"}`,
       `关键牌: ${keys.length ? keys.join("、") : "暂无"}`,
+      `高影响牌: ${impact.length ? impact.join("、") : "暂无"}`,
       `轨迹: ${timeline.length ? timeline.join(" | ") : "暂无"}`,
+      `亮点: ${highlights.join(" / ")}`,
       `成就: ${ach.join("、")}`
     ].join("\n");
 
@@ -634,11 +706,13 @@
       `坚持到 D${run.day}/T${run.turn}，决策 ${run.metrics.cardPlays} 次，关键事件 ${run.metrics.keyEvents} 次`,
       `状态：生命${stats.hp} 精神${stats.san} 疲劳${stats.fatigue} 债务${stats.debt} 热度${stats.heat} 现金${stats.cash}`,
       `关键牌：${keys.length ? keys.join("、") : "暂无"}`,
+      `高影响牌：${impact.length ? impact.join("、") : "暂无"}`,
       `轨迹：${timeline.length ? timeline.join("；") : "暂无"}`,
+      `亮点：${highlights.join("；")}`,
       `成就：${ach.join("、")}`
     ].join("\n");
 
-    return { text, shareText, achievements: ach, title, keyCards: keys, timeline };
+    return { text, shareText, achievements: ach, title, keyCards: keys, impactCards: impact, timeline, highlights };
   }
 
   function renderShareCard(run, ending) {
@@ -664,6 +738,7 @@
       `债务 ${stats.debt}  热度 ${stats.heat}  现金 ${stats.cash}`,
       `决策 ${run.metrics.cardPlays}  关键事件 ${run.metrics.keyEvents}`,
       `关键牌: ${(ending.keyCards || []).join("、") || "暂无"}`,
+      `高影响牌: ${(ending.impactCards || []).join("、") || "暂无"}`,
       `成就: ${(ending.achievements || []).join("、")}`
     ];
     shareCtx.font = "500 34px 'Noto Sans SC'";
@@ -732,6 +807,7 @@
     state.lastError = "";
     state.activeCardId = "";
     state.lastRecordedEndKey = "";
+    state.prevStats = null;
     try {
       const res = await callApi({ action: "new" });
       state.run = res.run;
@@ -796,7 +872,25 @@
     }
   }
 
+  async function setPreference(pref) {
+    if (!state.run) return;
+    setBusy(true);
+    state.lastError = "";
+    try {
+      const res = await callApi({ action: "prefer", preference: pref, run: state.run });
+      state.run = res.run;
+      state.info = res.message || "偏好已更新";
+    } finally {
+      setBusy(false);
+      render();
+    }
+  }
+
   function render() {
+    if (state.run && state.run.preference && els.prefSelect) {
+      const next = state.run.preference.key || "balanced";
+      if (els.prefSelect.value !== next) els.prefSelect.value = next;
+    }
     renderKpi();
     renderQueueHint();
     renderMainCard();
@@ -829,6 +923,28 @@
       const label = state.uiVariantRequested || "自动";
       els.layoutBtn.textContent = `布局：${label}`;
       render();
+    });
+    els.prefBtn.addEventListener("click", () => {
+      const v = els.prefSelect.value || "balanced";
+      setPreference(v).catch((e) => {
+        state.lastError = e.message;
+        render();
+      });
+    });
+    els.copyAnalyticsBtn.addEventListener("click", () => {
+      const text = buildAnalyticsSummaryText();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          state.info = "实验摘要已复制";
+          render();
+        }).catch((e) => {
+          state.lastError = e.message;
+          render();
+        });
+      } else {
+        state.info = "当前环境不支持剪贴板 API";
+        render();
+      }
     });
     els.exportAnalyticsBtn.addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(state.analytics || newAnalyticsStore(), null, 2)], { type: "application/json;charset=utf-8" });
@@ -875,6 +991,7 @@
       hand: state.run ? state.run.handMeta : [],
       active_card: state.activeCardId,
       ui_variant: state.uiVariantResolved,
+      preference: state.run && state.run.preference ? state.run.preference.key : "balanced",
       log_tail: state.run && state.run.log ? state.run.log.slice(-8) : [],
       info: state.info,
       error: state.lastError,
@@ -893,6 +1010,9 @@
   state.uiVariantResolved = resolveVariant();
   if (els.layoutBtn) {
     els.layoutBtn.textContent = `布局：${state.uiVariantRequested || "自动"}`;
+  }
+  if (els.prefSelect && state.run && state.run.preference) {
+    els.prefSelect.value = state.run.preference.key || "balanced";
   }
   window.addEventListener("resize", () => {
     if (!state.uiVariantRequested) {

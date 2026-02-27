@@ -60,7 +60,7 @@ function validate() {
   if (!isObj(profiles)) err("[profiles] must be object");
 
   if (isObj(deckRules)) {
-    ["baseHandSize", "maxHandSize", "drawPerTurn", "discardCooldownTurns", "deferCooldownTurns"].forEach((k) => {
+    ["baseHandSize", "maxHandSize", "drawPerTurn", "opportunitySlots", "discardCooldownTurns", "deferCooldownTurns"].forEach((k) => {
       if (!Number.isFinite(deckRules[k])) err(`[deckRules] ${k}: required number`);
     });
   }

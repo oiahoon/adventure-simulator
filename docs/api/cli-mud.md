@@ -17,6 +17,7 @@
 - `play`: 打出一张卡（传 `cardId`）
 - `discard`: 弃置一张可管理手牌（传 `cardId`）
 - `defer`: 延后一张可管理手牌（传 `cardId`，后续回合回收）
+- `prefer`: 设置机会偏好（`balanced/survival/growth/debt`）
 - `choose`: 处理关键抉择（传 `option`）
 
 ## Curl 示例

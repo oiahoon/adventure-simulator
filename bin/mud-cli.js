@@ -110,7 +110,7 @@ async function main() {
 
   mud-cli [--mode remote|local] [--base-url URL] [--name NAME] [--engine v2|v1]
 
-卡牌协议动作: new/status/draw/play/discard/defer/choose`);
+卡牌协议动作: new/status/draw/play/discard/defer/prefer/choose`);
     return;
   }
 
@@ -132,10 +132,11 @@ async function main() {
       console.log("5) 处理关键抉择");
       console.log("6) 新开一局");
       console.log("7) 切换到本地模式");
-      console.log("8) 退出");
+      console.log("8) 设置机会偏好");
+      console.log("9) 退出");
 
-      const choice = (await rl.question("\n请输入选项 [1-8]: ")).trim();
-      if (choice === "8") break;
+      const choice = (await rl.question("\n请输入选项 [1-9]: ")).trim();
+      if (choice === "9") break;
 
       if (choice === "1") {
         const resp = await engine.runAction({ action: "draw", run });
@@ -184,6 +185,10 @@ async function main() {
       } else if (choice === "7") {
         engine = new LocalEngine(args.engine);
         const resp = await engine.runAction({ action: "new", name: run && run.player ? run.player.name : "" });
+        run = resp.run;
+      } else if (choice === "8") {
+        const pref = (await rl.question("输入偏好 (balanced/survival/growth/debt): ")).trim();
+        const resp = await engine.runAction({ action: "prefer", preference: pref, run });
         run = resp.run;
       } else {
         await rl.question("无效输入，回车继续...");

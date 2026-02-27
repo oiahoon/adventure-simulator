@@ -498,3 +498,24 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:replay:v2` passed.
 - Playwright status:
   - skill client still blocked by ESM entry parsing issue in current environment (`Cannot use import statement outside a module`).
+- Continued toward remaining recommendations (strategy depth + motion + replay explainability):
+  - V2 engine upgraded with opportunity routing and preference control:
+    - New deck rule: `opportunitySlots`.
+    - New action: `prefer` (`balanced/survival/growth/debt`) to bias draw weights.
+  - Added play impact scoring to event log (`impactScore` + stat deltas) for better ending explainability.
+  - Web UI upgraded:
+    - preference selector + apply button.
+    - KPI pulse animation on stat changes.
+    - card enter + delayed text reveal micro-motion.
+    - ending summary/share now include impact cards + highlights.
+  - API/CLI protocol upgraded to include `prefer` in action list; CLI menu supports preference switching.
+  - V2 replay golden hashes updated after draw-policy change.
+  - `/game-v2/` converted to redirect alias to `/game/` to avoid divergent shell behavior.
+- Audit update:
+  - `docs/architecture/card-uiux-progress-audit.md` refreshed to UI/UX ~86%, A/B ~78%, with remaining gaps focused on polish and server-side analytics.
+- Validation:
+  - `node --check` passed for modified runtime/core/cli files.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.

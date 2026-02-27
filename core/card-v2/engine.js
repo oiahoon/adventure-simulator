@@ -3,7 +3,7 @@
 const { DEFAULT_CONTENT } = require("./default-content");
 const { loadCardV2Content } = require("./content-loader");
 
-const SUPPORTED_ACTIONS = ["new", "status", "draw", "play", "discard", "defer", "choose"];
+const SUPPORTED_ACTIONS = ["new", "status", "draw", "play", "discard", "defer", "prefer", "choose"];
 
 function defaultRandom() {
   return Math.random();
@@ -100,6 +100,9 @@ function computeWeight(run, card) {
   if (cardBias) w *= cardBias.mul;
   const recentCount = run.recentCards.filter((id) => id === card.id).length;
   if (recentCount > 0) w *= 1 / (1 + recentCount * 0.35);
+  const pref = run.preference;
+  if (pref && pref.tag && tags.includes(pref.tag)) w *= 1.25;
+  if (pref && pref.deckTag && Array.isArray(card.deckTags) && card.deckTags.includes(pref.deckTag)) w *= 1.15;
   return Math.max(0, w);
 }
 
@@ -284,6 +287,7 @@ function drawCards(run, rng, content) {
         title: forcedCard.event.title,
         text: forcedCard.event.text || "",
         tag: forcedCard.event.tags[0] || "forced",
+        deckType: "forced",
         forced: true,
         canDiscard: !!forcedCard.canDiscard,
         leftLabel: forcedChoices[0] && forcedChoices[0].label ? forcedChoices[0].label : "左选",
@@ -312,18 +316,32 @@ function drawCards(run, rng, content) {
     .map((card) => ({ card, weight: computeWeight(run, card) }))
     .filter((x) => x.weight > 0);
 
+  const opportunitySlots = Math.max(0, Number(content.DECK_RULES.opportunitySlots || 0));
   const pickedIds = Array.isArray(run.hand) ? run.hand.slice() : [];
   const pickedMeta = Array.isArray(run.handMeta) ? run.handMeta.slice() : [];
   while (pickedIds.length < size && weighted.length > 0) {
-    const card = weightedPick(rng, weighted);
+    let pool = weighted;
+    const currentOpp = pickedMeta.filter((m) => m && m.deckType === "opportunity").length;
+    if (currentOpp < opportunitySlots) {
+      const opp = weighted.filter((x) => Array.isArray(x.card.deckTags) && x.card.deckTags.includes("deck:opportunity"));
+      if (opp.length) pool = opp;
+    } else {
+      const nonOpp = weighted.filter((x) => !(Array.isArray(x.card.deckTags) && x.card.deckTags.includes("deck:opportunity")));
+      if (nonOpp.length) pool = nonOpp;
+    }
+
+    const card = weightedPick(rng, pool);
     if (!card) break;
     const choices = Array.isArray(card.event.choices) ? card.event.choices : [];
+    const deckTags = Array.isArray(card.deckTags) ? card.deckTags : [];
+    const uiTag = deckTags.includes("deck:opportunity") ? "opportunity" : card.event.tags[0] || "main";
     pickedIds.push(card.id);
     pickedMeta.push({
       id: card.id,
       title: card.event.title,
       text: card.event.text || "",
       tag: card.event.tags[0] || "main",
+      deckType: uiTag,
       forced: false,
       canDiscard: !!card.canDiscard,
       leftLabel: choices[0] && choices[0].label ? choices[0].label : "左选",
@@ -452,6 +470,7 @@ function playCard(run, rng, cardId, choiceId, content) {
   const card = cardById(content, resolvedCardId);
   if (!card) return { ok: false, statusCode: 400, error: "未知 cardId" };
 
+  const before = { ...run.stats };
   const resolution = resolveChoice(run, card, choiceId, rng);
   run.metrics.cardPlays += 1;
   run.handOpUsedTurn = -1;
@@ -467,7 +486,6 @@ function playCard(run, rng, cardId, choiceId, content) {
   }
 
   pushLog(run, `你打出【${event.title}】并选择「${resolution.label}」。`);
-  pushEvent(run, "play", { cardId: card.id, choiceId: resolution.choice });
 
   run.hand = [];
   run.handMeta = [];
@@ -478,6 +496,27 @@ function playCard(run, rng, cardId, choiceId, content) {
   updateContextTags(run);
   maybeActivateArcs(run);
   runArcStep(run, rng, content);
+
+  const after = { ...run.stats };
+  const impactScore = Math.abs((after.hp || 0) - (before.hp || 0))
+    + Math.abs((after.san || 0) - (before.san || 0))
+    + Math.abs((after.fatigue || 0) - (before.fatigue || 0))
+    + Math.abs((after.debt || 0) - (before.debt || 0))
+    + Math.abs((after.heat || 0) - (before.heat || 0))
+    + Math.abs((after.cash || 0) - (before.cash || 0));
+  pushEvent(run, "play", {
+    cardId: card.id,
+    choiceId: resolution.choice,
+    impactScore,
+    delta: {
+      hp: (after.hp || 0) - (before.hp || 0),
+      san: (after.san || 0) - (before.san || 0),
+      fatigue: (after.fatigue || 0) - (before.fatigue || 0),
+      debt: (after.debt || 0) - (before.debt || 0),
+      heat: (after.heat || 0) - (before.heat || 0),
+      cash: (after.cash || 0) - (before.cash || 0)
+    }
+  });
 
   const endReason = checkEnd(run);
   if (endReason) {
@@ -544,6 +583,7 @@ function createRun(rng, name, content) {
     handOpUsedTurn: -1,
     recentCards: [],
     playHistory: [],
+    preference: { key: "balanced", tag: "", deckTag: "" },
     storyStage: "初入社会",
     contextTags: [],
     metrics: { cardPlays: 0, keyEvents: 0, battles: 0, events: 0, discards: 0, defers: 0 },
@@ -565,6 +605,30 @@ function createRun(rng, name, content) {
   updateContextTags(run);
   drawCards(run, rng, content);
   return run;
+}
+
+function applyPreference(run, prefKey) {
+  const key = String(prefKey || "balanced");
+  if (key === "survival") {
+    run.preference = { key: "survival", tag: "recover", deckTag: "deck:opportunity" };
+    run.biasMap["tag:recover"] = { mul: 1.2, ttl: 10 };
+    run.biasMap["tag:legal"] = { mul: 1.1, ttl: 10 };
+    return "已切换机会偏好：求稳（恢复/法律）";
+  }
+  if (key === "growth") {
+    run.preference = { key: "growth", tag: "jobhunt", deckTag: "deck:main" };
+    run.biasMap["tag:jobhunt"] = { mul: 1.2, ttl: 10 };
+    run.biasMap["tag:career"] = { mul: 1.1, ttl: 10 };
+    return "已切换机会偏好：成长（求职/职业）";
+  }
+  if (key === "debt") {
+    run.preference = { key: "debt", tag: "mortgage", deckTag: "deck:main" };
+    run.biasMap["tag:mortgage"] = { mul: 1.25, ttl: 10 };
+    run.biasMap["tag:debt"] = { mul: 1.15, ttl: 10 };
+    return "已切换机会偏好：债务防线（房贷/债务）";
+  }
+  run.preference = { key: "balanced", tag: "", deckTag: "" };
+  return "已切换机会偏好：均衡";
 }
 
 function runAction(rng, payload, content) {
@@ -595,6 +659,8 @@ function runAction(rng, payload, content) {
       const drawRes = drawCards(currentRun, rng, content);
       if (drawRes.ok) message += ` ${drawRes.message}`;
     }
+  } else if (action === "prefer") {
+    message = applyPreference(currentRun, option || payload.preference || payload.preferenceKey);
   } else if (action === "discard" || action === "defer") {
     const handRes = handOpCard(currentRun, cardId || option, content, action);
     if (!handRes.ok) {
