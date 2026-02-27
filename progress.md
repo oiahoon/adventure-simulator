@@ -519,3 +519,28 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - `npm run check:replay:v2` passed.
+- Final recommendation closure pass:
+  - Added engine-level opportunity strategy controls:
+    - `opportunitySlots` deck rule.
+    - `prefer` action (`balanced/survival/growth/debt`) with draw bias updates.
+  - Added impact-based recap data:
+    - `play` events now include `impactScore` + per-stat deltas.
+    - ending/share include top impact cards and run highlights.
+  - Added motion polish:
+    - card enter animation + delayed text reveal + KPI pulse on stat changes.
+  - Added lightweight server-side analytics pipeline:
+    - `POST /api/ux/track`
+    - `GET /api/ux/summary`
+    - client auto-reports ended-run summary once per run key.
+  - Added UI controls:
+    - web preference selector + apply button.
+    - analytics summary copy button.
+    - `/game-v2/` now redirects to `/game/` as compatibility alias.
+- Audit refresh:
+  - `docs/architecture/card-uiux-progress-audit.md` updated to UI/UX ~88%, A/B operability ~84%.
+- Validation:
+  - `node --check` passed for changed core/api/cli/web runtime files.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed (golden hashes updated for opportunity policy changes).

@@ -1,6 +1,9 @@
 # CLI MUD API
 
 接口: `POST /api/mud/run`
+轻量埋点:
+- `POST /api/ux/track`
+- `GET /api/ux/summary`
 
 当请求头包含 `x-client-mode: cli`（或 `Accept: text/plain`）时，接口返回纯文本战报；否则返回 JSON。
 

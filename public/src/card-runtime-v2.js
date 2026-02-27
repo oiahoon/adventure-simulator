@@ -28,7 +28,8 @@
     runStartCounters: null,
     lastRecordedEndKey: "",
     lastQueueHintText: "",
-    prevStats: null
+    prevStats: null,
+    lastServerTrackKey: ""
   };
 
   const els = {
@@ -178,6 +179,18 @@
     });
     state.analytics.recentRuns = state.analytics.recentRuns.slice(0, 24);
     saveAnalyticsStore();
+
+    if (state.lastServerTrackKey !== key) {
+      state.lastServerTrackKey = key;
+      postUxTrack({
+        variant,
+        turns: Number(run.turn || 0),
+        plays: diff.plays,
+        shares: diff.shareCopies + diff.shareBuilds,
+        swipeRate: diff.plays > 0 ? Math.round((diff.swipePlays / diff.plays) * 1000) / 1000 : 0,
+        win: !!win
+      });
+    }
   }
 
   function clamp(v, min, max) {
@@ -249,6 +262,18 @@
     }
     if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
     return json;
+  }
+
+  async function postUxTrack(payload) {
+    try {
+      await fetch("/api/ux/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {})
+      });
+    } catch (_) {
+      // Ignore telemetry transport errors.
+    }
   }
 
   function renderKpi() {
@@ -807,6 +832,7 @@
     state.lastError = "";
     state.activeCardId = "";
     state.lastRecordedEndKey = "";
+    state.lastServerTrackKey = "";
     state.prevStats = null;
     try {
       const res = await callApi({ action: "new" });
