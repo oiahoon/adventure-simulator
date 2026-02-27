@@ -79,6 +79,9 @@ export function createGameUI(root, actions) {
       }
 
       if (view.mode === "ended") {
+        const restartLocked = Boolean(view.endingUi?.restartLocked);
+        const restartConfirm = Boolean(view.endingUi?.restartConfirm);
+        const restartText = restartLocked ? "结算中..." : restartConfirm ? "确认再来一局" : "再来一局";
         panel.innerHTML = `
           <article class="card hero end">
             <p class="badge">结局</p>
@@ -108,8 +111,9 @@ export function createGameUI(root, actions) {
                     : `<p>暂未生成（${view.result.storyError || "unknown"}）</p>`
               }
             </article>
+            <p class="opt-impact">${restartLocked ? "结局刚生成，按钮短暂保护中，避免误触。" : restartConfirm ? "再次点击将立即重开新局。" : "点击“再来一局”后需二次确认，防止误触。"} </p>
             <div class="action-grid">
-              <button class="primary" id="start-btn">再来一局</button>
+              <button class="primary" id="start-btn" ${restartLocked ? "disabled" : ""}>${restartText}</button>
               <button class="ghost" id="copy-share-btn">复制分享文案</button>
             </div>
           </article>

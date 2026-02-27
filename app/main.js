@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_4";
+import { createGameUI } from "../ui/game-ui.js?v=20260227_5";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -1118,6 +1118,10 @@ const state = {
   session: createSession(20260227),
   bestScore: Number(localStorage.getItem(STORAGE_KEY) || 0),
   notice: "",
+  endingUi: {
+    restartLockUntil: 0,
+    restartConfirmUntil: 0,
+  },
 };
 let noticeTimer = null;
 
@@ -1195,6 +1199,9 @@ function finishSession(alive) {
 
   state.bestScore = Math.max(state.bestScore, score);
   localStorage.setItem(STORAGE_KEY, String(state.bestScore));
+  state.endingUi.restartLockUntil = Date.now() + 1200;
+  state.endingUi.restartConfirmUntil = 0;
+  setNotice("本局已结算，确认后可开启新一局");
 
   generateStoryNarrative();
 }
@@ -1306,6 +1313,8 @@ function useSkill(skillId) {
 function startNew(seed = Date.now()) {
   state.session = createSession(seed);
   state.session.mode = "playing";
+  state.endingUi.restartLockUntil = 0;
+  state.endingUi.restartConfirmUntil = 0;
 }
 
 function shareText() {
@@ -1359,6 +1368,10 @@ function buildView() {
     shareText: shareText(),
     notice: state.notice,
     runtimeMode: "frontend_event_mainline",
+    endingUi: {
+      restartLocked: Date.now() < state.endingUi.restartLockUntil,
+      restartConfirm: Date.now() < state.endingUi.restartConfirmUntil,
+    },
   };
 }
 
@@ -1395,6 +1408,18 @@ function setNotice(text) {
 
 const ui = createGameUI(root, {
   onStart: () => {
+    if (state.session.mode === "ended") {
+      if (Date.now() < state.endingUi.restartLockUntil) {
+        setNotice("结局刚生成，稍等片刻再确认重开");
+        return;
+      }
+      if (Date.now() >= state.endingUi.restartConfirmUntil) {
+        state.endingUi.restartConfirmUntil = Date.now() + 2500;
+        setNotice("再点一次“再来一局”确认重开");
+        refresh();
+        return;
+      }
+    }
     startNew(Date.now());
     refresh();
   },
