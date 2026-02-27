@@ -1,81 +1,59 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>都市生存模拟器 - 项目主页</title>
-  <meta name="description" content="都市生存模拟器：单机卡牌文字游戏，每回合做关键决策，结局可分享。">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles/home.css">
-</head>
-<body>
-  <main class="home">
-    <header class="hero card">
-      <p class="eyebrow">TEXT IDLE RPG</p>
-      <h1>都市生存模拟器</h1>
-      <p class="lead">全新重构的回合制卡牌决策文字游戏。主卡滑动、机会手牌、策略偏好与可分享复盘。</p>
-      <div class="cta-row">
-        <a class="btn primary" href="/game/">开始体验（重构版）</a>
-        <a class="btn ghost" href="/game-classic/">进入经典版</a>
-        <a class="btn ghost" href="/game-legacy/">进入 Legacy 版本</a>
-        <a class="btn ghost" href="#intro">查看玩法</a>
-      </div>
-      <div class="meta">
-        <span>单机免费</span>
-        <span>移动端优先</span>
-        <span>可生成战报图分享</span>
-      </div>
-    </header>
-
-    <section id="intro" class="card">
-      <h2>项目介绍</h2>
-      <p>你将扮演城市中的普通人，从随机身份开局。每回合系统发放决策卡，你可以滑动主卡、管理机会手牌，并通过偏好策略调整后续走势。</p>
-      <ul>
-        <li>掷骰生成：姓名、职业、出身、教育、家庭压力、属性。</li>
-        <li>回合出牌：每回合抽牌并出牌，短期收益会改变中长期风险。</li>
-        <li>手牌管理：支持弃置/延后与机会偏好，减少无效抽牌。</li>
-        <li>关键选择：剧情链中的高价值节点需要手动抉择，影响后续分支与结局。</li>
-        <li>结局复盘：生成可截图的战报图与挑战链接。</li>
-      </ul>
-    </section>
-
-    <section class="grid">
-      <article class="card">
-        <h3>核心体验</h3>
-        <p>每回合抽牌 + 出牌。把所有推进操作聚焦到关键决策，减少无效点击。</p>
-      </article>
-      <article class="card">
-        <h3>内容方向</h3>
-        <p>围绕就业、通勤、家庭、财务、舆情等现实压力线，结合黑色幽默随机事件。</p>
-      </article>
-      <article class="card">
-        <h3>分享机制</h3>
-        <p>每局结束可导出战报图和文字总结，方便发布到微信群、朋友圈或论坛。</p>
-      </article>
-      <article class="card">
-        <h3>开发状态</h3>
-        <p>持续迭代中：移动端界面、剧情密度、成就系统、挑战模式会继续更新。</p>
-      </article>
-    </section>
-
-    <footer class="footer card">
-      <p>想直接开局？</p>
-      <a class="btn primary" href="/game/">进入重构版</a>
-      <a class="btn ghost" href="/game-classic/">进入经典版</a>
-      <a class="btn ghost" href="/game-legacy/">进入 Legacy 版本</a>
-    </footer>
-  </main>
-
-  <script>
-    (function () {
-      var p = new URLSearchParams(window.location.search);
-      if (p.has("seed")) {
-        var query = p.toString();
-        window.location.replace("/game/" + (query ? "?" + query : ""));
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Card Game Restart</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        --bg: #f3efe6;
+        --ink: #1f2a44;
+        --card: #fffdf7;
+        --line: #d8c8a8;
       }
-    })();
-  </script>
-</body>
+      html,
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #fff9ec, var(--bg));
+        color: var(--ink);
+      }
+      #app {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .layout header h1 {
+        margin: 0;
+      }
+      .layout main {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+      .card {
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        background: var(--card);
+        min-height: 100px;
+      }
+      .arena {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 180px;
+      }
+      @media (min-width: 768px) {
+        .layout main {
+          grid-template-columns: 2fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="../app/main.js"></script>
+  </body>
 </html>

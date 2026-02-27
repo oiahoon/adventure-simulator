@@ -1,24 +1,12 @@
 {
-  "name": "adventure-simulator",
-  "version": "1.0.0",
-  "description": "江湖奇缘 - 智能文字MUD游戏",
-  "bin": {
-    "mud-cli": "bin/mud-cli.js"
-  },
+  "name": "card-game-restart",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "build": "echo 'Static files already in public directory - build complete'",
-    "mud:cli": "mud-cli --mode local",
-    "check:events": "node scripts/check-events.js",
-    "check:replay": "node scripts/check-replay.js",
-    "check:replay:v2": "node scripts/check-replay-v2.js",
-    "check:cards:v2": "node scripts/check-cards-v2.js"
+    "test": "node --test",
+    "dev": "python3 -m http.server 5173 -d public"
   },
-  "keywords": [
-    "mud",
-    "game",
-    "vercel"
-  ],
-  "license": "MIT",
   "devDependencies": {
     "playwright": "^1.58.2"
   }
