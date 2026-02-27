@@ -7,6 +7,16 @@ function clamp(value, min = 0, max = 12) {
   return Math.max(min, Math.min(max, value));
 }
 
+function effectToText(effects = {}) {
+  const labels = [];
+  if (effects.money) labels.push(`现金${effects.money > 0 ? "+" : ""}${effects.money}`);
+  if (effects.energy) labels.push(`体力${effects.energy > 0 ? "+" : ""}${effects.energy}`);
+  if (effects.mood) labels.push(`心态${effects.mood > 0 ? "+" : ""}${effects.mood}`);
+  if (effects.reputation) labels.push(`人设${effects.reputation > 0 ? "+" : ""}${effects.reputation}`);
+  if (effects.heat) labels.push(`热度${effects.heat > 0 ? "+" : ""}${effects.heat}`);
+  return labels.join(" · ");
+}
+
 const STARTER_ARCHETYPES = [
   {
     id: "office_worker",
