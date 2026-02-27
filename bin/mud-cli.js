@@ -5,6 +5,7 @@
 const { createInterface } = require("node:readline/promises");
 const { stdin, stdout } = require("node:process");
 const { createMudService } = require("../core/mud-engine");
+const { createCardEngineV2 } = require("../core/card-v2/engine");
 
 const DEFAULT_BASE_URL = process.env.MUD_BASE_URL || "https://adventure-simulator.vercel.app";
 
@@ -12,7 +13,8 @@ function parseArgs(argv) {
   const args = {
     mode: "remote",
     baseUrl: DEFAULT_BASE_URL,
-    name: ""
+    name: "",
+    engine: "v1"
   };
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
@@ -26,6 +28,9 @@ function parseArgs(argv) {
     } else if ((a === "--name" || a === "-n") && next) {
       args.name = next;
       i += 1;
+    } else if ((a === "--engine" || a === "-e") && next) {
+      args.engine = next.toLowerCase();
+      i += 1;
     } else if (a === "--help" || a === "-h") {
       args.help = true;
     }
@@ -34,8 +39,9 @@ function parseArgs(argv) {
 }
 
 class LocalEngine {
-  constructor() {
-    this.service = createMudService();
+  constructor(engineVersion) {
+    this.engineVersion = engineVersion === "v2" ? "v2" : "v1";
+    this.service = this.engineVersion === "v2" ? createCardEngineV2() : createMudService();
   }
 
   async runAction(payload) {
@@ -46,15 +52,17 @@ class LocalEngine {
 }
 
 class RemoteEngine {
-  constructor(baseUrl) {
+  constructor(baseUrl, engineVersion) {
     this.endpoint = `${baseUrl.replace(/\/$/, "")}/api/mud/run`;
+    this.engineVersion = engineVersion === "v2" ? "v2" : "v1";
   }
 
   async runAction(payload) {
+    const body = { ...(payload || {}), engineVersion: this.engineVersion };
     const res = await fetch(this.endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(body)
     });
     if (!res.ok) {
       const text = await res.text();
@@ -66,14 +74,21 @@ class RemoteEngine {
 
 function printRun(run) {
   const recent = (run.log || []).slice(-5);
-  const hand = (run.hand || []).map((c, idx) => `${idx + 1}. ${c.title} [${c.tag}] (${c.id})`);
+  const handMeta = Array.isArray(run.handMeta)
+    ? run.handMeta
+    : Array.isArray(run.hand)
+    ? run.hand.map((id) => ({ id, title: id, tag: "card" }))
+    : [];
+  const hand = handMeta.map((c, idx) => `${idx + 1}. ${c.title} [${c.tag}] (${c.id})`);
+  const stage = run.story && run.story.lifeStage ? run.story.lifeStage : run.storyStage || "未知阶段";
+  const city = run.city || { morale: "-", fatigue: "-", debt: "-", heat: "-" };
   console.clear();
   console.log("==================== CARD MUD CLI ====================");
   console.log(`玩家: ${run.player.name} (${run.player.profession})`);
-  console.log(`状态: ${run.mode}  ${run.story.lifeStage}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`);
+  console.log(`状态: ${run.mode}  ${stage}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`);
   console.log(`Lv.${run.player.level} EXP ${run.player.exp}/${run.player.nextExp}`);
   console.log(`HP ${run.player.hp}/${run.player.maxHp} MP ${run.player.mp}/${run.player.maxMp} 金币 ${run.player.gold}`);
-  console.log(`精神 ${run.city.morale} 疲劳 ${run.city.fatigue} 债务 ${run.city.debt} 热度 ${run.city.heat}`);
+  console.log(`精神 ${city.morale} 疲劳 ${city.fatigue} 债务 ${city.debt} 热度 ${city.heat}`);
   console.log(`组织: ${run.player.sect || "未选"} 天赋: ${run.player.perk || "未选"}`);
   console.log(`出牌 ${run.metrics.cardPlays} 关键事件 ${run.metrics.keyEvents}`);
   if (run.pendingChoice) {
@@ -93,13 +108,13 @@ async function main() {
   if (args.help) {
     console.log(`mud-cli 使用说明:
 
-  mud-cli [--mode remote|local] [--base-url URL] [--name NAME]
+  mud-cli [--mode remote|local] [--base-url URL] [--name NAME] [--engine v1|v2]
 
 卡牌协议动作: new/status/draw/play/choose`);
     return;
   }
 
-  let engine = args.mode === "local" ? new LocalEngine() : new RemoteEngine(args.baseUrl);
+  let engine = args.mode === "local" ? new LocalEngine(args.engine) : new RemoteEngine(args.baseUrl, args.engine);
   const rl = createInterface({ input: stdin, output: stdout });
   let run = null;
 
@@ -149,7 +164,7 @@ async function main() {
         const resp = await engine.runAction({ action: "new", name, run: null });
         run = resp.run;
       } else if (choice === "5") {
-        engine = new LocalEngine();
+        engine = new LocalEngine(args.engine);
         const resp = await engine.runAction({ action: "new", name: run && run.player ? run.player.name : "" });
         run = resp.run;
       } else {

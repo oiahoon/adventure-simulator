@@ -1,19 +1,26 @@
 "use strict";
 
 function summarizeRun(run) {
+  if (!run) return "空运行状态";
+  const isV2 = run.engineVersion === "v2" || run.schemaVersion === 2;
   const status = run.mode === "ended" ? "END" : "RUN";
   const choice = run.pendingChoice
     ? `${run.pendingChoice.title}: ${run.pendingChoice.options.map((o) => `${o.id}/${o.label}`).join(", ")}`
     : "无";
   const recent = (run.log || []).slice(-5).map((l) => `- ${l}`).join("\n");
-  const hand = (run.hand || []).length
-    ? run.hand.map((c) => `${c.id}/${c.title}[${c.tag}]`).join(" | ")
+  const handList = Array.isArray(run.handMeta) && run.handMeta.length
+    ? run.handMeta
+    : Array.isArray(run.hand)
+    ? run.hand.map((id) => ({ id, title: id, tag: "card" }))
+    : [];
+  const hand = handList.length
+    ? handList.map((c) => `${c.id}/${c.title}[${c.tag}]`).join(" | ")
     : "无";
 
   return [
-    `=== CARD MUD (${status}) ===`,
+    `=== CARD MUD ${isV2 ? "V2 " : ""}(${status}) ===`,
     `玩家: ${run.player.name} (${run.player.profession})`,
-    `阶段: ${run.story.lifeStage}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`,
+    `阶段: ${isV2 ? run.storyStage : run.story.lifeStage}  Day ${run.day} / Turn ${run.turn}  位置: ${run.location}`,
     `Lv.${run.player.level} EXP ${run.player.exp}/${run.player.nextExp}`,
     `HP ${run.player.hp}/${run.player.maxHp}  MP ${run.player.mp}/${run.player.maxMp}`,
     `金币 ${run.player.gold}  精神 ${run.city.morale}  疲劳 ${run.city.fatigue}  债务 ${run.city.debt}  热度 ${run.city.heat}`,

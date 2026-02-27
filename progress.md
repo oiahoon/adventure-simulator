@@ -321,3 +321,27 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed (0 error / 0 warning).
   - `npm run check:replay` passed (3/3).
   - Core protocol smoke test passed (`new -> play`).
+- Imported new card-design blueprint doc into repo:
+  - `docs/architecture/cards-play-deep-research-report.md`
+- Added staged migration plan for full refactor:
+  - `docs/architecture/card-engine-v2-migration-plan.md`
+- Phase 1 implementation started (parallel-engine migration strategy):
+  - Added experimental v2 engine skeleton:
+    - `core/card-v2/default-content.js`
+    - `core/card-v2/engine.js`
+  - v2 includes:
+    - Card/Event-style state model (`stats/flags/biasMap/queue/activeArcs/cooldowns/recentCards`)
+    - Draw/play protocol and weighted draw with novelty/bias
+    - Forced queue routing and arc activation/step hooks
+    - Structured event log entries for replay/observability groundwork
+  - API now supports engine selection by request payload:
+    - `engineVersion: "v1" | "v2"`
+    - `/api/mud/status` returns supported actions for both versions
+  - CLI now supports engine switching:
+    - `mud-cli --engine v1|v2`
+  - Presenter upgraded to format both v1 and v2 run payloads
+- Validation:
+  - Syntax checks passed for all changed runtime files.
+  - Smoke tests passed for both `v1` and `v2` (`new -> play` loop).
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed (v1 regression baseline intact).

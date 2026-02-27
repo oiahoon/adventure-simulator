@@ -3,10 +3,12 @@
 const express = require("express");
 const cors = require("cors");
 const { createMudService } = require("../core/mud-engine");
+const { createCardEngineV2 } = require("../core/card-v2/engine");
 const { summarizeRun, isCliLikeRequest } = require("../core/mud-presenter");
 
 const app = express();
 const mud = createMudService();
+const mudV2 = createCardEngineV2();
 
 app.use(cors());
 app.use(express.json());
@@ -42,15 +44,21 @@ app.get("/", (req, res) => {
 app.get("/api/mud/status", (req, res) => {
   res.json({
     success: true,
-    engine: "core/mud-engine",
+    engine: "core/mud-engine + core/card-v2/engine",
     mode: ["web", "cli"],
-    supportedActions: mud.constants.SUPPORTED_ACTIONS
+    supportedActions: {
+      v1: mud.constants.SUPPORTED_ACTIONS,
+      v2: mudV2.constants.SUPPORTED_ACTIONS
+    }
   });
 });
 
 app.post("/api/mud/run", (req, res) => {
   try {
-    const result = mud.runAction(req.body || {});
+    const body = req.body || {};
+    const version = String(body.engineVersion || body.engine || "v1").toLowerCase();
+    const service = version === "v2" ? mudV2 : mud;
+    const result = service.runAction(body);
     if (!result.ok) {
       return res.status(result.statusCode || 400).json({
         error: result.error,

@@ -58,6 +58,9 @@ mud-cli --mode local
 ```
 
 CLI 与 API 现使用统一卡牌动作协议：`new / status / draw / play / choose`。
+可通过 `engineVersion` 切换引擎：
+- `v1`：当前稳定线（默认）
+- `v2`：重构中的 Card/Event 引擎（实验）
 
 ## 事件引擎开发
 

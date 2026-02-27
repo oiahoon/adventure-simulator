@@ -5,6 +5,9 @@
 当请求头包含 `x-client-mode: cli`（或 `Accept: text/plain`）时，接口返回纯文本战报；否则返回 JSON。
 
 该接口由共享核心 `core/mud-engine.js` 驱动，CLI 本地模式与远程 API 使用同一套动作语义。
+重构期可传 `engineVersion`：
+- `v1`（默认）
+- `v2`（新 Card/Event 引擎骨架）
 
 ## Actions
 
