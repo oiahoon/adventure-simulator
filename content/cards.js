@@ -5,6 +5,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Deal 6 damage.",
     effects: [{ type: "damage", value: 6 }],
+    tags: ["attack"],
   },
   heavy_strike: {
     id: "heavy_strike",
@@ -12,6 +13,7 @@ export const CARD_LIBRARY = {
     cost: 2,
     text: "Deal 11 damage.",
     effects: [{ type: "damage", value: 11 }],
+    tags: ["attack", "risk"],
   },
   guard: {
     id: "guard",
@@ -19,6 +21,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Gain 6 block.",
     effects: [{ type: "block", value: 6 }],
+    tags: ["defense", "survival"],
   },
   fortify: {
     id: "fortify",
@@ -26,6 +29,7 @@ export const CARD_LIBRARY = {
     cost: 2,
     text: "Gain 11 block.",
     effects: [{ type: "block", value: 11 }],
+    tags: ["defense", "survival"],
   },
   jab: {
     id: "jab",
@@ -33,6 +37,7 @@ export const CARD_LIBRARY = {
     cost: 0,
     text: "Deal 3 damage.",
     effects: [{ type: "damage", value: 3 }],
+    tags: ["attack"],
   },
   focus: {
     id: "focus",
@@ -40,6 +45,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Draw 2 cards.",
     effects: [{ type: "draw", value: 2 }],
+    tags: ["utility", "career"],
   },
   ration: {
     id: "ration",
@@ -47,6 +53,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Heal 4 HP.",
     effects: [{ type: "heal", value: 4 }],
+    tags: ["survival", "defense"],
   },
   assault: {
     id: "assault",
@@ -57,6 +64,7 @@ export const CARD_LIBRARY = {
       { type: "damage", value: 8 },
       { type: "self_block", value: -2 },
     ],
+    tags: ["attack", "risk"],
   },
   tactic: {
     id: "tactic",
@@ -64,6 +72,7 @@ export const CARD_LIBRARY = {
     cost: 0,
     text: "Gain 1 energy.",
     effects: [{ type: "energy", value: 1 }],
+    tags: ["utility", "career"],
   },
   poison_dart: {
     id: "poison_dart",
@@ -71,6 +80,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Apply 3 Poison.",
     effects: [{ type: "status", target: "enemy", status: "poison", value: 3 }],
+    tags: ["attack", "risk"],
   },
   expose: {
     id: "expose",
@@ -78,6 +88,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Apply 2 Vulnerable.",
     effects: [{ type: "status", target: "enemy", status: "vulnerable", value: 2 }],
+    tags: ["attack", "utility"],
   },
   rally: {
     id: "rally",
@@ -85,6 +96,7 @@ export const CARD_LIBRARY = {
     cost: 1,
     text: "Gain 1 Strength.",
     effects: [{ type: "status", target: "player", status: "strength", value: 1 }],
+    tags: ["attack", "career"],
   },
 };
 

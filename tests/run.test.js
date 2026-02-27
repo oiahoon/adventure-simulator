@@ -81,13 +81,13 @@ test("branch queue event has higher priority than arc", () => {
   run.playCard(0);
   run.chooseReward(null);
   run.nextNode(); // node 2: hr_meeting
-  run.chooseStoryBranch("hr_quick_exit"); // enqueueBranch job_hunt_sprint
+  run.chooseStoryBranch("hr_quick_exit"); // enqueueBranch absurd_side_hustle -> job_hunt_sprint
   run.state.battle.state.enemy.hp = 1;
   run.state.battle.state.player.hand = [{ id: "strike", name: "Strike", cost: 1, effects: [{ type: "damage", value: 6 }] }];
   run.playCard(0);
   run.chooseReward(null);
   run.nextNode(); // node 3 should be branchQueue event
 
-  assert.equal(run.state.story.current.id, "job_hunt_sprint");
+  assert.equal(run.state.story.current.id, "absurd_side_hustle");
   assert.equal(run.state.story.current.source, "branchQueue");
 });

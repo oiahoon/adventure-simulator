@@ -1,4 +1,6 @@
-export const STORY_EVENTS = {
+import { EXTRA_STORY_DECK, EXTRA_STORY_EVENTS } from "./story-pack-zh.js";
+
+const BASE_STORY_EVENTS = {
   layoff_rumor: {
     id: "layoff_rumor",
     title: "裁员风声",
@@ -6,7 +8,6 @@ export const STORY_EVENTS = {
     nodeType: "battle",
     enemyPool: ["enforcer", "scavenger"],
     preEffects: {
-      enqueue: ["hr_meeting"],
       setFlags: ["job_unstable"],
       bias: [{ tag: "debt", delta: 1 }],
     },
@@ -17,7 +18,7 @@ export const STORY_EVENTS = {
         label: "立刻进入省钱模式",
         text: "你决定砍掉非必要开支，短期稳住现金流。",
         effects: {
-          enqueue: ["hr_meeting"],
+          enqueueBranch: ["hr_meeting"],
           setFlags: ["save_mode"],
           bias: [{ tag: "survival", delta: 2 }],
           playerHpDelta: 1,
@@ -28,7 +29,7 @@ export const STORY_EVENTS = {
         label: "先维持体面生活",
         text: "你选择暂时不改变消费习惯，压力被延后了。",
         effects: {
-          enqueue: ["hr_meeting"],
+          enqueueBranch: ["hr_meeting"],
           setFlags: ["face_spending"],
           bias: [{ tag: "debt", delta: 2 }],
           playerHpDelta: -1,
@@ -54,8 +55,7 @@ export const STORY_EVENTS = {
         label: "争取补偿方案",
         text: "你选择硬谈条件，精神压力变高但后手更稳。",
         effects: {
-          enqueue: ["rent_hike_notice"],
-          enqueueBranch: ["compensation_stall"],
+          enqueueBranch: ["rent_hike_notice", "compensation_stall"],
           setFlags: ["negotiation_path"],
           bias: [{ tag: "risk", delta: 1 }],
           playerHpDelta: -1,
@@ -66,8 +66,7 @@ export const STORY_EVENTS = {
         label: "尽快离场找下一份",
         text: "你决定快速止损，把精力转到找机会。",
         effects: {
-          enqueue: ["absurd_side_hustle"],
-          enqueueBranch: ["job_hunt_sprint"],
+          enqueueBranch: ["absurd_side_hustle", "job_hunt_sprint"],
           setFlags: ["quick_exit_path"],
           bias: [{ tag: "career", delta: 2 }],
           playerHpDelta: 0,
@@ -83,7 +82,6 @@ export const STORY_EVENTS = {
     nodeType: "battle",
     enemyPool: ["scavenger", "sniper"],
     preEffects: {
-      enqueue: ["payday_loan_ad"],
       setFlags: ["rent_pressure"],
       bias: [{ tag: "debt", delta: 2 }],
     },
@@ -94,7 +92,7 @@ export const STORY_EVENTS = {
         label: "换房降成本",
         text: "你准备搬家，短期折腾但能降低后续支出。",
         effects: {
-          enqueue: ["social_misfire"],
+          enqueueBranch: ["social_misfire", "roommate_conflict"],
           setFlags: ["moving_out"],
           bias: [{ tag: "survival", delta: 1 }],
           playerHpDelta: -1,
@@ -105,7 +103,7 @@ export const STORY_EVENTS = {
         label: "借钱先扛住",
         text: "你决定先借钱续租，眼前稳定但债务风险抬头。",
         effects: {
-          enqueue: ["payday_loan_ad"],
+          enqueueBranch: ["payday_loan_ad", "credit_card_trap"],
           setFlags: ["borrow_to_hold"],
           bias: [{ tag: "debt", delta: 2 }],
           playerHpDelta: -1,
@@ -121,7 +119,6 @@ export const STORY_EVENTS = {
     nodeType: "battle",
     enemyPool: ["sniper", "scavenger"],
     preEffects: {
-      enqueue: ["debt_collection"],
       setFlags: ["debt_risk"],
       bias: [{ tag: "risk", delta: 2 }],
     },
@@ -132,7 +129,7 @@ export const STORY_EVENTS = {
         label: "拒绝贷款广告",
         text: "你压下冲动，决定靠时间换空间。",
         effects: {
-          enqueue: ["burnout_warning"],
+          enqueueBranch: ["burnout_warning"],
           setFlags: ["loan_declined"],
           bias: [{ tag: "survival", delta: 2 }],
           playerHpDelta: 0,
@@ -143,7 +140,7 @@ export const STORY_EVENTS = {
         label: "小额试水",
         text: "你抱着侥幸心理试了小额借贷。",
         effects: {
-          enqueue: ["debt_collection"],
+          enqueueBranch: ["debt_collection"],
           setFlags: ["loan_taken"],
           bias: [{ tag: "debt", delta: 3 }],
           playerHpDelta: -1,
@@ -457,7 +454,7 @@ export const STORY_EVENTS = {
 };
 
 export const STORY_ARC_ORDER = ["layoff_rumor", "rent_hike_notice", "burnout_warning"];
-export const STORY_DECK = [
+const BASE_STORY_DECK = [
   "absurd_side_hustle",
   "social_misfire",
   "public_opinion_wave",
@@ -465,3 +462,10 @@ export const STORY_DECK = [
   "gig_platform_ban",
   "fake_expert_course",
 ];
+
+export const STORY_EVENTS = {
+  ...BASE_STORY_EVENTS,
+  ...EXTRA_STORY_EVENTS,
+};
+
+export const STORY_DECK = [...BASE_STORY_DECK, ...EXTRA_STORY_DECK];

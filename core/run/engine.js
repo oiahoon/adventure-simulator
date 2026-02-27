@@ -5,12 +5,26 @@ import { createBattle, createSeededRandom } from "../battle/engine.js";
 
 const NODE_TOTAL = 11;
 
-function randomRewardCards(random, count) {
+function pickRewardCardsWithBias(random, count, rewardBias = {}) {
   const pool = Object.keys(CARD_LIBRARY);
   const options = [];
-  while (options.length < count) {
-    const id = pool[Math.floor(random() * pool.length)];
-    if (!options.includes(id)) options.push(id);
+  while (options.length < count && options.length < pool.length) {
+    const available = pool.filter((id) => !options.includes(id));
+    const weighted = available.map((id) => {
+      const score = (CARD_LIBRARY[id]?.tags || []).reduce((sum, tag) => sum + (rewardBias[tag] || 0), 0);
+      return { id, weight: 1 + Math.max(0, score) };
+    });
+    const total = weighted.reduce((sum, item) => sum + item.weight, 0);
+    let roll = random() * total;
+    let chosen = weighted[weighted.length - 1].id;
+    for (const item of weighted) {
+      roll -= item.weight;
+      if (roll <= 0) {
+        chosen = item.id;
+        break;
+      }
+    }
+    options.push(chosen);
   }
   return options;
 }
@@ -72,6 +86,9 @@ function applyStoryEffects(planner, state, effects = {}) {
   (effects.bias || []).forEach((item) => {
     planner.bias[item.tag] = (planner.bias[item.tag] || 0) + item.delta;
   });
+  (effects.rewardBias || []).forEach((item) => {
+    planner.rewardBias[item.tag] = (planner.rewardBias[item.tag] || 0) + item.delta;
+  });
   const hpDelta = Number(effects.playerHpDelta || 0);
   if (hpDelta) {
     state.playerHp = Math.max(1, Math.min(state.playerMaxHp, state.playerHp + hpDelta));
@@ -104,6 +121,7 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
     queue: [],
     flags: {},
     bias: {},
+    rewardBias: {},
   };
 
   const state = {
@@ -197,7 +215,7 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
       return;
     }
 
-    state.rewardOptions = randomRewardCards(random, 3);
+    state.rewardOptions = pickRewardCardsWithBias(random, 3, planner.rewardBias);
     state.mode = "reward";
   }
 
