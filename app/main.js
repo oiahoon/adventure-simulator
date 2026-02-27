@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_1";
+import { createGameUI } from "../ui/game-ui.js?v=20260227_2";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -621,8 +621,8 @@ function addPressure(session, key, delta) {
   session.pressure[key] = clamp((session.pressure[key] || 0) + delta, 0, 8);
 }
 
-function updatePressureFromAction(session, option) {
-  const effects = option.effects || {};
+function updatePressureFromAction(session, option, appliedEffects = option.effects || {}) {
+  const effects = appliedEffects || {};
   if (option.tag === "risk") {
     addPressure(session, "debt", 2);
     addPressure(session, "scrutiny", 1);
@@ -754,6 +754,62 @@ function applyEndOfDayConsequences(session) {
     }
   }
   return applied;
+}
+
+function resolveOptionOutcome(session, option) {
+  const base = { ...(option.effects || {}) };
+  const tag = option.tag || "other";
+  const usage = session.tagUsage[tag] || 0;
+  const pressure = session.pressure;
+  const pressureLoad = pressure.debt + pressure.burnout + pressure.scrutiny;
+
+  let failChance = 0.06;
+  if (tag === "risk") failChance += 0.14;
+  if (tag === "work") failChance += 0.08;
+  if (tag === "social" || tag === "content") failChance += 0.1;
+  failChance += usage * 0.03;
+  failChance += Math.max(0, session.sameTagCount - 1) * 0.04;
+  failChance += Math.min(0.12, pressureLoad * 0.01);
+  failChance = Math.min(0.62, failChance);
+
+  const jackpotChance = Math.max(0.03, 0.14 - usage * 0.015);
+  const roll = session.random();
+
+  const outcome = {
+    effects: base,
+    note: "",
+  };
+
+  if (roll < failChance) {
+    const adjusted = { ...base };
+    Object.keys(adjusted).forEach((key) => {
+      if ((adjusted[key] || 0) > 0) adjusted[key] -= 1;
+    });
+    if (tag === "risk") {
+      adjusted.money = (adjusted.money || 0) - 1;
+      adjusted.reputation = (adjusted.reputation || 0) - 1;
+    }
+    if (tag === "work") {
+      adjusted.energy = (adjusted.energy || 0) - 1;
+      adjusted.mood = (adjusted.mood || 0) - 1;
+    }
+    if (tag === "social" || tag === "content") {
+      adjusted.reputation = (adjusted.reputation || 0) - 1;
+      adjusted.heat = (adjusted.heat || 0) + 1;
+    }
+    outcome.effects = adjusted;
+    outcome.note = "（翻车）";
+  } else if (roll > 1 - jackpotChance) {
+    const adjusted = { ...base };
+    if (tag === "risk" || tag === "work") adjusted.money = (adjusted.money || 0) + 1;
+    if (tag === "social" || tag === "content") adjusted.reputation = (adjusted.reputation || 0) + 1;
+    adjusted.mood = (adjusted.mood || 0) + 1;
+    outcome.effects = adjusted;
+    outcome.note = "（超常发挥）";
+  }
+
+  session.tagUsage[tag] = usage + 1;
+  return outcome;
 }
 
 function buildAvatarConfig(random, seed) {
@@ -932,6 +988,7 @@ function buildEndingReason(session, alive) {
   const weakName = colloquialStatName(weakStatKey);
   const riskChoices = session.history.filter((entry) => entry.tag === "risk").length;
   const chainHits = session.history.filter((entry) => entry.tag === "chain").length;
+  const failCount = session.history.filter((entry) => (entry.optionLabel || "").includes("翻车")).length;
   const bullets = [];
 
   if (!alive) {
@@ -953,6 +1010,7 @@ function buildEndingReason(session, alive) {
   bullets.push(`整局主要损耗：${losses}。`);
 
   if (riskChoices >= 2) bullets.push(`你本局做了 ${riskChoices} 次高风险选择，波动明显变大。`);
+  if (failCount >= 2) bullets.push(`有 ${failCount} 次选择临场翻车，原本收益被现实打折。`);
   if (chainHits >= 3) bullets.push(`累计触发 ${chainHits} 次延迟连锁后果，节奏被不断反噬。`);
   if (worstDay) bullets.push(`关键转折：Day ${worstDay.day}「${worstDay.eventTitle}」选择「${worstDay.optionLabel}」。`);
   if (session.sameTagCount >= 3) bullets.push("连续同风格决策触发疲劳惩罚（情绪值/口碑面子下降）。");
@@ -993,6 +1051,7 @@ function createSession(seed = Date.now()) {
     },
     flags: {},
     pressure: { debt: 0, burnout: 0, scrutiny: 0 },
+    tagUsage: {},
     pendingConsequences: [],
     usedEventIds: new Set([openingEvent.id]),
     skillOffers,
@@ -1103,9 +1162,11 @@ function applyChoice(optionId) {
   const event = getCurrentEvent(session);
   const option = event.options.find((item) => item.id === optionId);
   if (!option) return;
+  const resolved = resolveOptionOutcome(session, option);
+  const finalEffects = resolved.effects;
 
   const before = cloneStats(session.stats);
-  applyEffects(session.stats, option.effects);
+  applyEffects(session.stats, finalEffects);
   applyOptionMeta(session, option);
 
   if (session.lastTag === option.tag) {
@@ -1126,13 +1187,13 @@ function applyChoice(optionId) {
     eventId: event.id,
     eventTitle: event.title,
     optionId: option.id,
-    optionLabel: option.label,
+    optionLabel: `${option.label}${resolved.note}`,
     tag: option.tag,
-    impactText: effectToText(option.effects),
+    impactText: effectToText(statsDelta(before, after)),
     delta: statsDelta(before, after),
   });
   session.usedEventIds.add(event.id);
-  updatePressureFromAction(session, option);
+  updatePressureFromAction(session, option, finalEffects);
   scheduleDelayedConsequence(session, event, option);
   const chainEntries = applyEndOfDayConsequences(session);
   chainEntries.forEach((item) => {
