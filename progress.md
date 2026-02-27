@@ -466,3 +466,16 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   3) Core Action 架构定位为 Legacy 兼容层，前端事件模式为线上主路径。
 - `docs/README.md` 增加“基线决议”入口。
 - `docs/architecture/system-overview.md` 增加基线裁决引用。
+
+## Gap Fix Pack：Top3复盘 + 100天提示词 + 架构代码对齐
+- 结局复盘结构化：`buildEndingReason()` 新增 `review` 字段，包含：
+  - `topNodes`（Top3 关键因果节点）
+  - `topDecisions`（Top3 关键决策）
+  - `chainSummary`（事件链摘要）
+- 结局 UI 新增复盘块，直接展示上述 Top3 与链路摘要。
+- DeepSeek 请求改为 100 天语境：
+  - 提示词从“7天记录”改为“目标100天，实际坚持X天”。
+  - 附带 Top3 节点/决策与链路摘要作为输入。
+- 架构对齐（代码侧）：
+  - `buildView/render_game_to_text` 增加 `runtimeMode: frontend_event_mainline`，明确线上主路径。
+- 质量验证：`npm test` 20/20 通过。

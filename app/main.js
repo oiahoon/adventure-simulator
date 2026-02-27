@@ -1015,7 +1015,55 @@ function buildEndingReason(session, alive) {
   if (worstDay) bullets.push(`关键转折：Day ${worstDay.day}「${worstDay.eventTitle}」选择「${worstDay.optionLabel}」。`);
   if (session.sameTagCount >= 3) bullets.push("连续同风格决策触发疲劳惩罚（情绪值/口碑面子下降）。");
 
-  return { weakest: { name: weakName, value: weakValue }, keyDay: worstDay ? worstDay.day : null, bullets };
+  const impactAbs = (entry) => {
+    const d = entry.delta || {};
+    return Math.abs(d.money || 0) + Math.abs(d.energy || 0) + Math.abs(d.mood || 0) + Math.abs(d.reputation || 0) + Math.abs(d.heat || 0);
+  };
+  const negativeImpact = (entry) => {
+    const d = entry.delta || {};
+    return Math.abs(Math.min(0, d.money || 0)) + Math.abs(Math.min(0, d.energy || 0)) + Math.abs(Math.min(0, d.mood || 0)) + Math.abs(Math.min(0, d.reputation || 0));
+  };
+  const positiveImpact = (entry) => {
+    const d = entry.delta || {};
+    return Math.max(0, d.money || 0) + Math.max(0, d.energy || 0) + Math.max(0, d.mood || 0) + Math.max(0, d.reputation || 0);
+  };
+  const asReviewLine = (entry) => `Day ${entry.day}「${entry.eventTitle}」->「${entry.optionLabel}」(${entry.impactText || "无变化"})`;
+
+  const topNodes = [...session.history]
+    .filter((entry) => impactAbs(entry) > 0)
+    .sort((a, b) => impactAbs(b) - impactAbs(a))
+    .slice(0, 3)
+    .map(asReviewLine);
+
+  const scoredDecisions = [...session.history]
+    .filter((entry) => entry.tag !== "chain" && entry.tag !== "skill")
+    .map((entry) => ({
+      entry,
+      score: alive ? positiveImpact(entry) : negativeImpact(entry),
+    }))
+    .filter((item) => item.score > 0);
+  const topDecisions = (scoredDecisions.length ? scoredDecisions : [...session.history].map((entry) => ({ entry, score: impactAbs(entry) })))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item) => asReviewLine(item.entry));
+
+  const first = session.history[0];
+  const pivot = worstDay || session.history[Math.floor(session.history.length / 2)];
+  const last = session.history[session.history.length - 1];
+  const chainSummary = first && pivot && last
+    ? `Day ${first.day}「${first.eventTitle}」 -> Day ${pivot.day}「${pivot.eventTitle}」 -> Day ${last.day} 结算。`
+    : "本局关键链路不足，无法提炼摘要。";
+
+  return {
+    weakest: { name: weakName, value: weakValue },
+    keyDay: worstDay ? worstDay.day : null,
+    bullets,
+    review: {
+      topNodes,
+      topDecisions,
+      chainSummary,
+    },
+  };
 }
 
 function buildShareLink() {
@@ -1083,7 +1131,10 @@ async function generateStoryNarrative() {
     history: state.session.history,
     stats: state.session.stats,
     ending: result.ending,
+    daysSurvived: result.daysSurvived,
+    targetDay: TARGET_DAY,
     reasonBullets: result.reason?.bullets || [],
+    review: result.reason?.review || {},
   };
 
   try {
@@ -1307,6 +1358,7 @@ function buildView() {
     result: session.result,
     shareText: shareText(),
     notice: state.notice,
+    runtimeMode: "frontend_event_mainline",
   };
 }
 
@@ -1384,6 +1436,7 @@ window.render_game_to_text = () => {
     currentSkills: v.skills,
     history: v.history,
     result: v.result,
+    runtimeMode: v.runtimeMode,
   });
 };
 

@@ -9,6 +9,11 @@ function historyItem(item) {
   return `<li>Day ${item.day}: ${item.optionLabel} <span>${item.impactText}</span></li>`;
 }
 
+function simpleList(items = []) {
+  if (!items.length) return "<li>暂无</li>";
+  return items.map((line) => `<li>${line}</li>`).join("");
+}
+
 function tempSkillCard(skill, disabled) {
   return `<button class="ghost" data-skill-id="${skill.id}" ${disabled ? "disabled" : ""}>
     ${skill.name} (${skill.impactText})
@@ -85,6 +90,13 @@ export function createGameUI(root, actions) {
               <ul class="history">
                 ${(view.result.reason?.bullets || []).map((line) => `<li>${line}</li>`).join("")}
               </ul>
+            </article>
+            <article class="reason-block">
+              <h3>Top3 关键因果节点</h3>
+              <ul class="history">${simpleList(view.result.reason?.review?.topNodes || [])}</ul>
+              <h3>Top3 关键决策</h3>
+              <ul class="history">${simpleList(view.result.reason?.review?.topDecisions || [])}</ul>
+              <p class="opt-impact">链路摘要：${view.result.reason?.review?.chainSummary || "暂无"}</p>
             </article>
             <article class="reason-block">
               <h3>整局故事</h3>

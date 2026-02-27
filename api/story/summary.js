@@ -3,6 +3,9 @@ function buildPrompt(payload = {}) {
   const stats = payload.stats || {};
   const ending = payload.ending || {};
   const reasonBullets = Array.isArray(payload.reasonBullets) ? payload.reasonBullets : [];
+  const review = payload.review || {};
+  const targetDay = Number(payload.targetDay) || 100;
+  const daysSurvived = Number(payload.daysSurvived) || history.length || 1;
 
   const timeline = history
     .map(
@@ -15,7 +18,7 @@ function buildPrompt(payload = {}) {
 
   return [
     "你是都市生存题材剧情文案编辑。",
-    "请把以下7天决策记录改写成一段120-220字的中文小故事，第一人称，语气参考贴吧老哥：有点调侃、有点刺激、但不低俗。",
+    `请把以下这局“目标坚持${targetDay}天、实际坚持${daysSurvived}天”的决策记录改写成一段120-220字的中文小故事，第一人称，语气参考贴吧老哥：有点调侃、有点刺激、但不低俗。`,
     "要求：",
     "1) 必须解释为什么会走到这个结局；",
     "2) 必须出现至少1个转折点；",
@@ -26,6 +29,9 @@ function buildPrompt(payload = {}) {
     `结局：${ending.title || "未知结局"}；结局说明：${ending.subtitle || ""}`,
     `最终状态：${colloquialStats}`,
     `成因摘要：${reasonBullets.join("；") || "无"}`,
+    `关键因果节点Top3：${(review.topNodes || []).join("；") || "无"}`,
+    `关键决策Top3：${(review.topDecisions || []).join("；") || "无"}`,
+    `因果链摘要：${review.chainSummary || "无"}`,
     "时间线：",
     timeline || "无记录",
   ].join("\n");
