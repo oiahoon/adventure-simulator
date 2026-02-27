@@ -357,6 +357,16 @@ function resolveEvent(session, dayIndex) {
   };
 }
 
+function computeScore(session) {
+  return (
+    session.stats.money * 2 +
+    session.stats.energy * 2 +
+    session.stats.mood * 2 +
+    session.stats.reputation * 2 +
+    session.stats.heat
+  );
+}
+
 function weakestStat(stats) {
   const entries = [
     ["现金", stats.money],
