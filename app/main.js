@@ -1,7 +1,7 @@
 import { createGameUI } from "../ui/game-ui.js";
 
 const STORAGE_KEY = "wechat-survival-best";
-const DAY_TOTAL = 7;
+const TARGET_DAY = 100;
 
 function clamp(value, min = 0, max = 12) {
   return Math.max(min, Math.min(max, value));
@@ -459,7 +459,7 @@ const CHAPTER_POOLS = {
         id: "pivot_end_a",
         chapter: "第六章：摊牌或转型",
         title: "你要决定接下来怎么活",
-        text: "短期止血还是长期转型，决定第七天结局基调。",
+        text: "短期止血还是长期转型，决定你后续几十天的生存基调。",
         causeText: "由前五章表现进入转型线。",
         options: [
           { id: "upskill_focus", label: "投入学习", tag: "work", effects: { money: -1, energy: -1, reputation: 2 }, setFlags: ["upgrade_route"] },
@@ -520,59 +520,48 @@ function pickFromPool(session, pool, fallbackEvent) {
   return candidates.length ? randomPick(candidates, session.random) : fallbackEvent;
 }
 
-function resolveEvent(session, dayIndex) {
-  if (dayIndex === 0) return session.openingEvent;
-
+function resolveCausalStageEvent(session, stageIndex) {
   const flags = session.flags;
   const s = session.stats;
 
-  if (dayIndex === 1) {
+  if (stageIndex === 1) {
     if (flags.debt_line) {
       return pickFromPool(session, CHAPTER_POOLS[1].debt, CHAPTER_POOLS[1].debt[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[1].work, CHAPTER_POOLS[1].work[0]);
   }
 
-  if (dayIndex === 2) {
+  if (stageIndex === 2) {
     if (flags.quality_risk || flags.debt_overhang || s.heat >= 6) {
       return pickFromPool(session, CHAPTER_POOLS[2].backlash, CHAPTER_POOLS[2].backlash[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[2].stable, CHAPTER_POOLS[2].stable[0]);
   }
 
-  if (dayIndex === 3) {
+  if (stageIndex === 3) {
     if (s.energy <= 3 || flags.overwork_line || flags.burnout_risk) {
       return pickFromPool(session, CHAPTER_POOLS[3].health, CHAPTER_POOLS[3].health[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[3].relation, CHAPTER_POOLS[3].relation[0]);
   }
 
-  if (dayIndex === 4) {
+  if (stageIndex === 4) {
     if (s.heat >= 7 || flags.content_line || flags.public_fight || flags.viral_path) {
       return pickFromPool(session, CHAPTER_POOLS[4].heat, CHAPTER_POOLS[4].heat[0]);
     }
     return pickFromPool(session, CHAPTER_POOLS[4].cash, CHAPTER_POOLS[4].cash[0]);
   }
 
-  if (dayIndex === 5) {
-    if (flags.debt_spiral || s.money <= 2 || flags.trust_break) {
-      return pickFromPool(session, CHAPTER_POOLS[5].debt, CHAPTER_POOLS[5].debt[0]);
-    }
-    return pickFromPool(session, CHAPTER_POOLS[5].pivot, CHAPTER_POOLS[5].pivot[0]);
+  if (flags.debt_spiral || s.money <= 2 || flags.trust_break) {
+    return pickFromPool(session, CHAPTER_POOLS[5].debt, CHAPTER_POOLS[5].debt[0]);
   }
+  return pickFromPool(session, CHAPTER_POOLS[5].pivot, CHAPTER_POOLS[5].pivot[0]);
+}
 
-  return {
-    id: "chapter_7_finale",
-    chapter: "第七章：结局之夜",
-    title: "最后一次选择",
-    text: "这不是单一事件，而是你前六章选择的集中兑现。",
-    causeText: "结局节点：系统将综合你的历程给出结局线。",
-    options: [
-      { id: "final_attack", label: "搏一把翻盘", tag: "risk", effects: { money: 2, energy: -2, mood: -1, heat: 1 } },
-      { id: "final_balance", label: "稳住基本盘", tag: "control", effects: { money: 0, energy: 1, mood: 1, reputation: 1 } },
-      { id: "final_logout", label: "给自己留白", tag: "rest", effects: { mood: 2, energy: 2, money: -1, heat: -1 } },
-    ],
-  };
+function resolveEvent(session, dayIndex) {
+  if (dayIndex === 0) return session.openingEvent;
+  const loopStage = ((dayIndex - 1) % 5) + 1;
+  return resolveCausalStageEvent(session, loopStage);
 }
 
 function computeScore(session) {
@@ -762,8 +751,10 @@ function finishSession(alive) {
   const score = computeScore(state.session);
   const ending = endingByScore(score, alive);
   const reason = buildEndingReason(state.session, alive);
+  const daysSurvived = state.session.dayIndex + 1;
   const challengeCode = encodeChallenge({
     seed: state.session.seed,
+    daysSurvived,
     score,
     ending: ending.id,
     days: state.session.history.map((item) => `${item.eventId}.${item.optionId}`).slice(0, 10),
@@ -772,6 +763,7 @@ function finishSession(alive) {
   state.session.mode = "ended";
   state.session.result = {
     alive,
+    daysSurvived,
     score,
     ending,
     reason,
@@ -840,11 +832,6 @@ function applyChoice(optionId) {
   }
 
   session.dayIndex += 1;
-  if (session.dayIndex >= DAY_TOTAL) {
-    finishSession(true);
-    return;
-  }
-
   session.skillOffers = drawTempSkills(session.random, 2);
   session.skillUsedDay = false;
 }
@@ -885,7 +872,7 @@ function shareText() {
   const result = state.session.result;
   if (!result) return "";
   return [
-    `我在《城市生存7天》打出 ${result.score} 分，结局：${result.ending.title}`,
+    `我在《是男人就坚持100天》坚持了 ${result.daysSurvived} 天，分数 ${result.score}，结局：${result.ending.title}`,
     `结局成因：${result.reason?.bullets?.[0] || "稳住了主要属性"}`,
     `挑战码：${result.challengeCode}`,
     "打开同链接输入挑战码就能复刻我的局。",
@@ -900,7 +887,8 @@ function buildView() {
   return {
     mode: session.mode,
     day: session.dayIndex + 1,
-    dayTotal: DAY_TOTAL,
+    dayTarget: TARGET_DAY,
+    reachedTarget: session.dayIndex + 1 >= TARGET_DAY,
     profileName: session.archetypeName,
     bestScore: state.bestScore,
     score,
@@ -978,7 +966,8 @@ window.render_game_to_text = () => {
   return JSON.stringify({
     coordinateSystem: "UI only; one-column mobile card layout.",
     mode: v.mode,
-    day: `${Math.min(v.day, v.dayTotal)}/${v.dayTotal}`,
+    day: `${v.day}/${v.dayTarget}`,
+    reachedTarget: v.reachedTarget,
     profileName: v.profileName,
     score: v.score,
     stats: v.stats,

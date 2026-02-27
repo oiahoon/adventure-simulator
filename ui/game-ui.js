@@ -24,8 +24,8 @@ export function createGameUI(root, actions) {
     <section class="shell">
       <header class="topbar">
         <div>
-          <h1>城市生存7天</h1>
-          <p id="subtitle">微信可分享的短局生存挑战</p>
+          <h1>是男人就坚持100天</h1>
+          <p id="subtitle">目标通关100天，但你可以一直活下去</p>
         </div>
         <button class="ghost" id="restart-btn">重开</button>
       </header>
@@ -57,9 +57,9 @@ export function createGameUI(root, actions) {
       if (view.mode === "intro") {
         panel.innerHTML = `
           <article class="card hero">
-            <p class="badge">3~5 分钟一局</p>
-            <h2>你只有 7 天在城市里稳住现金、体力、心态和人设。</h2>
-            <p>每天一个高压事件，三选一，结局可生成挑战码发微信群。</p>
+            <p class="badge">100天目标挑战</p>
+            <h2>扛住 100 天是第一目标，之后你还能继续冲更长生存纪录。</h2>
+            <p>每天一个高压事件，三选一，直到属性崩盘才会结算并生成挑战码。</p>
             <button id="start-btn" class="primary">开始新挑战</button>
           </article>
           <article class="card">
@@ -115,9 +115,10 @@ export function createGameUI(root, actions) {
       panel.innerHTML = `
         <article class="card status-card">
           <div class="head-row">
-            <h2>Day ${view.day}/${view.dayTotal}</h2>
+            <h2>Day ${view.day}/${view.dayTarget}</h2>
             <p>当前分数 ${view.score}</p>
           </div>
+          ${view.reachedTarget ? `<p class="badge">已达成100天目标，可继续挑战</p>` : ""}
           <p class="opt-impact">开局角色：${view.profileName}</p>
           <div class="stats-grid">
             ${statCard("现金", view.stats.money, "money")}
