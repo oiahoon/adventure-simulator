@@ -1,24 +1,25 @@
-# 文档总览（2026 重构版）
+# 文档总览（2026-02-28）
 
-本目录以“面向中国玩家的都市生存题材、移动端优先的卡牌 Web Game”为唯一基线。
+本目录以“面向中国玩家、移动端优先、都市生存题材的卡牌选择 Web Game”为唯一基线。
 
 ## 结构
 
-- `docs/product/`：产品定位、玩法设计、移动端体验规范
-- `docs/architecture/`：系统分层、核心协议、事件内容策略
-- `docs/engineering/`：重构计划、测试与质量策略
-- `docs/release/`：发布清单、部署与运维流程
+- `docs/product/`：玩法定义、内容策略、事件因果链、微信传播设计
+- `docs/architecture/`：系统分层、内容策略、兼容协议说明
+- `docs/engineering/`：测试质量与当前状态审计
+- `docs/release/`：部署与发布流程
 
-## 关键内容设计文档
+## 当前必读
 
-- 事件因果链设计：`docs/product/event-causal-chain-design.md`
-- 贴吧内容引入策略（含弱智吧语感）：`docs/product/tieba-content-integration.md`
-- 剧情分支扩容计划：`docs/engineering/story-branch-expansion-plan.md`
-
-## 文档约束
-
-- 任何新需求先更新 `product` 文档，再落到 `architecture` 与 `engineering`。
-- 架构改动必须同步 `architecture/system-overview.md`。
-- 发布流程改动必须同步 `release/release-playbook.md`。
-
+- [游戏设计基线（V4）](./product/game-design-baseline.md)
+- [事件因果链设计](./product/event-causal-chain-design.md)
+- [贴吧内容引入策略](./product/tieba-content-integration.md)
 - [微信传播导向重设计](./product/wechat-mobile-redesign.md)
+- [系统架构总览](./architecture/system-overview.md)
+- [发布与部署手册](./release/release-playbook.md)
+
+## 文档维护约束
+
+- 先改 `product`，再同步 `architecture` 与 `release`。
+- 代码行为变化（例如分享机制、天数目标、失败条件）必须同步文档。
+- 过期计划文档需及时归档或删除，避免与现网行为冲突。

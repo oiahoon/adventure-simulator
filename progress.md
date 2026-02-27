@@ -439,3 +439,22 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 手机断点下保持 `头像左 / 状态右`，不再堆叠为上下结构。
 - 缓存刷新：前端资源版本号升级为 `v=20260227_4`。
 - 质量验证：`npm test` 20/20 通过。
+
+## Repo Cleanup + Docs Refresh（2026-02-28）
+- 全仓审计后清理过期文档与冗余文件：
+  - 删除过期文档（战斗构筑时代）：
+    - `docs/product/gameplay-design.md`
+    - `docs/product/mobile-ux-spec.md`
+    - `docs/product/product-brief.md`
+    - `docs/engineering/refactor-plan.md`
+    - `docs/engineering/story-branch-expansion-plan.md`
+    - `docs/release/release-checklist.md`
+  - 删除冗余文件：根目录空 `favicon.ico`、临时目录 `tmp/`。
+- 新增并重构文档：
+  - 新增 `docs/product/game-design-baseline.md`（当前玩法基线）
+  - 新增 `docs/engineering/current-state-audit.md`（清理审计）
+  - 重写 `docs/README.md`、`docs/architecture/system-overview.md`、`docs/architecture/action-protocol.md`、`docs/architecture/event-content-strategy.md`、`docs/product/wechat-mobile-redesign.md`、`docs/release/release-playbook.md`。
+- 其他整理：
+  - 更新根 `index.html` 文案为当前项目名。
+  - 移除 `public/index.html` 中已废弃样式（挑战码导入相关样式残留）。
+- 质量验证：`npm test` 20/20 通过。

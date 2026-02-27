@@ -1,4 +1,7 @@
-# Core Action 协议
+# Core Action 协议（Legacy 兼容层）
+
+> 说明：本协议面向 `core/*` 历史运行时与 CLI/API 兼容能力，
+> 当前线上主玩法（100 天事件模式）不直接走该协议。
 
 ## 入口
 
@@ -10,7 +13,7 @@
 - `new`: 新建会话
 - `state`: 获取当前状态
 - `play`: 出牌（`cardIndex`）
-- `cycle`: 战术重抽（`cardIndex`，每回合一次，消耗 1 能量）
+- `cycle`: 战术重抽（`cardIndex`）
 - `end`: 结束回合
 - `reward`: 选择奖励（`cardId|null`）
 - `remove`: 删除牌（`cardId`）
