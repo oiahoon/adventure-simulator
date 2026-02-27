@@ -20,7 +20,7 @@ function renderNodes(view) {
   return `<div class='node-row'>${Array.from({ length: view.run.nodeTotal }, (_, idx) => {
     const current = idx === view.run.nodeIndex;
     const done = idx < view.run.nodeIndex;
-    const type = view.run.nodeTotal > idx ? (idx === 3 ? "elite" : "battle") : "battle";
+    const type = view.run.nodeTypes[idx] || "battle";
     return `<span class='node ${current ? "current" : ""} ${done ? "done" : ""} ${type}'>${idx + 1}</span>`;
   }).join("")}</div>`;
 }
@@ -82,6 +82,7 @@ export function createGameUI(root, actions) {
       <ol>
         ${view.onboarding.steps.map((step) => `<li>${step}</li>`).join("")}
       </ol>
+      <p class="shortcut-hint">Hotkeys: <code>Enter</code> End Turn, <code>N</code> Next Node, <code>G</code> Guide, <code>R</code> New Run</p>
     `;
   }
 

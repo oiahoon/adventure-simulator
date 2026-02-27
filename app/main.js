@@ -57,6 +57,7 @@ function buildView() {
     run: {
       nodeIndex: runState.nodeIndex,
       nodeTotal: runState.nodes.length,
+      nodeTypes: runState.nodes.map((node) => node.type),
       deckSize: runState.deck.length,
       playerHp: runState.playerHp,
       playerMaxHp: runState.playerMaxHp,
@@ -97,6 +98,14 @@ function showGuide() {
   refresh();
 }
 
+function shouldIgnoreHotkeyTarget(target) {
+  if (!target) {
+    return false;
+  }
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA";
+}
+
 const ui = createGameUI(root, {
   onRestart: () => restartRun(),
   onPlayCard: (idx) => {
@@ -121,6 +130,40 @@ const ui = createGameUI(root, {
   },
   onHideGuide: () => hideGuide(),
   onShowGuide: () => showGuide(),
+});
+
+window.addEventListener("keydown", (event) => {
+  if (shouldIgnoreHotkeyTarget(event.target)) {
+    return;
+  }
+  const key = event.key.toLowerCase();
+  const mode = appState.run.state.mode;
+
+  if (key === "enter" && mode === "battle") {
+    event.preventDefault();
+    appState.run.endTurn();
+    refresh();
+    return;
+  }
+  if (key === "n" && mode === "map") {
+    event.preventDefault();
+    appState.run.nextNode();
+    refresh();
+    return;
+  }
+  if (key === "g") {
+    event.preventDefault();
+    if (appState.guideHidden) {
+      showGuide();
+    } else {
+      hideGuide();
+    }
+    return;
+  }
+  if (key === "r") {
+    event.preventDefault();
+    restartRun();
+  }
 });
 
 window.advanceTime = () => {

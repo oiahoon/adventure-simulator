@@ -59,3 +59,21 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 手工回归 5 局并记录节点胜率。
 - 根据胜率和出牌率继续调整卡牌与精英数值。
 - 增加部署配置与版本发布流程。
+
+## Post-M4 改进（部署前增强）
+- 交互增强：新增热键
+  - `Enter`：结束回合
+  - `N`：进入下一节点
+  - `G`：开关引导
+  - `R`：新开一局
+- 路径显示修正：节点 UI 改为读取真实节点类型，不再硬编码精英位置。
+- 本地运行改进：`npm run dev` 改为仓库根目录静态服务，避免模块路径 404。
+- 平衡分析工具：新增 `npm run simulate -- <count>` 批量自动对局模拟（默认 30 局）。
+- 部署能力：
+  - 新增 GitHub Actions 工作流 `.github/workflows/vercel-deploy.yml`。
+  - 支持 Deploy Hook 与 Vercel CLI 两种自动部署路径。
+  - 新增部署说明文档 `docs/release/vercel-deploy.md`。
+- 验证：
+  - `npm test` 11 项通过。
+  - `npm run simulate -- 20` 输出：胜率 100%、平均终局 HP 53.2。
+  - Playwright 截图状态验证通过：`output/web-game-post-improve`。

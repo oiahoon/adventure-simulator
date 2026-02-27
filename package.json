@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "dev": "python3 -m http.server 5173 -d public"
+    "dev": "python3 -m http.server 5173",
+    "simulate": "node scripts/simulate-runs.js"
   },
   "devDependencies": {
     "playwright": "^1.58.2"
