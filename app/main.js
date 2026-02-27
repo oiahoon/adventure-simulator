@@ -2,8 +2,11 @@ import { CARD_LIBRARY } from "../content/cards.js";
 import { createRun } from "../core/run/engine.js";
 import { createGameUI } from "../ui/game-ui.js";
 
+const GUIDE_STORAGE_KEY = "neon-deck-guide-hidden";
+
 const appState = {
   run: createRun({ seed: 20260227 }),
+  guideHidden: localStorage.getItem(GUIDE_STORAGE_KEY) === "1",
 };
 
 const root = document.querySelector("#app");
@@ -43,6 +46,14 @@ function buildView() {
   const runState = appState.run.state;
   const view = {
     mode: runState.mode,
+    onboarding: {
+      visible: !appState.guideHidden,
+      steps: [
+        "每回合优先看敌方 Intent，再决定防御或进攻。",
+        "状态牌（Poison/Vulnerable/Weak）在前中期价值很高。",
+        "战后奖励先补短板，再做删牌精简。",
+      ],
+    },
     run: {
       nodeIndex: runState.nodeIndex,
       nodeTotal: runState.nodes.length,
@@ -74,6 +85,18 @@ function restartRun() {
   refresh();
 }
 
+function hideGuide() {
+  appState.guideHidden = true;
+  localStorage.setItem(GUIDE_STORAGE_KEY, "1");
+  refresh();
+}
+
+function showGuide() {
+  appState.guideHidden = false;
+  localStorage.setItem(GUIDE_STORAGE_KEY, "0");
+  refresh();
+}
+
 const ui = createGameUI(root, {
   onRestart: () => restartRun(),
   onPlayCard: (idx) => {
@@ -96,6 +119,8 @@ const ui = createGameUI(root, {
     appState.run.nextNode();
     refresh();
   },
+  onHideGuide: () => hideGuide(),
+  onShowGuide: () => showGuide(),
 });
 
 window.advanceTime = () => {
@@ -107,6 +132,7 @@ window.render_game_to_text = () => {
   return JSON.stringify({
     coordinateSystem: "UI board only; no world coordinates. top-left origin for layout.",
     mode: v.mode,
+    guideVisible: v.onboarding.visible,
     node: {
       index: v.run.nodeIndex + 1,
       total: v.run.nodeTotal,

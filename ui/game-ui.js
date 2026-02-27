@@ -33,8 +33,12 @@ export function createGameUI(root, actions) {
           <h1>Neon Deck</h1>
           <p id="battle-status">Initializing...</p>
         </div>
-        <button id="restart-btn" class="subtle">New Run</button>
+        <div class="head-actions">
+          <button id="guide-toggle-btn" class="subtle">Show Guide</button>
+          <button id="restart-btn" class="subtle">New Run</button>
+        </div>
       </header>
+      <section class="panel" id="guide-panel"></section>
       <section class="panel" id="run-panel"></section>
       <main class="arena" id="arena-panel"></main>
     </section>
@@ -61,14 +65,37 @@ export function createGameUI(root, actions) {
     root.querySelector("#next-node-btn")?.addEventListener("click", () => actions.onNextNode());
   }
 
+  function renderGuide(view, guidePanel) {
+    const toggleBtn = root.querySelector("#guide-toggle-btn");
+    if (!view.onboarding.visible) {
+      guidePanel.style.display = "none";
+      toggleBtn.textContent = "Show Guide";
+      toggleBtn.onclick = () => actions.onShowGuide();
+      return;
+    }
+
+    guidePanel.style.display = "block";
+    toggleBtn.textContent = "Hide Guide";
+    toggleBtn.onclick = () => actions.onHideGuide();
+    guidePanel.innerHTML = `
+      <h2>Starter Guide</h2>
+      <ol>
+        ${view.onboarding.steps.map((step) => `<li>${step}</li>`).join("")}
+      </ol>
+    `;
+  }
+
   return {
     render(view) {
       const status = root.querySelector("#battle-status");
       const runPanel = root.querySelector("#run-panel");
       const arenaPanel = root.querySelector("#arena-panel");
+      const guidePanel = root.querySelector("#guide-panel");
 
       const statusText = `Node ${view.run.nodeIndex + 1}/${view.run.nodeTotal} (${view.run.currentNodeType}) | HP ${view.run.playerHp}/${view.run.playerMaxHp} | Deck ${view.run.deckSize}`;
       status.textContent = `${view.mode.toUpperCase()} | ${statusText}`;
+
+      renderGuide(view, guidePanel);
 
       runPanel.innerHTML = `
         <h2>Run Path</h2>

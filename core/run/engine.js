@@ -47,7 +47,7 @@ export function createRun({ seed = Date.now() } = {}) {
       enemyId: node.enemyId,
       playerHp: state.playerHp,
       playerMaxHp: state.playerMaxHp,
-      enemyHpScale: node.type === "elite" ? 1.35 : 1,
+      enemyHpScale: node.type === "elite" ? 1.25 : 1,
       elite: node.type === "elite",
     });
     state.mode = "battle";

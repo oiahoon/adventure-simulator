@@ -31,10 +31,18 @@
         align-items: start;
         gap: 10px;
       }
+      .head-actions {
+        display: flex;
+        gap: 6px;
+      }
       h1,
       h2,
       h3 {
         margin: 0 0 8px;
+      }
+      ol {
+        margin: 0;
+        padding-left: 18px;
       }
       .subtle,
       #end-turn-btn,
@@ -136,6 +144,28 @@
         display: flex;
         gap: 8px;
         align-items: center;
+      }
+      @media (max-width: 699px) {
+        #app {
+          padding: 10px;
+        }
+        .hud {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .head-actions {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+        .hand-grid,
+        .reward-grid {
+          grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+        .tune-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
       }
       @media (min-width: 900px) {
         .arena {

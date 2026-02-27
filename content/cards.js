@@ -10,8 +10,8 @@ export const CARD_LIBRARY = {
     id: "heavy_strike",
     name: "Heavy Strike",
     cost: 2,
-    text: "Deal 12 damage.",
-    effects: [{ type: "damage", value: 12 }],
+    text: "Deal 11 damage.",
+    effects: [{ type: "damage", value: 11 }],
   },
   guard: {
     id: "guard",
@@ -69,8 +69,8 @@ export const CARD_LIBRARY = {
     id: "poison_dart",
     name: "Poison Dart",
     cost: 1,
-    text: "Apply 4 Poison.",
-    effects: [{ type: "status", target: "enemy", status: "poison", value: 4 }],
+    text: "Apply 3 Poison.",
+    effects: [{ type: "status", target: "enemy", status: "poison", value: 3 }],
   },
   expose: {
     id: "expose",
@@ -83,8 +83,8 @@ export const CARD_LIBRARY = {
     id: "rally",
     name: "Rally",
     cost: 1,
-    text: "Gain 2 Strength.",
-    effects: [{ type: "status", target: "player", status: "strength", value: 2 }],
+    text: "Gain 1 Strength.",
+    effects: [{ type: "status", target: "player", status: "strength", value: 1 }],
   },
 };
 
