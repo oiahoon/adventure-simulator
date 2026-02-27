@@ -35,18 +35,21 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
-      - name: Deploy via Vercel Hook
-        if: ${{ env.VERCEL_DEPLOY_HOOK_URL != '' }}
-        run: curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
-      - name: Install Vercel CLI
-        if: ${{ env.VERCEL_DEPLOY_HOOK_URL == '' && env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
-        run: npm i -g vercel@latest
-      - name: Deploy via Vercel CLI
-        if: ${{ env.VERCEL_DEPLOY_HOOK_URL == '' && env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+      - name: Deploy
         run: |
-          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-          vercel build --prod --token="$VERCEL_TOKEN"
-          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-      - name: No deploy credentials
-        if: ${{ env.VERCEL_DEPLOY_HOOK_URL == '' && (env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '') }}
-        run: echo "Skipping deploy: no Vercel hook or CLI credentials configured."
+          if [ -n "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Deploy via Vercel Hook"
+            curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
+            exit 0
+          fi
+
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "Deploy via Vercel CLI"
+            npm i -g vercel@latest
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            vercel build --prod --token="$VERCEL_TOKEN"
+            vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+            exit 0
+          fi
+
+          echo "Skipping deploy: no Vercel hook or CLI credentials configured."
