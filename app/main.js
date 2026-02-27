@@ -17,6 +17,34 @@ function effectToText(effects = {}) {
   return labels.join(" · ");
 }
 
+function cloneStats(stats) {
+  return {
+    money: stats.money,
+    energy: stats.energy,
+    mood: stats.mood,
+    reputation: stats.reputation,
+    heat: stats.heat,
+  };
+}
+
+function statsDelta(before, after) {
+  return {
+    money: after.money - before.money,
+    energy: after.energy - before.energy,
+    mood: after.mood - before.mood,
+    reputation: after.reputation - before.reputation,
+    heat: after.heat - before.heat,
+  };
+}
+
+function applyEffects(target, effects = {}) {
+  target.money = clamp(target.money + (effects.money || 0));
+  target.energy = clamp(target.energy + (effects.energy || 0));
+  target.mood = clamp(target.mood + (effects.mood || 0));
+  target.reputation = clamp(target.reputation + (effects.reputation || 0));
+  target.heat = clamp(target.heat + (effects.heat || 0), 0, 10);
+}
+
 const STARTER_ARCHETYPES = [
   {
     id: "office_worker",
