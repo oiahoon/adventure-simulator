@@ -268,6 +268,168 @@ const CHAPTER_POOLS = {
       },
     ],
   },
+  3: {
+    health: [
+      {
+        id: "health_break_a",
+        chapter: "第四章：身体与关系",
+        title: "体力断崖",
+        text: "你开始出现明显疲劳症状，开会时都在走神。",
+        causeText: "由连续高压工作或低体力触发。",
+        options: [
+          { id: "force_rest", label: "强制休整", tag: "rest", effects: { energy: 3, mood: 2, money: -1 }, setFlags: ["rest_recovery"] },
+          { id: "energy_drink", label: "继续硬扛", tag: "risk", effects: { energy: 1, mood: -2, heat: 1 }, setFlags: ["burnout_risk"] },
+          { id: "delegate_tasks", label: "拆分任务", tag: "network", effects: { energy: 1, reputation: -1, mood: 1 }, setFlags: ["delegation_path"] },
+        ],
+      },
+      {
+        id: "health_break_b",
+        chapter: "第四章：身体与关系",
+        title: "体检报告预警",
+        text: "报告提示多个指标偏红，你不得不重新安排节奏。",
+        causeText: "由低体力/过劳线触发。",
+        options: [
+          { id: "full_checkup", label: "立刻复查", tag: "rest", effects: { money: -2, mood: 1, energy: 1 }, setFlags: ["rest_recovery"] },
+          { id: "skip_checkup", label: "先顶过去", tag: "risk", effects: { money: 0, mood: -2, heat: 1 }, setFlags: ["burnout_risk"] },
+          { id: "insurance_route", label: "走报销流程", tag: "control", effects: { money: -1, reputation: 1, energy: -1 }, setFlags: ["scope_control"] },
+        ],
+      },
+    ],
+    relation: [
+      {
+        id: "relation_pull_a",
+        chapter: "第四章：身体与关系",
+        title: "关系拉扯",
+        text: "你开始在“维系关系”与“保护自己”之间左右互搏。",
+        causeText: "由前三章关系/舆论余波触发。",
+        options: [
+          { id: "help_everyone", label: "尽量都帮", tag: "social", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["overcommit"] },
+          { id: "set_boundary", label: "明确边界", tag: "control", effects: { mood: 1, reputation: -1, heat: -1 }, setFlags: ["boundary_mode"] },
+          { id: "trade_resources", label: "资源互换", tag: "network", effects: { money: 1, reputation: 1, heat: 1 }, setFlags: ["resource_swap"] },
+        ],
+      },
+      {
+        id: "relation_pull_b",
+        chapter: "第四章：身体与关系",
+        title: "群聊站队点名",
+        text: "你被群管理点名表态，沉默也会被解读成立场。",
+        causeText: "由社交线积累触发。",
+        options: [
+          { id: "pick_side", label: "明确站队", tag: "social", effects: { reputation: -1, heat: 2, mood: 1 }, setFlags: ["public_fight"] },
+          { id: "neutral_reply", label: "中立回应", tag: "control", effects: { mood: 0, reputation: 1, heat: -1 }, setFlags: ["boundary_mode"] },
+          { id: "dm_key_people", label: "私聊关键人", tag: "network", effects: { reputation: 1, energy: -1, mood: -1 }, setFlags: ["network_mode"] },
+        ],
+      },
+    ],
+  },
+  4: {
+    heat: [
+      {
+        id: "heat_branch_a",
+        chapter: "第五章：热度或现金",
+        title: "你被推上风口",
+        text: "看似有流量，实则每条评论都在吃你的状态值。",
+        causeText: "由高热度或内容路线触发。",
+        options: [
+          { id: "issue_statement", label: "发正式说明", tag: "control", effects: { heat: -2, reputation: 1, mood: -1 }, setFlags: ["stabilized"] },
+          { id: "farm_traffic", label: "继续冲热度", tag: "risk", effects: { heat: 2, money: 1, reputation: -2 }, setFlags: ["viral_path"] },
+          { id: "logout_day", label: "离线一天", tag: "rest", effects: { mood: 2, heat: -1, money: -1 }, setFlags: ["offline_day"] },
+        ],
+      },
+      {
+        id: "heat_branch_b",
+        chapter: "第五章：热度或现金",
+        title: "微博热搜擦边",
+        text: "你被挂在热搜边缘词条，路人和熟人同时围观。",
+        causeText: "由高热度触发。",
+        options: [
+          { id: "pin_clarify", label: "置顶说明", tag: "control", effects: { heat: -1, reputation: 1, mood: -1 }, setFlags: ["stabilized"] },
+          { id: "followup_post", label: "再发一条", tag: "content", effects: { heat: 2, mood: 1, reputation: -1 }, setFlags: ["content_line"] },
+          { id: "silent_disappear", label: "暂时消失", tag: "rest", effects: { mood: 2, heat: -2 }, setFlags: ["offline_day"] },
+        ],
+      },
+    ],
+    cash: [
+      {
+        id: "cash_branch_a",
+        chapter: "第五章：热度或现金",
+        title: "账单集中到期",
+        text: "各种账单在同一天到来，你只能保一个重点。",
+        causeText: "由中低热度进入现金决策线。",
+        options: [
+          { id: "pay_necessity", label: "只保刚需", tag: "control", effects: { money: -1, mood: 1 }, setFlags: ["survival_focus"] },
+          { id: "borrow_rotate", label: "借新还旧", tag: "risk", effects: { money: 2, reputation: -2, heat: 1 }, setFlags: ["debt_spiral"] },
+          { id: "extra_job", label: "临时接单", tag: "work", effects: { money: 2, energy: -2, mood: -1 }, setFlags: ["grind_path"] },
+        ],
+      },
+      {
+        id: "cash_branch_b",
+        chapter: "第五章：热度或现金",
+        title: "平台扣款异常",
+        text: "自动续费和隐藏扣款同时触发，余额直线下降。",
+        causeText: "由现金压力线触发。",
+        options: [
+          { id: "chargeback_now", label: "立刻申诉", tag: "control", effects: { money: 1, energy: -1, mood: -1 }, setFlags: ["budget_mode"] },
+          { id: "ignore_small_loss", label: "先不管小额", tag: "rest", effects: { money: -1, mood: 1 }, setFlags: ["survival_focus"] },
+          { id: "public_expose_pay", label: "公开挂平台", tag: "content", effects: { heat: 2, reputation: -1, mood: 1 }, setFlags: ["content_line"] },
+        ],
+      },
+    ],
+  },
+  5: {
+    debt: [
+      {
+        id: "debt_end_a",
+        chapter: "第六章：摊牌或转型",
+        title: "你必须解释钱去哪了",
+        text: "借贷链条开始反噬，你要面对真实代价。",
+        causeText: "由第五章债务/低现金触发。",
+        options: [
+          { id: "full_disclose", label: "坦白并重排预算", tag: "control", effects: { reputation: 1, mood: -1, money: 1 }, setFlags: ["budget_rebuild"] },
+          { id: "hide_again", label: "继续隐瞒", tag: "risk", effects: { reputation: -2, mood: -1, heat: 1 }, setFlags: ["trust_break"] },
+          { id: "sell_assets", label: "处理闲置回血", tag: "money", effects: { money: 2, mood: -1 }, setFlags: ["asset_liquidation"] },
+        ],
+      },
+      {
+        id: "debt_end_b",
+        chapter: "第六章：摊牌或转型",
+        title: "催款电话连环响",
+        text: "从白天到深夜不断来电，你不得不正面回应。",
+        causeText: "由债务螺旋触发。",
+        options: [
+          { id: "repay_plan", label: "给出还款计划", tag: "control", effects: { reputation: 1, mood: -1, money: 1 }, setFlags: ["budget_rebuild"] },
+          { id: "switch_number", label: "先躲几天", tag: "risk", effects: { mood: -1, reputation: -2, heat: 1 }, setFlags: ["trust_break"] },
+          { id: "ask_family_help", label: "向家里求助", tag: "network", effects: { money: 2, reputation: -1, mood: 1 }, setFlags: ["family_help"] },
+        ],
+      },
+    ],
+    pivot: [
+      {
+        id: "pivot_end_a",
+        chapter: "第六章：摊牌或转型",
+        title: "你要决定接下来怎么活",
+        text: "短期止血还是长期转型，决定第七天结局基调。",
+        causeText: "由前五章表现进入转型线。",
+        options: [
+          { id: "upskill_focus", label: "投入学习", tag: "work", effects: { money: -1, energy: -1, reputation: 2 }, setFlags: ["upgrade_route"] },
+          { id: "relationship_route", label: "经营关系网络", tag: "network", effects: { reputation: 2, heat: 1, mood: 1 }, setFlags: ["network_route"] },
+          { id: "survival_route", label: "继续保守求生", tag: "rest", effects: { mood: 1, energy: 1, money: -1 }, setFlags: ["survival_route"] },
+        ],
+      },
+      {
+        id: "pivot_end_b",
+        chapter: "第六章：摊牌或转型",
+        title: "赛道切换窗口",
+        text: "你拿到一次转型机会，但代价是真实的时间和金钱。",
+        causeText: "由稳定线触发。",
+        options: [
+          { id: "switch_track", label: "切新赛道", tag: "work", effects: { money: -2, energy: -1, reputation: 2 }, setFlags: ["upgrade_route"] },
+          { id: "stay_track", label: "留在原轨道", tag: "control", effects: { mood: 1, money: 1 }, setFlags: ["survival_route"] },
+          { id: "hybrid_route", label: "主副并行", tag: "risk", effects: { money: 1, energy: -2, heat: 1 }, setFlags: ["grind_path"] },
+        ],
+      },
+    ],
+  },
 };
 
 function seededRandom(seed = 1) {
@@ -316,69 +478,24 @@ function resolveEvent(session, dayIndex) {
   }
 
   if (dayIndex === 3) {
-    return {
-      id: "chapter4_dynamic",
-      chapter: "第四章：身体与关系",
-      title: s.energy <= 3 || flags.overwork_line ? "体力断崖" : "关系拉扯",
-      text: s.energy <= 3 || flags.overwork_line ? "你开始出现明显疲劳症状，任何决定都在透支未来。" : "你开始在“维系关系”与“保护自己”之间左右互搏。",
-      causeText: s.energy <= 3 || flags.overwork_line ? "由连续高压工作或低体力触发。" : "由前三章关系/舆论余波触发。",
-      options:
-        s.energy <= 3 || flags.overwork_line
-          ? [
-              { id: "force_rest", label: "强制休整", tag: "rest", effects: { energy: 3, mood: 2, money: -1 }, setFlags: ["rest_recovery"] },
-              { id: "energy_drink", label: "继续硬扛", tag: "risk", effects: { energy: 1, mood: -2, heat: 1 }, setFlags: ["burnout_risk"] },
-              { id: "delegate_tasks", label: "拆分任务", tag: "network", effects: { energy: 1, reputation: -1, mood: 1 }, setFlags: ["delegation_path"] },
-            ]
-          : [
-              { id: "help_everyone", label: "尽量都帮", tag: "social", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["overcommit"] },
-              { id: "set_boundary", label: "明确边界", tag: "control", effects: { mood: 1, reputation: -1, heat: -1 }, setFlags: ["boundary_mode"] },
-              { id: "trade_resources", label: "资源互换", tag: "network", effects: { money: 1, reputation: 1, heat: 1 }, setFlags: ["resource_swap"] },
-            ],
-    };
+    if (s.energy <= 3 || flags.overwork_line || flags.burnout_risk) {
+      return pickFromPool(session, CHAPTER_POOLS[3].health, CHAPTER_POOLS[3].health[0]);
+    }
+    return pickFromPool(session, CHAPTER_POOLS[3].relation, CHAPTER_POOLS[3].relation[0]);
   }
 
   if (dayIndex === 4) {
-    return {
-      id: "chapter5_dynamic",
-      chapter: "第五章：热度或现金",
-      title: s.heat >= 7 || flags.content_line ? "你被推上风口" : "账单集中到期",
-      text: s.heat >= 7 || flags.content_line ? "看似有流量，实则每条评论都在吃你的状态值。" : "各种账单在同一天到来，你只能保一个重点。",
-      causeText: s.heat >= 7 || flags.content_line ? "由高热度或内容路线触发。" : "由中低热度进入现金决策线。",
-      options:
-        s.heat >= 7 || flags.content_line
-          ? [
-              { id: "issue_statement", label: "发正式说明", tag: "control", effects: { heat: -2, reputation: 1, mood: -1 }, setFlags: ["stabilized"] },
-              { id: "farm_traffic", label: "继续冲热度", tag: "risk", effects: { heat: 2, money: 1, reputation: -2 }, setFlags: ["viral_path"] },
-              { id: "logout_day", label: "离线一天", tag: "rest", effects: { mood: 2, heat: -1, money: -1 }, setFlags: ["offline_day"] },
-            ]
-          : [
-              { id: "pay_necessity", label: "只保刚需", tag: "control", effects: { money: -1, mood: 1 }, setFlags: ["survival_focus"] },
-              { id: "borrow_rotate", label: "借新还旧", tag: "risk", effects: { money: 2, reputation: -2, heat: 1 }, setFlags: ["debt_spiral"] },
-              { id: "extra_job", label: "临时接单", tag: "work", effects: { money: 2, energy: -2, mood: -1 }, setFlags: ["grind_path"] },
-            ],
-    };
+    if (s.heat >= 7 || flags.content_line || flags.public_fight || flags.viral_path) {
+      return pickFromPool(session, CHAPTER_POOLS[4].heat, CHAPTER_POOLS[4].heat[0]);
+    }
+    return pickFromPool(session, CHAPTER_POOLS[4].cash, CHAPTER_POOLS[4].cash[0]);
   }
 
   if (dayIndex === 5) {
-    return {
-      id: "chapter6_dynamic",
-      chapter: "第六章：摊牌或转型",
-      title: flags.debt_spiral || s.money <= 2 ? "你必须解释钱去哪了" : "你要决定接下来怎么活",
-      text: flags.debt_spiral || s.money <= 2 ? "借贷链条开始反噬，你要面对真实代价。" : "短期止血还是长期转型，决定第七天结局基调。",
-      causeText: flags.debt_spiral || s.money <= 2 ? "由第五章债务/低现金触发。" : "由前五章表现进入转型线。",
-      options:
-        flags.debt_spiral || s.money <= 2
-          ? [
-              { id: "full_disclose", label: "坦白并重排预算", tag: "control", effects: { reputation: 1, mood: -1, money: 1 }, setFlags: ["budget_rebuild"] },
-              { id: "hide_again", label: "继续隐瞒", tag: "risk", effects: { reputation: -2, mood: -1, heat: 1 }, setFlags: ["trust_break"] },
-              { id: "sell_assets", label: "处理闲置回血", tag: "money", effects: { money: 2, mood: -1 }, setFlags: ["asset_liquidation"] },
-            ]
-          : [
-              { id: "upskill_focus", label: "投入学习", tag: "work", effects: { money: -1, energy: -1, reputation: 2 }, setFlags: ["upgrade_route"] },
-              { id: "relationship_route", label: "经营关系网络", tag: "network", effects: { reputation: 2, heat: 1, mood: 1 }, setFlags: ["network_route"] },
-              { id: "survival_route", label: "继续保守求生", tag: "rest", effects: { mood: 1, energy: 1, money: -1 }, setFlags: ["survival_route"] },
-            ],
-    };
+    if (flags.debt_spiral || s.money <= 2 || flags.trust_break) {
+      return pickFromPool(session, CHAPTER_POOLS[5].debt, CHAPTER_POOLS[5].debt[0]);
+    }
+    return pickFromPool(session, CHAPTER_POOLS[5].pivot, CHAPTER_POOLS[5].pivot[0]);
   }
 
   return {
