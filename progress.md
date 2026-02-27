@@ -77,3 +77,14 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   - `npm test` 11 项通过。
   - `npm run simulate -- 20` 输出：胜率 100%、平均终局 HP 53.2。
   - Playwright 截图状态验证通过：`output/web-game-post-improve`。
+
+## Architecture Refactor (Baseline: docs/architecture)
+- 新增重构执行计划：`docs/architecture/refactor-execution-plan.md`。
+- Phase 1 已完成：
+  - Core 服务层：`core/mud-engine.js`（统一 `createMudService().runAction(payload)`）
+  - CLI 输出层：`core/mud-presenter.js`
+  - HTTP 适配层：`api/index.js`、`api/mud/run.js`、`api/mud/status.js`、`api/health.js`
+  - 终端适配层：`bin/mud-cli.js`（local/remote 模式）
+- 测试：新增 `tests/mud-service.test.js` 并通过全量测试（14/14）。
+- Playwright 冒烟验证：`output/web-game-refactor-p1`，UI 与状态输出正常。
+- 下一阶段：Phase 2 将 Web UI 改为 action 协议驱动（不再直接依赖 run 内部结构）。
