@@ -3,7 +3,7 @@ import { ENEMY_ORDER } from "../../content/enemies.js";
 import { STORY_ARC_ORDER, STORY_DECK, STORY_EVENTS } from "../../content/story-events.js";
 import { createBattle, createSeededRandom } from "../battle/engine.js";
 
-const NODE_TOTAL = 8;
+const NODE_TOTAL = 11;
 
 function randomRewardCards(random, count) {
   const pool = Object.keys(CARD_LIBRARY);

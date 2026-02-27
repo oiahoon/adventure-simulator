@@ -175,6 +175,30 @@ export const STORY_EVENTS = {
       bias: [{ tag: "survival", delta: 2 }],
     },
     runtimeEffects: { playerHpDelta: -2 },
+    branches: [
+      {
+        id: "burnout_rest",
+        label: "强制休整一周",
+        text: "你决定暂时停下来，短期进度变慢但状态恢复。",
+        effects: {
+          enqueueBranch: ["parent_pressure_call"],
+          setFlags: ["rest_mode"],
+          bias: [{ tag: "survival", delta: 2 }],
+          playerHpDelta: 2,
+        },
+      },
+      {
+        id: "burnout_push",
+        label: "继续硬扛",
+        text: "你决定继续推进，赌一次状态还能撑住。",
+        effects: {
+          enqueueBranch: ["public_opinion_wave"],
+          setFlags: ["overwork_mode"],
+          bias: [{ tag: "risk", delta: 2 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
     tags: ["health", "survival"],
   },
   absurd_side_hustle: {
@@ -187,6 +211,28 @@ export const STORY_EVENTS = {
       bias: [{ tag: "risk", delta: 1 }],
     },
     runtimeEffects: { playerHpDelta: 0 },
+    branches: [
+      {
+        id: "absurd_follow",
+        label: "尝试跟进",
+        text: "你决定先小规模尝试，看看是不是机会。",
+        effects: {
+          enqueueBranch: ["fake_expert_course"],
+          setFlags: ["absurd_follow"],
+          bias: [{ tag: "risk", delta: 2 }],
+        },
+      },
+      {
+        id: "absurd_reject",
+        label: "直接拒绝",
+        text: "你觉得这事不靠谱，决定回归稳妥路线。",
+        effects: {
+          enqueueBranch: ["gig_platform_ban"],
+          setFlags: ["absurd_reject"],
+          bias: [{ tag: "survival", delta: 1 }],
+        },
+      },
+    ],
     tags: ["tieba", "absurd"],
   },
   social_misfire: {
@@ -199,6 +245,28 @@ export const STORY_EVENTS = {
       bias: [{ tag: "survival", delta: 1 }],
     },
     runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "social_apology",
+        label: "主动道歉修复关系",
+        text: "你选择降低姿态，争取把损失控制住。",
+        effects: {
+          setFlags: ["social_repair"],
+          bias: [{ tag: "social", delta: 2 }],
+          playerHpDelta: 1,
+        },
+      },
+      {
+        id: "social_counter",
+        label: "硬刚舆论",
+        text: "你选择正面硬刚，声量上去了但风险更高。",
+        effects: {
+          setFlags: ["social_counter"],
+          bias: [{ tag: "risk", delta: 2 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
     tags: ["tieba", "social"],
   },
   compensation_stall: {
@@ -253,7 +321,147 @@ export const STORY_EVENTS = {
     runtimeEffects: { playerHpDelta: -2 },
     tags: ["debt", "risk"],
   },
+  public_opinion_wave: {
+    id: "public_opinion_wave",
+    title: "舆情浪潮",
+    text: "你被卷入一波网络讨论，短时间内流量和风险都在上升。",
+    nodeType: "battle",
+    enemyPool: ["sniper", "enforcer"],
+    preEffects: {
+      bias: [{ tag: "social", delta: 2 }],
+    },
+    runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "opinion_hide",
+        label: "降温处理",
+        text: "你选择降温，稳住局势。",
+        effects: {
+          setFlags: ["opinion_hide"],
+          bias: [{ tag: "survival", delta: 1 }],
+        },
+      },
+      {
+        id: "opinion_ride",
+        label: "借势放大",
+        text: "你决定借势冲一把，把争议当流量。",
+        effects: {
+          setFlags: ["opinion_ride"],
+          bias: [{ tag: "risk", delta: 2 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
+    tags: ["social", "risk"],
+  },
+  parent_pressure_call: {
+    id: "parent_pressure_call",
+    title: "家庭来电压力",
+    text: "家里打来电话问近况，你必须在现实和期待之间回答。",
+    nodeType: "battle",
+    enemyPool: ["scavenger", "enforcer"],
+    preEffects: {
+      bias: [{ tag: "social", delta: 1 }],
+    },
+    runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "parent_tell_truth",
+        label: "如实说明现状",
+        text: "你选择坦白处境，短期尴尬但减轻心理负担。",
+        effects: {
+          setFlags: ["family_truth"],
+          bias: [{ tag: "survival", delta: 1 }],
+          playerHpDelta: 1,
+        },
+      },
+      {
+        id: "parent_hold_mask",
+        label: "先报喜不报忧",
+        text: "你选择维持表面稳定，把压力留给自己。",
+        effects: {
+          setFlags: ["family_mask"],
+          bias: [{ tag: "risk", delta: 1 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
+    tags: ["social", "pressure"],
+  },
+  fake_expert_course: {
+    id: "fake_expert_course",
+    title: "大师课程推销",
+    text: "有人向你兜售“逆天改命课”，承诺三天翻盘。",
+    nodeType: "battle",
+    enemyPool: ["scavenger", "sniper"],
+    requiresFlags: ["absurd_follow"],
+    preEffects: {
+      bias: [{ tag: "risk", delta: 2 }],
+    },
+    runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "course_buy",
+        label: "付费买课",
+        text: "你决定花钱买希望。",
+        effects: {
+          setFlags: ["course_buyer"],
+          bias: [{ tag: "debt", delta: 2 }],
+          playerHpDelta: -1,
+        },
+      },
+      {
+        id: "course_skip",
+        label: "理性跳过",
+        text: "你选择止损，不再追加沉没成本。",
+        effects: {
+          setFlags: ["course_skipper"],
+          bias: [{ tag: "survival", delta: 1 }],
+        },
+      },
+    ],
+    tags: ["tieba", "absurd"],
+  },
+  gig_platform_ban: {
+    id: "gig_platform_ban",
+    title: "平台规则突变",
+    text: "你依赖的平台临时改规则，收益模型被打乱。",
+    nodeType: "battle",
+    enemyPool: ["sniper", "enforcer"],
+    preEffects: {
+      bias: [{ tag: "career", delta: 1 }],
+    },
+    runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "gig_appeal",
+        label: "提交申诉",
+        text: "你尝试走流程挽回影响。",
+        effects: {
+          setFlags: ["gig_appeal"],
+          bias: [{ tag: "career", delta: 1 }],
+        },
+      },
+      {
+        id: "gig_switch",
+        label: "切换平台",
+        text: "你果断换到别的平台，但需要重新爬坡。",
+        effects: {
+          setFlags: ["gig_switch"],
+          bias: [{ tag: "survival", delta: 1 }],
+        },
+      },
+    ],
+    tags: ["career", "risk"],
+  },
 };
 
 export const STORY_ARC_ORDER = ["layoff_rumor", "rent_hike_notice", "burnout_warning"];
-export const STORY_DECK = ["absurd_side_hustle", "social_misfire"];
+export const STORY_DECK = [
+  "absurd_side_hustle",
+  "social_misfire",
+  "public_opinion_wave",
+  "parent_pressure_call",
+  "gig_platform_ban",
+  "fake_expert_course",
+];

@@ -7,7 +7,7 @@ test("run starts at story mode with first node branch options", () => {
   const run = createRun({ seed: 3 });
   assert.equal(run.state.mode, "story");
   assert.equal(run.state.nodeIndex, 0);
-  assert.equal(run.state.nodeTotal, 8);
+  assert.equal(run.state.nodeTotal, 11);
   assert.equal(run.state.story.current.id, "layoff_rumor");
   assert.ok(run.state.pendingStoryChoice.options.length >= 2);
 });
