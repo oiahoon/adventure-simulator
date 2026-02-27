@@ -277,8 +277,17 @@ function drawCards(run, rng, content) {
   if (forced) {
     const forcedCard = cardById(content, forced.cardId);
     if (forcedCard) {
+      const forcedChoices = Array.isArray(forcedCard.event.choices) ? forcedCard.event.choices : [];
       run.hand = [forcedCard.id];
-      run.handMeta = [{ id: forcedCard.id, title: forcedCard.event.title, tag: forcedCard.event.tags[0] || "forced", forced: true }];
+      run.handMeta = [{
+        id: forcedCard.id,
+        title: forcedCard.event.title,
+        text: forcedCard.event.text || "",
+        tag: forcedCard.event.tags[0] || "forced",
+        forced: true,
+        leftLabel: forcedChoices[0] && forcedChoices[0].label ? forcedChoices[0].label : "左选",
+        rightLabel: forcedChoices[1] && forcedChoices[1].label ? forcedChoices[1].label : "右选"
+      }];
       pushEvent(run, "draw_forced", { cardId: forcedCard.id });
       return { ok: true, message: "已发放强制后续卡。" };
     }
@@ -303,8 +312,17 @@ function drawCards(run, rng, content) {
   while (pickedIds.length < size && weighted.length > 0) {
     const card = weightedPick(rng, weighted);
     if (!card) break;
+    const choices = Array.isArray(card.event.choices) ? card.event.choices : [];
     pickedIds.push(card.id);
-    pickedMeta.push({ id: card.id, title: card.event.title, tag: card.event.tags[0] || "main", forced: false });
+    pickedMeta.push({
+      id: card.id,
+      title: card.event.title,
+      text: card.event.text || "",
+      tag: card.event.tags[0] || "main",
+      forced: false,
+      leftLabel: choices[0] && choices[0].label ? choices[0].label : "左选",
+      rightLabel: choices[1] && choices[1].label ? choices[1].label : "右选"
+    });
     const idx = weighted.findIndex((w) => w.card.id === card.id);
     if (idx >= 0) weighted.splice(idx, 1);
   }

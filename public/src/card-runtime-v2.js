@@ -7,12 +7,24 @@
     busy: false,
     lastError: "",
     shareText: "",
-    ending: null
+    ending: null,
+    activeCardId: "",
+    dragDx: 0,
+    uxMetrics: {
+      plays: 0,
+      swipePlays: 0,
+      buttonPlays: 0,
+      queueHintsSeen: 0,
+      shareCopy: 0,
+      shareBuild: 0
+    }
   };
 
   const els = {
     kpi: document.getElementById("kpi"),
-    cards: document.getElementById("cards"),
+    mainCardHost: document.getElementById("main-card-host"),
+    handMini: document.getElementById("hand-mini"),
+    queueHint: document.getElementById("queue-hint"),
     info: document.getElementById("info"),
     log: document.getElementById("log"),
     newBtn: document.getElementById("new-btn"),
@@ -29,6 +41,42 @@
     return Math.max(min, Math.min(max, v));
   }
 
+  function ratio(v, max, invert) {
+    const safe = Number.isFinite(v) ? v : 0;
+    const pct = max > 0 ? clamp((safe / max) * 100, 0, 100) : 0;
+    return invert ? 100 - pct : pct;
+  }
+
+  function getMainCard(run) {
+    const hand = Array.isArray(run && run.handMeta) ? run.handMeta : [];
+    if (!hand.length) return null;
+    if (!state.activeCardId) {
+      state.activeCardId = hand[0].id;
+      return hand[0];
+    }
+    const hit = hand.find((x) => x && x.id === state.activeCardId);
+    if (hit) return hit;
+    state.activeCardId = hand[0].id;
+    return hand[0];
+  }
+
+  function nextForcedHint(run) {
+    if (!run) return "";
+    const hand = Array.isArray(run.handMeta) ? run.handMeta : [];
+    const inHandForced = hand.find((x) => x && x.forced);
+    if (inHandForced) {
+      return `强制后续已到达：${inHandForced.title || inHandForced.id}`;
+    }
+    const q = Array.isArray(run.queue) ? run.queue.slice() : [];
+    if (!q.length) return "";
+    q.sort((a, b) => (a.dueIn || 0) - (b.dueIn || 0));
+    const first = q[0];
+    if (!first || !first.cardId) return "";
+    const due = Number.isFinite(first.dueIn) ? first.dueIn : 0;
+    if (due <= 0) return `强制后续：${first.cardId}（即将触发）`;
+    return `强制后续：${first.cardId}（约 ${due} 回合后）`;
+  }
+
   async function callApi(payload) {
     const res = await fetch("/api/mud/run", {
       method: "POST",
@@ -42,17 +90,8 @@
     } catch (_) {
       throw new Error(`API 返回非 JSON: ${text.slice(0, 120)}`);
     }
-    if (!res.ok) {
-      throw new Error(json.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
     return json;
-  }
-
-  function makeKpiItem(name, value, max, invert) {
-    const safe = Number.isFinite(value) ? value : 0;
-    const pct = max > 0 ? clamp((safe / max) * 100, 0, 100) : 0;
-    const display = invert ? 100 - pct : pct;
-    return `<div><span>${name}</span><strong>${safe}</strong><div class="bar"><i style="width:${display.toFixed(1)}%"></i></div></div>`;
   }
 
   function renderKpi() {
@@ -62,49 +101,196 @@
       return;
     }
     const stats = run.stats || {};
-    els.kpi.innerHTML = [
-      makeKpiItem("生命", stats.hp, 100, false),
-      makeKpiItem("精神", stats.san, 100, false),
-      makeKpiItem("疲劳", stats.fatigue, 100, true),
-      makeKpiItem("债务", stats.debt, 280, true),
-      makeKpiItem("热度", stats.heat, 100, true),
-      makeKpiItem("现金", stats.cash, 200, false),
-      makeKpiItem("天数", run.day, 36, false),
-      makeKpiItem("回合", run.turn, 80, false)
-    ].join("");
+    const items = [
+      ["生命", stats.hp, 100, false],
+      ["精神", stats.san, 100, false],
+      ["疲劳", stats.fatigue, 100, true],
+      ["债务", stats.debt, 280, true],
+      ["热度", stats.heat, 100, true],
+      ["现金", stats.cash, 220, false],
+      ["天数", run.day, 36, false],
+      ["回合", run.turn, 80, false]
+    ];
+    els.kpi.innerHTML = items
+      .map((it) => `<div><span>${it[0]}</span><strong>${Number.isFinite(it[1]) ? it[1] : 0}</strong><div class="bar"><i style="width:${ratio(it[1], it[2], it[3]).toFixed(1)}%"></i></div></div>`)
+      .join("");
   }
 
-  function renderCards() {
+  function renderQueueHint() {
+    const text = nextForcedHint(state.run);
+    if (!text) {
+      els.queueHint.classList.remove("show");
+      els.queueHint.textContent = "";
+      return;
+    }
+    els.queueHint.classList.add("show");
+    els.queueHint.textContent = text;
+    state.uxMetrics.queueHintsSeen += 1;
+  }
+
+  function renderMainCard() {
     const run = state.run;
-    if (!run || run.mode === "ended" || !Array.isArray(run.handMeta) || !run.handMeta.length) {
-      els.cards.innerHTML = `<div class="card"><h3>暂无手牌</h3><p>点击“抽牌”或先完成关键抉择。</p><span class="tag">empty</span></div>`;
+    const hand = Array.isArray(run && run.handMeta) ? run.handMeta : [];
+    if (!run || run.mode === "ended" || !hand.length) {
+      els.mainCardHost.innerHTML = `<div class="main-card"><h3>暂无手牌</h3><p>点击“补牌”继续，或新开一局。</p></div>`;
       return;
     }
 
-    els.cards.innerHTML = run.handMeta
-      .map((card) => {
-        return `<article class="card">
-          <h3>${card.title || card.id}</h3>
-          <p>${card.id}</p>
+    const card = getMainCard(run);
+    if (!card) {
+      els.mainCardHost.innerHTML = `<div class="main-card"><h3>暂无可选主卡</h3></div>`;
+      return;
+    }
+
+    els.mainCardHost.innerHTML = `
+      <article class="main-card" data-card-id="${card.id}">
+        <h3>${card.title || card.id}</h3>
+        <p>${card.text || card.id}</p>
+        <div class="row">
           <span class="tag">${card.tag || "card"}</span>
-          <div class="choice">
-            <button data-play="${card.id}" data-choice="left">左选</button>
-            <button data-play="${card.id}" data-choice="right">右选</button>
+          ${card.forced ? '<span class="forced-tag">强制后续</span>' : ""}
+        </div>
+        <div class="preview">
+          <i id="preview-left">左滑：${card.leftLabel || "左选"}</i>
+          <i id="preview-right">右滑：${card.rightLabel || "右选"}</i>
+        </div>
+        <div class="actions">
+          <button data-play="${card.id}" data-choice="left">${card.leftLabel || "左选"}</button>
+          <button data-play="${card.id}" data-choice="right">${card.rightLabel || "右选"}</button>
+        </div>
+      </article>`;
+
+    bindMainCardActions(card);
+  }
+
+  function renderMiniHand() {
+    const run = state.run;
+    const hand = Array.isArray(run && run.handMeta) ? run.handMeta : [];
+    if (!hand.length) {
+      els.handMini.innerHTML = "";
+      return;
+    }
+    const main = getMainCard(run);
+    const list = hand.filter((x) => x && main && x.id !== main.id);
+    if (!list.length) {
+      els.handMini.innerHTML = "";
+      return;
+    }
+    els.handMini.innerHTML = list
+      .map((card) => {
+        return `<article class="mini-card">
+          <h4>${card.title || card.id}</h4>
+          <p>${card.text ? String(card.text).slice(0, 36) : card.id}</p>
+          <div class="row">
+            <span class="tag">${card.tag || "card"}</span>
+            ${card.forced ? '<span class="forced-tag">强制</span>' : ""}
           </div>
+          <button data-focus="${card.id}">设为主卡</button>
         </article>`;
       })
       .join("");
 
-    els.cards.querySelectorAll("button[data-play]").forEach((btn) => {
+    els.handMini.querySelectorAll("button[data-focus]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cardId = btn.getAttribute("data-focus");
+        if (!cardId) return;
+        state.activeCardId = cardId;
+        renderMainCard();
+      });
+    });
+  }
+
+  function pointerX(event) {
+    if (event.touches && event.touches[0]) return event.touches[0].clientX;
+    if (event.changedTouches && event.changedTouches[0]) return event.changedTouches[0].clientX;
+    return event.clientX;
+  }
+
+  function bindMainCardActions(card) {
+    const host = els.mainCardHost;
+    host.querySelectorAll("button[data-play]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const cardId = btn.getAttribute("data-play");
         const choiceId = btn.getAttribute("data-choice");
+        state.uxMetrics.buttonPlays += 1;
         play(cardId, choiceId).catch((e) => {
           state.lastError = e.message;
           render();
         });
       });
     });
+
+    const el = host.querySelector(".main-card");
+    if (!el || !card) return;
+
+    let dragging = false;
+    let startX = 0;
+
+    const left = host.querySelector("#preview-left");
+    const right = host.querySelector("#preview-right");
+
+    function applyDrag(dx) {
+      state.dragDx = dx;
+      const rot = clamp(dx / 18, -12, 12);
+      el.style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
+      if (left) left.classList.toggle("active-left", dx < -35);
+      if (right) right.classList.toggle("active-right", dx > 35);
+    }
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      const dx = state.dragDx;
+      state.dragDx = 0;
+      if (Math.abs(dx) >= 110 && !state.busy) {
+        const choiceId = dx < 0 ? "left" : "right";
+        state.uxMetrics.swipePlays += 1;
+        play(card.id, choiceId).catch((e) => {
+          state.lastError = e.message;
+          render();
+        });
+        return;
+      }
+      el.style.transform = "translateX(0px) rotate(0deg)";
+      if (left) left.classList.remove("active-left");
+      if (right) right.classList.remove("active-right");
+    }
+
+    const onStart = (e) => {
+      if (state.busy) return;
+      dragging = true;
+      startX = pointerX(e);
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      const dx = pointerX(e) - startX;
+      applyDrag(dx);
+    };
+
+    function detach() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchcancel", onEnd);
+    }
+
+    const onEnd = () => {
+      endDrag();
+      detach();
+    };
+
+    el.addEventListener("mousedown", onStart);
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("mousedown", () => {
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onEnd);
+    }, { once: true });
+    el.addEventListener("touchstart", () => {
+      window.addEventListener("touchmove", onMove, { passive: true });
+      window.addEventListener("touchend", onEnd, { passive: true });
+      window.addEventListener("touchcancel", onEnd, { passive: true });
+    }, { once: true });
   }
 
   function renderInfo() {
@@ -115,13 +301,14 @@
       else els.info.classList.remove("error");
       return;
     }
-    const stage = run.storyStage || (run.story && run.story.lifeStage) || "未知阶段";
+    const stage = run.storyStage || "未知阶段";
+    const obs = run.observability || {};
     const basic = [
       `状态: ${run.mode}`,
       `阶段: ${stage}`,
-      `地点: ${run.location}`,
       `玩家: ${run.player.name} (${run.player.profession})`,
-      `出牌: ${run.metrics.cardPlays} | 关键事件: ${run.metrics.keyEvents}`,
+      `出牌: ${run.metrics.cardPlays} | 多样性: ${obs.cardDiversity || 0} | 重复率: ${obs.repeatRate || 0}`,
+      `剧情链收束率: ${obs.arcCompletionRate || 0} | 强制命中率: ${obs.queueHitRate || 0}`,
       `消息: ${state.info || "-"}`
     ];
     if (state.lastError) {
@@ -143,6 +330,20 @@
     els.log.scrollTop = els.log.scrollHeight;
   }
 
+  function topCards(run, limit) {
+    const hist = Array.isArray(run && run.playHistory) ? run.playHistory : [];
+    const map = {};
+    for (let i = 0; i < hist.length; i += 1) {
+      const id = hist[i];
+      if (!id) continue;
+      map[id] = (map[id] || 0) + 1;
+    }
+    return Object.keys(map)
+      .sort((a, b) => map[b] - map[a])
+      .slice(0, limit || 3)
+      .map((id) => `${id} x${map[id]}`);
+  }
+
   function computeAchievements(run) {
     const stats = run.stats || {};
     const arcs = run.activeArcs || {};
@@ -153,18 +354,12 @@
     if ((run.metrics && run.metrics.cardPlays) >= 24) list.push("决策耐受体");
     if ((stats.debt || 0) < 90) list.push("账本稳压");
     if ((stats.san || 0) >= 45) list.push("精神稳态");
-    if ((stats.fatigue || 0) <= 45) list.push("体力调度员");
     if (!list.length) list.push("持续求生");
     return list.slice(0, 4);
   }
 
   function buildEnding(run) {
-    if (!run || run.mode !== "ended") {
-      return {
-        text: "本局尚未结束",
-        shareText: ""
-      };
-    }
+    if (!run || run.mode !== "ended") return { text: "本局尚未结束", shareText: "" };
     const stats = run.stats || {};
     const arcs = run.activeArcs || {};
     const arcSummary = Object.keys(arcs)
@@ -178,6 +373,7 @@
       .filter(Boolean)
       .join(" / ");
     const ach = computeAchievements(run);
+    const keys = topCards(run, 3);
     const title = run.day >= 36 ? "终盘幸存" : "阶段倒下";
     const text = [
       `结局: ${title}`,
@@ -185,16 +381,19 @@
       `核心值: 生命${stats.hp} 精神${stats.san} 疲劳${stats.fatigue} 债务${stats.debt} 热度${stats.heat} 现金${stats.cash}`,
       `决策数: ${run.metrics.cardPlays} 关键事件: ${run.metrics.keyEvents}`,
       `剧情链: ${arcSummary || "无显著收束"}`,
+      `关键牌: ${keys.length ? keys.join("、") : "暂无"}`,
       `成就: ${ach.join("、")}`
     ].join("\n");
+
     const shareText = [
-      `我在《都市生存模拟器V2》打出了「${title}」`,
+      `我在《都市生存模拟器》打出了「${title}」`,
       `坚持到 D${run.day}/T${run.turn}，决策 ${run.metrics.cardPlays} 次，关键事件 ${run.metrics.keyEvents} 次`,
       `状态：生命${stats.hp} 精神${stats.san} 疲劳${stats.fatigue} 债务${stats.debt} 热度${stats.heat} 现金${stats.cash}`,
-      `成就：${ach.join("、")}`,
-      `来挑战我的卡牌命运线`
+      `关键牌：${keys.length ? keys.join("、") : "暂无"}`,
+      `成就：${ach.join("、")}`
     ].join("\n");
-    return { text, shareText, achievements: ach, title };
+
+    return { text, shareText, achievements: ach, title, keyCards: keys };
   }
 
   function renderShareCard(run, ending) {
@@ -209,7 +408,7 @@
 
     shareCtx.fillStyle = "#2a2d36";
     shareCtx.font = "700 62px 'Noto Sans SC'";
-    shareCtx.fillText("都市生存模拟器 V2", 70, 110);
+    shareCtx.fillText("都市生存模拟器", 70, 110);
     shareCtx.font = "600 38px 'Noto Sans SC'";
     shareCtx.fillText(ending.title || "结局", 70, 178);
 
@@ -219,19 +418,16 @@
       `生命 ${stats.hp}  精神 ${stats.san}  疲劳 ${stats.fatigue}`,
       `债务 ${stats.debt}  热度 ${stats.heat}  现金 ${stats.cash}`,
       `决策 ${run.metrics.cardPlays}  关键事件 ${run.metrics.keyEvents}`,
+      `关键牌: ${(ending.keyCards || []).join("、") || "暂无"}`,
       `成就: ${(ending.achievements || []).join("、")}`
     ];
     shareCtx.font = "500 34px 'Noto Sans SC'";
-    lines.forEach((line, i) => {
-      shareCtx.fillText(line, 70, 290 + i * 62);
-    });
+    lines.forEach((line, i) => shareCtx.fillText(line, 70, 290 + i * 62));
 
     shareCtx.font = "400 30px 'Noto Sans SC'";
     const recent = (run.log || []).slice(-6);
-    shareCtx.fillText("剧情片段：", 70, 690);
-    recent.forEach((line, i) => {
-      shareCtx.fillText(`- ${String(line).slice(0, 36)}`, 70, 750 + i * 52);
-    });
+    shareCtx.fillText("剧情片段：", 70, 760);
+    recent.forEach((line, i) => shareCtx.fillText(`- ${String(line).slice(0, 36)}`, 70, 820 + i * 52));
 
     els.downloadShareBtn.href = els.shareCanvas.toDataURL("image/png");
     els.downloadShareBtn.classList.remove("hidden");
@@ -249,6 +445,7 @@
       document.execCommand("copy");
       document.body.removeChild(ta);
     }
+    state.uxMetrics.shareCopy += 1;
     state.info = "分享文案已复制";
   }
 
@@ -280,6 +477,7 @@
   async function newRun() {
     setBusy(true);
     state.lastError = "";
+    state.activeCardId = "";
     try {
       const res = await callApi({ action: "new" });
       state.run = res.run;
@@ -297,7 +495,7 @@
     try {
       const res = await callApi({ action: "draw", run: state.run });
       state.run = res.run;
-      state.info = res.message || "已抽牌";
+      state.info = res.message || "已补牌";
     } finally {
       setBusy(false);
       render();
@@ -305,13 +503,20 @@
   }
 
   async function play(cardId, choiceId) {
-    if (!state.run) return;
+    if (!state.run || !cardId) return;
     setBusy(true);
     state.lastError = "";
     try {
       const res = await callApi({ action: "play", cardId, choiceId, run: state.run });
       state.run = res.run;
+      state.uxMetrics.plays += 1;
       state.info = res.message || "已出牌";
+      const hand = Array.isArray(state.run.handMeta) ? state.run.handMeta : [];
+      if (hand.length) {
+        state.activeCardId = hand[0].id;
+      } else {
+        state.activeCardId = "";
+      }
     } finally {
       setBusy(false);
       render();
@@ -320,7 +525,9 @@
 
   function render() {
     renderKpi();
-    renderCards();
+    renderQueueHint();
+    renderMainCard();
+    renderMiniHand();
     renderInfo();
     renderLog();
     renderEnding();
@@ -348,6 +555,7 @@
     });
     els.buildShareBtn.addEventListener("click", () => {
       if (state.run && state.run.mode === "ended" && state.ending) {
+        state.uxMetrics.shareBuild += 1;
         renderShareCard(state.run, state.ending);
         state.info = "战报图已生成";
         render();
@@ -363,9 +571,11 @@
       story_stage: state.run ? state.run.storyStage : "",
       stats: state.run ? state.run.stats : {},
       hand: state.run ? state.run.handMeta : [],
+      active_card: state.activeCardId,
       log_tail: state.run && state.run.log ? state.run.log.slice(-8) : [],
       info: state.info,
-      error: state.lastError
+      error: state.lastError,
+      ux_metrics: state.uxMetrics
     });
   }
 

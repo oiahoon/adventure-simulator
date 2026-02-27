@@ -417,3 +417,21 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - `npm run check:replay:v2` passed.
+- Card UI/UX phased refactor started against `cards-play-deep-research-report`:
+  - Added plan doc: `docs/architecture/card-uiux-improvement-plan.md` (Phase 0-4 with acceptance criteria).
+- Phase 1 + Phase 2 first implementation delivered:
+  - `/game` rebuilt to mobile-first main-card layout with swipe interactions and fallback buttons.
+  - Added half-swipe preview highlight and swipe-threshold play trigger.
+  - Added queue/forced visibility area (`#queue-hint`) and forced badges on cards.
+  - Added side hand selector (`设为主卡`) to keep desktop/strategy flow while mobile remains main-card focused.
+  - Runtime now tracks minimal UX metrics (`plays/swipePlays/buttonPlays/queueHintsSeen/shareCopy/shareBuild`) and exports under `render_game_to_text.ux_metrics`.
+  - Ending summary/share now includes key cards (top usage) for stronger run explainability.
+  - Engine hand metadata now includes `text`, `leftLabel`, `rightLabel`, and `forced` for UI-level narrative readability.
+- Validation:
+  - `node --check core/card-v2/engine.js` passed.
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.
+- Playwright status:
+  - `develop-web-game` client run remains blocked by module-format mismatch in current environment (`web_game_playwright_client.js` ESM parse error under current runtime setup).
