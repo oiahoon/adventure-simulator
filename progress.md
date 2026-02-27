@@ -363,3 +363,16 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed
   - `npm run check:replay` passed (v1 baseline unchanged)
   - v2 smoke test confirmed JSON pack source loaded (non-fallback) and `new -> play` loop works.
+- Phase 3 started (Web runtime replacement prep):
+  - Added v2 standalone web shell:
+    - `public/game-v2/index.html`
+    - `public/src/card-runtime-v2.js`
+  - Web v2 shell now drives card flow through API (`/api/mud/run` + `engineVersion=v2`) with actions `new/draw/play`.
+  - Added homepage entry links to V2 experimental route (`/game-v2/`).
+  - Updated migration plan with Phase 3 progress notes.
+- Validation:
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - v2 smoke test (`new -> play`) passed with JSON-pack source.

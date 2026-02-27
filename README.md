@@ -5,6 +5,7 @@
 ## 当前状态
 
 - Web 游戏入口：`/game/`
+- Web V2 试验场：`/game-v2/`
 - 项目主页：`/`
 - CLI：`mud-cli`（远程/本地模式）
 - 共享核心：`core/mud-engine.js`（API/CLI 共用）
@@ -35,6 +36,7 @@ python3 -m http.server 8080
 
 - 主页：`http://localhost:8080/`
 - 游戏：`http://localhost:8080/game/`
+- V2 试验场：`http://localhost:8080/game-v2/`
 
 ### 3) 本地命令行游玩
 

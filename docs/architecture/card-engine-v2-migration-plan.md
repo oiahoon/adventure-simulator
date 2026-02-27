@@ -58,6 +58,11 @@
 - Web 与 API/CLI 的回合语义一致
 - 旧功能（分享/结算/挑战 seed）在 v2 下可用
 
+当前进展：
+- 已新增 `public/game-v2/index.html` + `public/src/card-runtime-v2.js` 作为 v2 独立壳层。
+- 壳层通过 `/api/mud/run` + `engineVersion=v2` 运行抽牌/出牌循环。
+- 下一步是把分享/成就/结算和 v2 runtime 对齐并接回主 `/game` 页面。
+
 ## Phase 4: 观测与回放
 
 目标：可调参与可验证。

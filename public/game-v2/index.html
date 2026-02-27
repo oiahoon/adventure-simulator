@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>都市生存模拟器 V2 - 卡牌引擎</title>
+  <meta name="description" content="Card/Event V2 试验场，按抽牌与出牌协议运行" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #edf3fb;
+      --card: #ffffff;
+      --ink: #1a2633;
+      --line: #d2deef;
+      --brand: #1158c7;
+      --danger: #c2410c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 540px at -10% -10%, #d5e7ff, transparent 62%),
+        radial-gradient(900px 540px at 110% 0%, #d5f4ec, transparent 56%),
+        var(--bg);
+    }
+    .page {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: 0 10px 26px rgba(33, 67, 108, 0.1);
+      overflow: hidden;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px;
+      background: linear-gradient(135deg, #eef5ff, #f8fcff);
+    }
+    .hero h1 { margin: 0; font-size: 1.4rem; font-family: "ZCOOL XiaoWei", serif; }
+    .hero p { margin: 3px 0 0; color: #526579; font-size: 0.86rem; }
+    .v2-badge {
+      align-self: start;
+      border-radius: 999px;
+      border: 1px solid #b6ceef;
+      color: #0f4da9;
+      background: #eaf2ff;
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .kpi > div {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      background: linear-gradient(145deg, #fff, #f4f8ff);
+      display: grid;
+      gap: 2px;
+    }
+    .kpi span { color: #607286; font-size: 0.74rem; }
+    .kpi strong { font-size: 1rem; }
+    .bar {
+      margin-top: 2px;
+      height: 8px;
+      background: #e6eef9;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #2563eb);
+      transition: width .22s ease;
+    }
+    .toolbar {
+      padding: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--line);
+    }
+    button {
+      border: 1px solid #b7c9e2;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .cards {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .card {
+      border: 1px solid #c2d5f0;
+      border-radius: 14px;
+      padding: 10px;
+      background: linear-gradient(160deg, #fff, #edf4ff);
+      display: grid;
+      gap: 5px;
+    }
+    .card h3 { margin: 0; font-size: 0.92rem; }
+    .card p { margin: 0; font-size: 0.78rem; color: #4f6173; min-height: 34px; }
+    .tag { font-size: 0.68rem; color: #0d4da8; background: #e7f1ff; border-radius: 999px; padding: 2px 7px; justify-self: start; }
+    .choice { margin-top: 4px; display: flex; gap: 6px; }
+    .choice button { flex: 1; font-size: 0.73rem; }
+    .info {
+      padding: 10px;
+      font-size: 0.82rem;
+      color: #334559;
+      border-top: 1px solid var(--line);
+      white-space: pre-wrap;
+      min-height: 56px;
+    }
+    .log {
+      padding: 10px;
+      border-top: 1px solid var(--line);
+      max-height: 280px;
+      overflow: auto;
+      background: #fbfdff;
+      white-space: pre-wrap;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .error { color: var(--danger); }
+    @media (max-width: 720px) {
+      .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel hero">
+      <div>
+        <h1>都市生存模拟器</h1>
+        <p>Card/Event V2 实验场（抽牌 / 出牌协议）</p>
+      </div>
+      <div class="v2-badge">engine=v2</div>
+    </section>
+
+    <section class="panel">
+      <div class="kpi" id="kpi"></div>
+      <div class="toolbar">
+        <button id="new-btn">新开一局</button>
+        <button id="draw-btn">抽牌</button>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="info" id="info">等待初始化...</div>
+      <div class="log" id="log"></div>
+    </section>
+  </main>
+
+  <script src="/src/card-runtime-v2.js"></script>
+</body>
+</html>
