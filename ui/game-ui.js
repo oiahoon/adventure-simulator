@@ -112,6 +112,7 @@ export function createGameUI(root, actions) {
             <h2>Day ${view.day}/${view.dayTotal}</h2>
             <p>当前分数 ${view.score}</p>
           </div>
+          <p class="opt-impact">开局角色：${view.profileName}</p>
           <div class="stats-grid">
             ${statCard("现金", view.stats.money, "money")}
             ${statCard("体力", view.stats.energy, "energy")}
