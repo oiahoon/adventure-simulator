@@ -3,7 +3,7 @@
 const { DEFAULT_CONTENT } = require("./default-content");
 const { loadCardV2Content } = require("./content-loader");
 
-const SUPPORTED_ACTIONS = ["new", "status", "draw", "play", "choose"];
+const SUPPORTED_ACTIONS = ["new", "status", "draw", "play", "discard", "defer", "choose"];
 
 function defaultRandom() {
   return Math.random();
@@ -285,6 +285,7 @@ function drawCards(run, rng, content) {
         text: forcedCard.event.text || "",
         tag: forcedCard.event.tags[0] || "forced",
         forced: true,
+        canDiscard: !!forcedCard.canDiscard,
         leftLabel: forcedChoices[0] && forcedChoices[0].label ? forcedChoices[0].label : "左选",
         rightLabel: forcedChoices[1] && forcedChoices[1].label ? forcedChoices[1].label : "右选"
       }];
@@ -294,12 +295,16 @@ function drawCards(run, rng, content) {
   }
 
   const size = clamp(content.DECK_RULES.baseHandSize, 1, content.DECK_RULES.maxHandSize);
+  if (Array.isArray(run.hand) && run.hand.length >= size) {
+    return { ok: true, message: "当前手牌已满。" };
+  }
   const available = content.CARDS.filter((card) => {
     const event = card.event || {};
     if (run.cooldowns[event.id] > 0) return false;
     if (event.when && !evalCondition(run, event.when, rng)) return false;
     if (content.DECK_RULES.preventDuplicatesInHand && run.hand.includes(card.id)) return false;
     if ((run.discardHistory[card.id] || -999) + content.DECK_RULES.discardCooldownTurns > run.turn) return false;
+    if ((run.deferHistory[card.id] || -999) + (content.DECK_RULES.deferCooldownTurns || 2) > run.turn) return false;
     return true;
   });
 
@@ -307,8 +312,8 @@ function drawCards(run, rng, content) {
     .map((card) => ({ card, weight: computeWeight(run, card) }))
     .filter((x) => x.weight > 0);
 
-  const pickedIds = [];
-  const pickedMeta = [];
+  const pickedIds = Array.isArray(run.hand) ? run.hand.slice() : [];
+  const pickedMeta = Array.isArray(run.handMeta) ? run.handMeta.slice() : [];
   while (pickedIds.length < size && weighted.length > 0) {
     const card = weightedPick(rng, weighted);
     if (!card) break;
@@ -320,6 +325,7 @@ function drawCards(run, rng, content) {
       text: card.event.text || "",
       tag: card.event.tags[0] || "main",
       forced: false,
+      canDiscard: !!card.canDiscard,
       leftLabel: choices[0] && choices[0].label ? choices[0].label : "左选",
       rightLabel: choices[1] && choices[1].label ? choices[1].label : "右选"
     });
@@ -330,7 +336,7 @@ function drawCards(run, rng, content) {
   run.hand = pickedIds;
   run.handMeta = pickedMeta;
   pushEvent(run, "draw", { cards: pickedIds });
-  return { ok: true, message: pickedIds.length ? "已发放手牌。" : "没有可抽卡牌。" };
+  return { ok: true, message: pickedIds.length ? "已补齐手牌。" : "没有可抽卡牌。" };
 }
 
 function applyTurnProgress(run) {
@@ -356,6 +362,42 @@ function checkEnd(run) {
   if (run.stats.debt >= 280) return "债务线归零";
   if (run.day >= 36) return "成功坚持到人生终盘";
   return "";
+}
+
+function handOpCard(run, cardId, content, op) {
+  if (run.mode !== "running") return { ok: false, statusCode: 400, error: "本局已结束。" };
+  if (run.pendingChoice) return { ok: false, statusCode: 400, error: "存在关键抉择，请先 choose。" };
+  if (!Array.isArray(run.hand) || !run.hand.length) return { ok: false, statusCode: 400, error: "当前无手牌。" };
+  if (run.handOpUsedTurn === run.turn) {
+    return { ok: false, statusCode: 400, error: "每回合仅允许一次手牌管理（弃置/延后）。" };
+  }
+
+  const resolvedCardId = cardId || run.hand[0];
+  if (!run.hand.includes(resolvedCardId)) {
+    return { ok: false, statusCode: 400, error: "cardId 不在当前手牌中", hand: run.handMeta };
+  }
+  const card = cardById(content, resolvedCardId);
+  if (!card) return { ok: false, statusCode: 400, error: "未知 cardId" };
+  if (!card.canDiscard) return { ok: false, statusCode: 400, error: "该卡不可进行手牌管理操作。" };
+
+  run.hand = run.hand.filter((id) => id !== resolvedCardId);
+  run.handMeta = (run.handMeta || []).filter((x) => x && x.id !== resolvedCardId);
+  run.handOpUsedTurn = run.turn;
+
+  if (op === "discard") {
+    run.discardHistory[resolvedCardId] = run.turn;
+    run.metrics.discards += 1;
+    pushLog(run, `你弃置了【${card.event.title}】，等待更合适的机会卡。`);
+    pushEvent(run, "discard", { cardId: resolvedCardId });
+    return { ok: true, statusCode: 200, message: `已弃置卡牌 ${card.event.title}。` };
+  }
+
+  run.deferHistory[resolvedCardId] = run.turn;
+  run.metrics.defers += 1;
+  run.queue.push({ cardId: resolvedCardId, dueIn: 2, priority: 40, forced: false });
+  pushLog(run, `你延后了【${card.event.title}】，它将在后续回合再次浮现。`);
+  pushEvent(run, "defer", { cardId: resolvedCardId, dueIn: 2 });
+  return { ok: true, statusCode: 200, message: `已延后卡牌 ${card.event.title}。` };
 }
 
 function buildObservability(run) {
@@ -412,6 +454,7 @@ function playCard(run, rng, cardId, choiceId, content) {
 
   const resolution = resolveChoice(run, card, choiceId, rng);
   run.metrics.cardPlays += 1;
+  run.handOpUsedTurn = -1;
   run.lastPlayedCard = card.id;
   run.playHistory.push(card.id);
   if (run.playHistory.length > 400) run.playHistory = run.playHistory.slice(-400);
@@ -497,11 +540,13 @@ function createRun(rng, name, content) {
     },
     cooldowns: {},
     discardHistory: {},
+    deferHistory: {},
+    handOpUsedTurn: -1,
     recentCards: [],
     playHistory: [],
     storyStage: "初入社会",
     contextTags: [],
-    metrics: { cardPlays: 0, keyEvents: 0, battles: 0, events: 0 },
+    metrics: { cardPlays: 0, keyEvents: 0, battles: 0, events: 0, discards: 0, defers: 0 },
     log: [],
     eventLog: [],
     observability: {
@@ -547,6 +592,16 @@ function runAction(rng, payload, content) {
     }
     message = playRes.message;
     if (currentRun.mode === "running" && !currentRun.hand.length && !currentRun.pendingChoice) {
+      const drawRes = drawCards(currentRun, rng, content);
+      if (drawRes.ok) message += ` ${drawRes.message}`;
+    }
+  } else if (action === "discard" || action === "defer") {
+    const handRes = handOpCard(currentRun, cardId || option, content, action);
+    if (!handRes.ok) {
+      return { ok: false, statusCode: handRes.statusCode || 400, error: handRes.error, hand: handRes.hand, supported: SUPPORTED_ACTIONS };
+    }
+    message = handRes.message;
+    if (currentRun.mode === "running" && !currentRun.pendingChoice) {
       const drawRes = drawCards(currentRun, rng, content);
       if (drawRes.ok) message += ` ${drawRes.message}`;
     }

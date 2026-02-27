@@ -26,7 +26,8 @@
   "maxHandSize": 3,
   "drawPerTurn": 3,
   "preventDuplicatesInHand": true,
-  "discardCooldownTurns": 4
+  "discardCooldownTurns": 4,
+  "deferCooldownTurns": 2
 }
 ```
 

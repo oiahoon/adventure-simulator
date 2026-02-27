@@ -110,7 +110,7 @@ async function main() {
 
   mud-cli [--mode remote|local] [--base-url URL] [--name NAME] [--engine v2|v1]
 
-卡牌协议动作: new/status/draw/play/choose`);
+卡牌协议动作: new/status/draw/play/discard/defer/choose`);
     return;
   }
 
@@ -127,13 +127,15 @@ async function main() {
       console.log("\n操作菜单:");
       console.log("1) 抽牌");
       console.log("2) 出牌");
-      console.log("3) 处理关键抉择");
-      console.log("4) 新开一局");
-      console.log("5) 切换到本地模式");
-      console.log("6) 退出");
+      console.log("3) 弃置手牌");
+      console.log("4) 延后手牌");
+      console.log("5) 处理关键抉择");
+      console.log("6) 新开一局");
+      console.log("7) 切换到本地模式");
+      console.log("8) 退出");
 
-      const choice = (await rl.question("\n请输入选项 [1-6]: ")).trim();
-      if (choice === "6") break;
+      const choice = (await rl.question("\n请输入选项 [1-8]: ")).trim();
+      if (choice === "8") break;
 
       if (choice === "1") {
         const resp = await engine.runAction({ action: "draw", run });
@@ -142,16 +144,32 @@ async function main() {
         if (!run.hand || !run.hand.length) {
           await rl.question("当前无手牌，回车继续...");
         } else {
+          const handMeta = Array.isArray(run.handMeta) ? run.handMeta : run.hand.map((id) => ({ id }));
           const cardInput = (await rl.question("输入卡牌序号或 cardId: ")).trim();
           const asIndex = Number(cardInput);
           let cardId = cardInput;
-          if (Number.isFinite(asIndex) && asIndex >= 1 && asIndex <= run.hand.length) {
-            cardId = run.hand[asIndex - 1].id;
+          if (Number.isFinite(asIndex) && asIndex >= 1 && asIndex <= handMeta.length) {
+            cardId = handMeta[asIndex - 1].id;
           }
           const resp = await engine.runAction({ action: "play", cardId, run });
           run = resp.run;
         }
-      } else if (choice === "3") {
+      } else if (choice === "3" || choice === "4") {
+        if (!run.hand || !run.hand.length) {
+          await rl.question("当前无手牌，回车继续...");
+        } else {
+          const handMeta = Array.isArray(run.handMeta) ? run.handMeta : run.hand.map((id) => ({ id }));
+          const cardInput = (await rl.question("输入卡牌序号或 cardId: ")).trim();
+          const asIndex = Number(cardInput);
+          let cardId = cardInput;
+          if (Number.isFinite(asIndex) && asIndex >= 1 && asIndex <= handMeta.length) {
+            cardId = handMeta[asIndex - 1].id;
+          }
+          const action = choice === "3" ? "discard" : "defer";
+          const resp = await engine.runAction({ action, cardId, run });
+          run = resp.run;
+        }
+      } else if (choice === "5") {
         if (!run.pendingChoice) {
           await rl.question("当前没有关键抉择，回车继续...");
         } else {
@@ -159,11 +177,11 @@ async function main() {
           const resp = await engine.runAction({ action: "choose", option: opt, run });
           run = resp.run;
         }
-      } else if (choice === "4") {
+      } else if (choice === "6") {
         const name = (await rl.question("新角色名(可空): ")).trim();
         const resp = await engine.runAction({ action: "new", name, run: null });
         run = resp.run;
-      } else if (choice === "5") {
+      } else if (choice === "7") {
         engine = new LocalEngine(args.engine);
         const resp = await engine.runAction({ action: "new", name: run && run.player ? run.player.name : "" });
         run = resp.run;

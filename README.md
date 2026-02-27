@@ -74,7 +74,7 @@ mud-cli --base-url https://adventure-simulator.vercel.app
 mud-cli --mode local
 ```
 
-CLI 与 API 现使用统一卡牌动作协议：`new / status / draw / play / choose`。
+CLI 与 API 现使用统一卡牌动作协议：`new / status / draw / play / discard / defer / choose`。
 可通过 `engineVersion` 切换引擎：
 - `v2`：当前默认线
 - `v1`：legacy 兼容线

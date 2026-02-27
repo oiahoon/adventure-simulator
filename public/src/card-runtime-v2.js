@@ -16,6 +16,8 @@
       plays: 0,
       swipePlays: 0,
       buttonPlays: 0,
+      discards: 0,
+      defers: 0,
       queueHintsSeen: 0,
       shareCopy: 0,
       shareBuild: 0
@@ -59,6 +61,8 @@
         totalPlays: 0,
         swipePlays: 0,
         buttonPlays: 0,
+        discards: 0,
+        defers: 0,
         shareCopies: 0,
         shareBuilds: 0
       },
@@ -106,6 +110,8 @@
       plays: state.uxMetrics.plays,
       swipePlays: state.uxMetrics.swipePlays,
       buttonPlays: state.uxMetrics.buttonPlays,
+      discards: state.uxMetrics.discards,
+      defers: state.uxMetrics.defers,
       shareCopy: state.uxMetrics.shareCopy,
       shareBuild: state.uxMetrics.shareBuild
     };
@@ -130,6 +136,8 @@
       plays: Math.max(0, state.uxMetrics.plays - state.runStartCounters.plays),
       swipePlays: Math.max(0, state.uxMetrics.swipePlays - state.runStartCounters.swipePlays),
       buttonPlays: Math.max(0, state.uxMetrics.buttonPlays - state.runStartCounters.buttonPlays),
+      discards: Math.max(0, state.uxMetrics.discards - state.runStartCounters.discards),
+      defers: Math.max(0, state.uxMetrics.defers - state.runStartCounters.defers),
       shareCopies: Math.max(0, state.uxMetrics.shareCopy - state.runStartCounters.shareCopy),
       shareBuilds: Math.max(0, state.uxMetrics.shareBuild - state.runStartCounters.shareBuild)
     };
@@ -142,6 +150,8 @@
     state.analytics.totals.totalPlays += diff.plays;
     state.analytics.totals.swipePlays += diff.swipePlays;
     state.analytics.totals.buttonPlays += diff.buttonPlays;
+    state.analytics.totals.discards += diff.discards;
+    state.analytics.totals.defers += diff.defers;
     state.analytics.totals.shareCopies += diff.shareCopies;
     state.analytics.totals.shareBuilds += diff.shareBuilds;
 
@@ -158,6 +168,8 @@
       turn: run.turn || 0,
       win: !!win,
       plays: diff.plays,
+      discards: diff.discards,
+      defers: diff.defers,
       swipeRate: diff.plays > 0 ? Math.round((diff.swipePlays / diff.plays) * 1000) / 1000 : 0
     });
     state.analytics.recentRuns = state.analytics.recentRuns.slice(0, 24);
@@ -303,6 +315,7 @@
           <button data-play="${card.id}" data-choice="left">${card.leftLabel || "左选"}</button>
           <button data-play="${card.id}" data-choice="right">${card.rightLabel || "右选"}</button>
         </div>
+        ${card.canDiscard ? `<div class="actions"><button data-hand-op="${card.id}" data-op="discard">弃置</button><button data-hand-op="${card.id}" data-op="defer">延后</button></div>` : ""}
       </article>`;
 
     bindMainCardActions(card);
@@ -327,6 +340,7 @@
         const handActions = variant === "hand"
           ? `<div class="actions"><button data-play-mini="${card.id}" data-choice="left">${card.leftLabel || "左选"}</button><button data-play-mini="${card.id}" data-choice="right">${card.rightLabel || "右选"}</button></div>`
           : "";
+        const handOps = card.canDiscard ? `<div class="actions"><button data-op-mini="${card.id}" data-op="discard">弃置</button><button data-op-mini="${card.id}" data-op="defer">延后</button></div>` : "";
         return `<article class="mini-card">
           <h4>${card.title || card.id}</h4>
           <p>${card.text ? String(card.text).slice(0, 36) : card.id}</p>
@@ -335,6 +349,7 @@
             ${card.forced ? '<span class="forced-tag">强制</span>' : ""}
           </div>
           ${handActions}
+          ${handOps}
           <button data-focus="${card.id}">设为主卡</button>
         </article>`;
       })
@@ -359,6 +374,17 @@
         });
       });
     });
+    els.handMini.querySelectorAll("button[data-op-mini]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cardId = btn.getAttribute("data-op-mini");
+        const op = btn.getAttribute("data-op");
+        state.uxMetrics.buttonPlays += 1;
+        handOp(cardId, op).catch((e) => {
+          state.lastError = e.message;
+          render();
+        });
+      });
+    });
   }
 
   function pointerX(event) {
@@ -375,6 +401,17 @@
         const choiceId = btn.getAttribute("data-choice");
         state.uxMetrics.buttonPlays += 1;
         play(cardId, choiceId).catch((e) => {
+          state.lastError = e.message;
+          render();
+        });
+      });
+    });
+    host.querySelectorAll("button[data-hand-op]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cardId = btn.getAttribute("data-hand-op");
+        const op = btn.getAttribute("data-op");
+        state.uxMetrics.buttonPlays += 1;
+        handOp(cardId, op).catch((e) => {
           state.lastError = e.message;
           render();
         });
@@ -465,12 +502,13 @@
     const bAuto = (a.byVariant && a.byVariant.auto) || { runs: 0, wins: 0, plays: 0, turns: 0 };
     const last = Array.isArray(a.recentRuns) ? a.recentRuns.slice(0, 3) : [];
     const lastText = last.length
-      ? last.map((x) => `${x.at.slice(0, 16)} ${x.variant} D${x.day}/T${x.turn} plays=${x.plays} swipe=${x.swipeRate}`).join("\n")
+      ? last.map((x) => `${x.at.slice(0, 16)} ${x.variant} D${x.day}/T${x.turn} plays=${x.plays} discard=${x.discards} defer=${x.defers} swipe=${x.swipeRate}`).join("\n")
       : "-";
 
     els.analyticsBox.textContent = [
       `累计局数: ${runs}  胜率: ${winRate}  平均回合: ${avgTurn}`,
       `累计出牌: ${plays}  滑动占比: ${swipeRate}  分享转化(粗略): ${shareRate}`,
+      `累计弃置: ${t.discards || 0}  累计延后: ${t.defers || 0}`,
       `single: runs=${bSingle.runs} wins=${bSingle.wins} plays=${bSingle.plays} turns=${bSingle.turns}`,
       `hand: runs=${bHand.runs} wins=${bHand.wins} plays=${bHand.plays} turns=${bHand.turns}`,
       `auto: runs=${bAuto.runs} wins=${bAuto.wins} plays=${bAuto.plays} turns=${bAuto.turns}`,
@@ -496,6 +534,7 @@
       `阶段: ${stage}`,
       `玩家: ${run.player.name} (${run.player.profession})`,
       `出牌: ${run.metrics.cardPlays} | 多样性: ${obs.cardDiversity || 0} | 重复率: ${obs.repeatRate || 0}`,
+      `手牌管理: 弃置${run.metrics.discards || 0} / 延后${run.metrics.defers || 0}`,
       `剧情链收束率: ${obs.arcCompletionRate || 0} | 强制命中率: ${obs.queueHitRate || 0}`,
       `消息: ${state.info || "-"}`
     ];
@@ -733,6 +772,24 @@
       } else {
         state.activeCardId = "";
       }
+    } finally {
+      setBusy(false);
+      render();
+    }
+  }
+
+  async function handOp(cardId, op) {
+    if (!state.run || !cardId || (op !== "discard" && op !== "defer")) return;
+    setBusy(true);
+    state.lastError = "";
+    try {
+      const res = await callApi({ action: op, cardId, run: state.run });
+      state.run = res.run;
+      if (op === "discard") state.uxMetrics.discards += 1;
+      else state.uxMetrics.defers += 1;
+      state.info = res.message || (op === "discard" ? "已弃置" : "已延后");
+      const hand = Array.isArray(state.run.handMeta) ? state.run.handMeta : [];
+      state.activeCardId = hand.length ? hand[0].id : "";
     } finally {
       setBusy(false);
       render();

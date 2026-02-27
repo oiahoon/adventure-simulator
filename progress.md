@@ -470,3 +470,31 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `render_game_to_text` now exports `ux_analytics_totals` for automation.
 - Current audit conclusion:
   - UI/UX completion ~72%, A/B operability ~68%, main remaining gaps are strategy depth (discard/defer), motion polish, and server-side metrics pipeline.
+- P0 strategy-depth implementation continued:
+  - v2 protocol now supports `discard` and `defer` actions (hand management).
+  - Engine behavior:
+    - `discard`: remove hand card, apply discard cooldown, refill hand.
+    - `defer`: remove hand card, enqueue as delayed non-forced follow-up (`dueIn=2`), apply defer cooldown, refill hand.
+    - turn-level limiter: one hand-management operation per turn to prevent infinite card cycling.
+  - Added `deferCooldownTurns` to deck rules and schema/checker.
+  - Hand metadata now includes `canDiscard` to allow UI-level action gating.
+- UI updates:
+  - Main card and mini-hand now expose `弃置/延后` actions for manageable cards.
+  - UX metrics and analytics now include `discards/defers` counts and run summaries.
+- CLI/Presenter/Docs updates:
+  - CLI menu supports discard/defer operations.
+  - text presenter action list includes discard/defer.
+  - API doc and README action protocol updated.
+- Audit refresh:
+  - `docs/architecture/card-uiux-progress-audit.md` updated completion estimate to UI/UX ~79%, A/B operability ~73%.
+- Validation:
+  - `node --check core/card-v2/engine.js` passed.
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `node --check bin/mud-cli.js` passed.
+  - `node --check core/mud-presenter.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.
+- Playwright status:
+  - skill client still blocked by ESM entry parsing issue in current environment (`Cannot use import statement outside a module`).

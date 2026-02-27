@@ -25,7 +25,7 @@ function summarizeRun(run) {
     `HP ${run.player.hp}/${run.player.maxHp}  MP ${run.player.mp}/${run.player.maxMp}`,
     `金币 ${run.player.gold}  精神 ${run.city.morale}  疲劳 ${run.city.fatigue}  债务 ${run.city.debt}  热度 ${run.city.heat}`,
     `组织: ${run.player.sect || "未选"}  天赋: ${run.player.perk || "未选"}`,
-    `出牌 ${run.metrics.cardPlays} 关键事件 ${run.metrics.keyEvents} 战斗杂项 ${run.metrics.battles + run.metrics.events}`,
+    `出牌 ${run.metrics.cardPlays} 弃置 ${run.metrics.discards || 0} 延后 ${run.metrics.defers || 0} 关键事件 ${run.metrics.keyEvents} 战斗杂项 ${run.metrics.battles + run.metrics.events}`,
     `待选择: ${choice}`,
     `当前手牌: ${hand}`,
     "",
@@ -37,6 +37,8 @@ function summarizeRun(run) {
     "- status              查看状态",
     "- draw                发牌（无手牌时）",
     "- play                出牌（传 cardId）",
+    "- discard             弃置手牌（传 cardId）",
+    "- defer               延后手牌（传 cardId）",
     "- choose              处理关键抉择（传 option）"
   ].join("\n");
 }
