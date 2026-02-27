@@ -20,6 +20,7 @@
         --rep: #d3527e;
         --heat: #e08a1f;
         --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        --avatar-size: 124px;
       }
       * {
         box-sizing: border-box;
@@ -70,7 +71,6 @@
         border-radius: 14px;
         background: var(--card);
         padding: 12px;
-        animation: cardIn 220ms var(--ease-out);
       }
       .hero {
         padding: 16px;
@@ -105,27 +105,31 @@
       .hud-layout {
         margin-top: 8px;
         display: grid;
-        grid-template-columns: 86px 1fr;
+        grid-template-columns: var(--avatar-size) 1fr;
         gap: 10px;
-        align-items: center;
+        align-items: stretch;
       }
       .avatar-card {
         display: flex;
         align-items: center;
         justify-content: center;
+        height: var(--avatar-size);
       }
       .avatar-img {
-        width: 78px;
-        height: 78px;
+        width: var(--avatar-size);
+        height: var(--avatar-size);
         border-radius: 10px;
         border: 2px solid var(--line);
         background: #f7f1e4;
+        object-fit: cover;
       }
       .hud-panel {
         justify-self: end;
         width: 100%;
         display: grid;
         gap: 6px;
+        min-height: var(--avatar-size);
+        align-content: space-between;
       }
       .hud-bar {
         border: 1px solid #cebfa2;
@@ -195,6 +199,11 @@
       }
       .option-btn:active {
         transform: scale(0.985) translateY(1px);
+      }
+      .option-btn.tap-fx,
+      .ghost.tap-fx {
+        transform: scale(0.992);
+        box-shadow: 0 2px 10px rgba(123, 93, 44, 0.16);
       }
       .opt-title {
         font-weight: 700;
@@ -266,16 +275,6 @@
         margin: 0 0 6px;
         font-size: 15px;
       }
-      @keyframes cardIn {
-        from {
-          opacity: 0;
-          transform: translateY(4px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
       @keyframes subtitleFlash {
         0% {
           opacity: 0.7;
@@ -293,15 +292,18 @@
         }
       }
       @media (max-width: 540px) {
+        :root {
+          --avatar-size: 108px;
+        }
         .avatar-img {
-          width: 64px;
-          height: 64px;
+          width: var(--avatar-size);
+          height: var(--avatar-size);
         }
         .hud-panel {
           width: 100%;
         }
         .hud-layout {
-          grid-template-columns: 72px 1fr;
+          grid-template-columns: var(--avatar-size) 1fr;
           gap: 8px;
         }
         .head-row h2 {
@@ -318,6 +320,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260227_7"></script>
+    <script type="module" src="./app/main.js?v=20260227_8"></script>
   </body>
 </html>
