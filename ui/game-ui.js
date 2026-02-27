@@ -29,7 +29,7 @@ export function createGameUI(root, actions) {
       <header class="topbar">
         <div>
           <h1>是男人就坚持100天</h1>
-          <p id="subtitle">目标通关100天，但你可以一直活下去</p>
+          <p id="subtitle">都市生存挑战</p>
         </div>
         <button class="ghost" id="restart-btn">重开</button>
       </header>
@@ -62,7 +62,7 @@ export function createGameUI(root, actions) {
         panel.innerHTML = `
           <article class="card hero">
             <p class="badge">100天目标挑战</p>
-            <h2>扛住 100 天是第一目标，之后你还能继续冲更长生存纪录。</h2>
+            <h2>这局只看一件事：你能不能坚持 100 天。</h2>
             <p>每天一个高压事件，三选一，直到属性崩盘才会结算并生成挑战码。</p>
             <button id="start-btn" class="primary">开始新挑战</button>
           </article>
@@ -122,7 +122,6 @@ export function createGameUI(root, actions) {
             <h2>Day ${view.day}/${view.dayTarget}</h2>
             <p>当前分数 ${view.score}</p>
           </div>
-          ${view.reachedTarget ? `<p class="badge">已达成100天目标，可继续挑战</p>` : ""}
           <div class="hud-layout">
             <div class="avatar-card">
               <img class="avatar-img" src="${view.avatar.url}" alt="角色头像" />

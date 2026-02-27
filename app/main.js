@@ -121,6 +121,42 @@ const TEMP_SKILL_POOL = [
     text: "先拿到现金缓冲，但后续压力更高。",
     effects: { money: 3, heat: 1, reputation: -2, mood: -1 },
   },
+  {
+    id: "wb_hot_search",
+    name: "蹭热搜发癫",
+    text: "一波流量直接拉满，但评论区也会反噬。",
+    effects: { heat: 3, money: 1, reputation: -2, mood: -1 },
+  },
+  {
+    id: "group_mute_99",
+    name: "99+群聊静音",
+    text: "耳根清净一整天，但错过了几个人情节点。",
+    effects: { mood: 2, energy: 1, reputation: -1, heat: -1 },
+  },
+  {
+    id: "friends_circle_flex",
+    name: "朋友圈硬装体面",
+    text: "人设暂时稳住，但钱包会先受伤。",
+    effects: { reputation: 2, heat: 1, money: -2, mood: -1 },
+  },
+  {
+    id: "ai_side_hustle",
+    name: "AI副业冲KPI",
+    text: "接单效率提升，但你会更像流水线机器。",
+    effects: { money: 2, reputation: 1, energy: -2, mood: -1 },
+  },
+  {
+    id: "late_night_emo_post",
+    name: "凌晨emo长文",
+    text: "宣泄后心态回一点，但容易引战。",
+    effects: { mood: 2, heat: 2, reputation: -1, energy: -1 },
+  },
+  {
+    id: "bargain_king",
+    name: "砍价圣体附体",
+    text: "薅到实惠但社交体面会掉一点。",
+    effects: { money: 2, energy: -1, reputation: -1, mood: 1 },
+  },
 ];
 
 const OPENING_EVENTS = {
@@ -263,6 +299,18 @@ const CHAPTER_POOLS = {
           { id: "bluff_output", label: "数据美化", tag: "risk", effects: { money: 1, reputation: -2, heat: 1 }, setFlags: ["quality_risk"] },
         ],
       },
+      {
+        id: "work_followup_c",
+        chapter: "第二章：工位风暴",
+        title: "凌晨群里@全体",
+        text: "项目群突然开始“谁懂啊”接龙，你被连环点名交付进度。",
+        causeText: "由第一章职场线与加班惯性触发。",
+        options: [
+          { id: "instant_report", label: "连夜写完汇报", tag: "work", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
+          { id: "sync_boundary", label: "明确边界明早回", tag: "control", effects: { mood: 1, energy: 1, reputation: -1 }, setFlags: ["boundary_mode"] },
+          { id: "meme_defuse", label: "发梗缓和气氛", tag: "content", effects: { heat: 1, mood: 1, reputation: -1 }, setFlags: ["content_line"] },
+        ],
+      },
     ],
   },
   2: {
@@ -291,6 +339,18 @@ const CHAPTER_POOLS = {
           { id: "offline_break", label: "离线一天", tag: "rest", effects: { mood: 2, heat: -1 }, setFlags: ["offline_day"] },
         ],
       },
+      {
+        id: "public_backlash_c",
+        chapter: "第三章：舆论起火",
+        title: "词条评论区失控",
+        text: "一条截图被二次搬运，评论从调侃升级到站队互喷。",
+        causeText: "由高热度内容线持续外溢触发。",
+        options: [
+          { id: "long_clarify", label: "发长文解释", tag: "social", effects: { reputation: 1, heat: -1, energy: -1 }, setFlags: ["stabilized"] },
+          { id: "reply_with_meme", label: "用梗图回击", tag: "content", effects: { heat: 2, mood: 1, reputation: -1 }, setFlags: ["public_fight"] },
+          { id: "delegate_friend", label: "让朋友代为沟通", tag: "network", effects: { reputation: 1, money: -1, mood: 0 }, setFlags: ["network_mode"] },
+        ],
+      },
     ],
     stable: [
       {
@@ -315,6 +375,18 @@ const CHAPTER_POOLS = {
           { id: "upskill", label: "学一小时技能", tag: "work", effects: { energy: -1, reputation: 1, mood: 1 }, setFlags: ["upgrade_route"] },
           { id: "sleep_early", label: "早睡回血", tag: "rest", effects: { energy: 2, mood: 1 }, setFlags: ["rest_recovery"] },
           { id: "part_time", label: "接个小单", tag: "money", effects: { money: 2, energy: -1 }, setFlags: ["grind_path"] },
+        ],
+      },
+      {
+        id: "stable_branch_c",
+        chapter: "第三章：短暂喘息",
+        title: "算法忽然给你一口饭",
+        text: "你随手发的日常内容突然被推荐，评论区意外友好。",
+        causeText: "由前两章稳健处理与低争议路线触发。",
+        options: [
+          { id: "cash_out_fast", label: "趁热接推广", tag: "money", effects: { money: 2, reputation: -1, heat: 1 }, setFlags: ["content_line"] },
+          { id: "quality_first", label: "慢慢打磨内容", tag: "control", effects: { reputation: 2, mood: 1, money: -1 }, setFlags: ["upgrade_route"] },
+          { id: "keep_low_profile", label: "见好就收", tag: "rest", effects: { mood: 2, heat: -1 }, setFlags: ["silent_line"] },
         ],
       },
     ],
@@ -371,6 +443,18 @@ const CHAPTER_POOLS = {
           { id: "dm_key_people", label: "私聊关键人", tag: "network", effects: { reputation: 1, energy: -1, mood: -1 }, setFlags: ["network_mode"] },
         ],
       },
+      {
+        id: "relation_pull_c",
+        chapter: "第四章：身体与关系",
+        title: "饭局临时加座",
+        text: "本来小范围的饭局突然变大型社交局，人人都在观察你。",
+        causeText: "由关系线积累与前章社交选择触发。",
+        options: [
+          { id: "hard_socialize", label: "硬着头皮社交", tag: "social", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["network_mode"] },
+          { id: "early_leave", label: "找借口提前撤", tag: "control", effects: { mood: 1, energy: 1, reputation: -1 }, setFlags: ["boundary_mode"] },
+          { id: "trade_contact", label: "精准交换资源", tag: "network", effects: { money: 1, reputation: 1, heat: 1 }, setFlags: ["resource_swap"] },
+        ],
+      },
     ],
   },
   4: {
@@ -399,6 +483,18 @@ const CHAPTER_POOLS = {
           { id: "silent_disappear", label: "暂时消失", tag: "rest", effects: { mood: 2, heat: -2 }, setFlags: ["offline_day"] },
         ],
       },
+      {
+        id: "heat_branch_c",
+        chapter: "第五章：热度或现金",
+        title: "评论区开始玩你的梗",
+        text: "本来只是吐槽，结果被改成模板二创到处复读。",
+        causeText: "由高热度持续发酵触发。",
+        options: [
+          { id: "embrace_meme", label: "顺势认领梗", tag: "content", effects: { heat: 2, money: 1, reputation: -1 }, setFlags: ["viral_path"] },
+          { id: "copyright_claim", label: "发声明止损", tag: "control", effects: { heat: -1, reputation: 1, mood: -1 }, setFlags: ["stabilized"] },
+          { id: "quit_social_day", label: "社媒休息日", tag: "rest", effects: { mood: 2, heat: -1, money: -1 }, setFlags: ["offline_day"] },
+        ],
+      },
     ],
     cash: [
       {
@@ -423,6 +519,18 @@ const CHAPTER_POOLS = {
           { id: "chargeback_now", label: "立刻申诉", tag: "control", effects: { money: 1, energy: -1, mood: -1 }, setFlags: ["budget_mode"] },
           { id: "ignore_small_loss", label: "先不管小额", tag: "rest", effects: { money: -1, mood: 1 }, setFlags: ["survival_focus"] },
           { id: "public_expose_pay", label: "公开挂平台", tag: "content", effects: { heat: 2, reputation: -1, mood: 1 }, setFlags: ["content_line"] },
+        ],
+      },
+      {
+        id: "cash_branch_c",
+        chapter: "第五章：热度或现金",
+        title: "房租到期倒计时",
+        text: "钱包和账单开始贴脸输出，你必须做一个当下最现实的选择。",
+        causeText: "由中低现金与预算压力触发。",
+        options: [
+          { id: "move_cheaper_room", label: "搬去更便宜房", tag: "money", effects: { money: 2, mood: -1, reputation: -1 }, setFlags: ["survival_focus"] },
+          { id: "ask_landlord_delay", label: "和房东谈延期", tag: "network", effects: { money: 1, reputation: 1, heat: 1 }, setFlags: ["rent_secured"] },
+          { id: "consume_credit", label: "刷卡先顶住", tag: "risk", effects: { money: 2, mood: -1, reputation: -1 }, setFlags: ["debt_spiral"] },
         ],
       },
     ],
@@ -477,6 +585,18 @@ const CHAPTER_POOLS = {
           { id: "switch_track", label: "切新赛道", tag: "work", effects: { money: -2, energy: -1, reputation: 2 }, setFlags: ["upgrade_route"] },
           { id: "stay_track", label: "留在原轨道", tag: "control", effects: { mood: 1, money: 1 }, setFlags: ["survival_route"] },
           { id: "hybrid_route", label: "主副并行", tag: "risk", effects: { money: 1, energy: -2, heat: 1 }, setFlags: ["grind_path"] },
+        ],
+      },
+      {
+        id: "pivot_end_c",
+        chapter: "第六章：摊牌或转型",
+        title: "赛博班味与理想冲突",
+        text: "你开始怀疑自己是在升级人生，还是只是在换一种方式内耗。",
+        causeText: "由长期高压但未崩盘状态触发。",
+        options: [
+          { id: "join_training_camp", label: "报班强行升级", tag: "work", effects: { money: -2, reputation: 2, energy: -1 }, setFlags: ["upgrade_route"] },
+          { id: "small_business_try", label: "试水小买卖", tag: "risk", effects: { money: 1, heat: 1, mood: -1 }, setFlags: ["grind_path"] },
+          { id: "slow_life_reset", label: "慢节奏重置", tag: "rest", effects: { mood: 2, energy: 1, money: -1 }, setFlags: ["survival_route"] },
         ],
       },
     ],
