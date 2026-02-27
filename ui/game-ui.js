@@ -123,8 +123,10 @@ export function createGameUI(root, actions) {
 
         <article class="card event-card">
           <p class="badge">今日事件</p>
+          <p class="opt-impact">${view.event.chapter}</p>
           <h3>${view.event.title}</h3>
           <p>${view.event.text}</p>
+          <p class="opt-impact">因果线：${view.event.causeText}</p>
           <div class="option-list">${view.event.options.map(optionCard).join("")}</div>
         </article>
 
