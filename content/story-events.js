@@ -11,6 +11,30 @@ export const STORY_EVENTS = {
       bias: [{ tag: "debt", delta: 1 }],
     },
     runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "layoff_save_mode",
+        label: "立刻进入省钱模式",
+        text: "你决定砍掉非必要开支，短期稳住现金流。",
+        effects: {
+          enqueue: ["hr_meeting"],
+          setFlags: ["save_mode"],
+          bias: [{ tag: "survival", delta: 2 }],
+          playerHpDelta: 1,
+        },
+      },
+      {
+        id: "layoff_keep_face",
+        label: "先维持体面生活",
+        text: "你选择暂时不改变消费习惯，压力被延后了。",
+        effects: {
+          enqueue: ["hr_meeting"],
+          setFlags: ["face_spending"],
+          bias: [{ tag: "debt", delta: 2 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
     tags: ["career", "pressure"],
   },
   hr_meeting: {
@@ -24,6 +48,30 @@ export const STORY_EVENTS = {
       bias: [{ tag: "survival", delta: 1 }],
     },
     runtimeEffects: { playerHpDelta: -2 },
+    branches: [
+      {
+        id: "hr_fight_package",
+        label: "争取补偿方案",
+        text: "你选择硬谈条件，精神压力变高但后手更稳。",
+        effects: {
+          enqueue: ["rent_hike_notice"],
+          setFlags: ["negotiation_path"],
+          bias: [{ tag: "risk", delta: 1 }],
+          playerHpDelta: -1,
+        },
+      },
+      {
+        id: "hr_quick_exit",
+        label: "尽快离场找下一份",
+        text: "你决定快速止损，把精力转到找机会。",
+        effects: {
+          enqueue: ["absurd_side_hustle"],
+          setFlags: ["quick_exit_path"],
+          bias: [{ tag: "career", delta: 2 }],
+          playerHpDelta: 0,
+        },
+      },
+    ],
     tags: ["career", "risk"],
   },
   rent_hike_notice: {
@@ -38,6 +86,30 @@ export const STORY_EVENTS = {
       bias: [{ tag: "debt", delta: 2 }],
     },
     runtimeEffects: { playerHpDelta: -2 },
+    branches: [
+      {
+        id: "rent_move_out",
+        label: "换房降成本",
+        text: "你准备搬家，短期折腾但能降低后续支出。",
+        effects: {
+          enqueue: ["social_misfire"],
+          setFlags: ["moving_out"],
+          bias: [{ tag: "survival", delta: 1 }],
+          playerHpDelta: -1,
+        },
+      },
+      {
+        id: "rent_borrow_hold",
+        label: "借钱先扛住",
+        text: "你决定先借钱续租，眼前稳定但债务风险抬头。",
+        effects: {
+          enqueue: ["payday_loan_ad"],
+          setFlags: ["borrow_to_hold"],
+          bias: [{ tag: "debt", delta: 2 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
     tags: ["rent", "debt"],
   },
   payday_loan_ad: {
@@ -52,6 +124,30 @@ export const STORY_EVENTS = {
       bias: [{ tag: "risk", delta: 2 }],
     },
     runtimeEffects: { playerHpDelta: -1 },
+    branches: [
+      {
+        id: "loan_decline",
+        label: "拒绝贷款广告",
+        text: "你压下冲动，决定靠时间换空间。",
+        effects: {
+          enqueue: ["burnout_warning"],
+          setFlags: ["loan_declined"],
+          bias: [{ tag: "survival", delta: 2 }],
+          playerHpDelta: 0,
+        },
+      },
+      {
+        id: "loan_try_small",
+        label: "小额试水",
+        text: "你抱着侥幸心理试了小额借贷。",
+        effects: {
+          enqueue: ["debt_collection"],
+          setFlags: ["loan_taken"],
+          bias: [{ tag: "debt", delta: 3 }],
+          playerHpDelta: -1,
+        },
+      },
+    ],
     tags: ["debt", "risk"],
   },
   debt_collection: {

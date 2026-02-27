@@ -115,3 +115,20 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 结果：
   - `npm test` 15/15 通过。
   - Playwright 冒烟通过（`output/web-game-storychain-p2`）。
+
+## Phase 2.2: 剧情节点分支（Branching Story Beats）
+- 在 `content/story-events.js` 为关键剧情节点新增分支选项（2 选 1）。
+- `core/run/engine.js` 新增 `story` 模式：
+  - 节点开始先进入剧情分支选择，再进入战斗。
+  - 分支会影响 Queue/Flags/Bias/HP，并改变后续节点走向。
+  - 节点不再一次性预生成，改为按推进动态生成，确保分支对后续真实生效。
+- `app/main.js` 与 `ui/game-ui.js` 增加分支交互与展示：
+  - Story Decision 面板
+  - 链路中记录选中分支
+  - 快捷键 `1/2` 选择分支
+- `core/mud-engine.js` 增加 `story_branch` action 支持。
+- `tests/run.test.js` 与 `tests/mud-service.test.js` 更新以覆盖 story 模式与分支链。
+- `docs/architecture/action-protocol.md` 补充 `story_branch`。
+- 结果：
+  - `npm test` 15/15 通过。
+  - Playwright 验证分支选择流通过（`output/web-game-story-branch-p2`）。

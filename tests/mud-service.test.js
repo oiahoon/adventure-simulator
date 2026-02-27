@@ -8,7 +8,7 @@ test("mud service new -> state lifecycle", () => {
   const created = service.runAction({ action: "new", seed: 123 });
   assert.equal(created.ok, true);
   assert.ok(created.sessionId);
-  assert.equal(created.state.mode, "battle");
+  assert.equal(created.state.mode, "story");
 
   const state = service.runAction({ action: "state", sessionId: created.sessionId });
   assert.equal(state.ok, true);
@@ -20,6 +20,11 @@ test("mud service can play and end turn", () => {
   const service = createMudService();
   const created = service.runAction({ action: "new", seed: 123 });
   const sessionId = created.sessionId;
+  const firstBranch = created.state.story.current ? created.state.story.current.id : null;
+  const branchAction = service.runAction({ action: "story_branch", sessionId, branchId: "layoff_save_mode" });
+  assert.equal(branchAction.ok, true);
+  assert.equal(branchAction.state.mode, "battle");
+  assert.ok(firstBranch);
 
   const played = service.runAction({ action: "play", sessionId, cardIndex: 0 });
   assert.equal(played.ok, true);

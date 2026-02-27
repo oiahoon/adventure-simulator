@@ -82,7 +82,7 @@ export function createGameUI(root, actions) {
       <ol>
         ${view.onboarding.steps.map((step) => `<li>${step}</li>`).join("")}
       </ol>
-      <p class="shortcut-hint">Hotkeys: <code>Enter</code> End Turn, <code>N</code> Next Node, <code>G</code> Guide, <code>R</code> New Run</p>
+      <p class="shortcut-hint">Hotkeys: <code>Enter</code> End Turn, <code>N</code> Next Node, <code>1/2</code> Story Branch, <code>G</code> Guide, <code>R</code> New Run</p>
     `;
   }
 
@@ -104,9 +104,10 @@ export function createGameUI(root, actions) {
         <h3>Story Beat</h3>
         <p><strong>${view.run.storyCurrent?.title || "Unknown"}</strong> <span class="tag">${view.run.storyCurrent?.source || "n/a"}</span></p>
         <p>${view.run.storyCurrent?.text || "No story event."}</p>
+        ${view.run.storyCurrent?.branch ? `<p><span class="tag">branch</span> ${view.run.storyCurrent.branch.label}</p>` : ""}
         <p class="story-chain">Chain: ${view.run.storyHistory
           .slice(-4)
-          .map((item) => `#${item.node} ${item.title}`)
+          .map((item) => `#${item.node} ${item.title}${item.branch ? `(${item.branch.label})` : ""}`)
           .join(" -> ")}</p>
       `;
 
@@ -142,6 +143,30 @@ export function createGameUI(root, actions) {
           </section>
         `;
         bindBattleActions();
+        return;
+      }
+
+      if (view.mode === "story") {
+        arenaPanel.innerHTML = `
+          <section class="panel" id="story-choice-panel">
+            <h2>Story Decision</h2>
+            <p>${view.run.storyCurrent?.text || ""}</p>
+            <div class="reward-grid">
+              ${(view.run.pendingStoryChoice?.options || [])
+                .map(
+                  (option, idx) => `<button class="card-btn" data-story-branch="${option.id}">
+                    <span class="name">Option ${idx + 1}: ${option.label}</span>
+                    <span class="text">${option.text}</span>
+                  </button>`
+                )
+                .join("")}
+            </div>
+            <p class="shortcut-hint">Hotkeys: <code>1</code>/<code>2</code> choose branch</p>
+          </section>
+        `;
+        root.querySelectorAll("[data-story-branch]").forEach((el) => {
+          el.addEventListener("click", () => actions.onChooseStoryBranch(el.dataset.storyBranch));
+        });
         return;
       }
 

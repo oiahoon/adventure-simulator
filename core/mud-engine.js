@@ -138,6 +138,13 @@ export function createMudService() {
       session.run.nextNode();
       return response(sessionId, summarizeRun(session.run.state));
     }
+    if (action === "story_branch") {
+      const picked = session.run.chooseStoryBranch(payload.branchId);
+      return {
+        ...response(sessionId, summarizeRun(session.run.state)),
+        picked,
+      };
+    }
     if (action === "restart") {
       const seed = toNumber(payload.seed, Date.now());
       session.run.restart(seed);

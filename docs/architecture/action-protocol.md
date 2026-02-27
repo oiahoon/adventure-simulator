@@ -14,6 +14,7 @@
 - `reward`: 选择奖励（`cardId|null`）
 - `remove`: 删除牌（`cardId`）
 - `next`: 下一节点
+- `story_branch`: 选择剧情分支（`branchId`）
 - `restart`: 重开当前会话
 
 ## 返回结构

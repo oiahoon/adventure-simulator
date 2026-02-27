@@ -56,7 +56,7 @@ function buildView() {
     },
     run: {
       nodeIndex: runState.nodeIndex,
-      nodeTotal: runState.nodes.length,
+      nodeTotal: runState.nodeTotal || runState.nodes.length,
       nodeTypes: runState.nodes.map((node) => node.type),
       deckSize: runState.deck.length,
       playerHp: runState.playerHp,
@@ -73,6 +73,7 @@ function buildView() {
         .sort((a, b) => a.id.localeCompare(b.id)),
       storyCurrent: runState.story?.current || null,
       storyHistory: runState.story?.history || [],
+      pendingStoryChoice: runState.pendingStoryChoice || null,
     },
     battle: runState.battle ? battleView(runState.battle) : null,
   };
@@ -130,6 +131,10 @@ const ui = createGameUI(root, {
     appState.run.nextNode();
     refresh();
   },
+  onChooseStoryBranch: (branchId) => {
+    appState.run.chooseStoryBranch(branchId);
+    refresh();
+  },
   onHideGuide: () => hideGuide(),
   onShowGuide: () => showGuide(),
 });
@@ -151,6 +156,24 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     appState.run.nextNode();
     refresh();
+    return;
+  }
+  if (key === "1" && mode === "story") {
+    event.preventDefault();
+    const first = appState.run.state.pendingStoryChoice?.options?.[0];
+    if (first) {
+      appState.run.chooseStoryBranch(first.id);
+      refresh();
+    }
+    return;
+  }
+  if (key === "2" && mode === "story") {
+    event.preventDefault();
+    const second = appState.run.state.pendingStoryChoice?.options?.[1];
+    if (second) {
+      appState.run.chooseStoryBranch(second.id);
+      refresh();
+    }
     return;
   }
   if (key === "g") {
@@ -186,6 +209,7 @@ window.render_game_to_text = () => {
     story: {
       current: v.run.storyCurrent,
       history: v.run.storyHistory.slice(-5),
+      pendingChoice: v.run.pendingStoryChoice,
     },
     playerMeta: {
       hp: v.run.playerHp,
