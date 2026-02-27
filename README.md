@@ -50,6 +50,8 @@ UI 变体参数（便于 A/B）：
 - `http://localhost:8080/game/?uiVariant=single`
 - `http://localhost:8080/game/?uiVariant=hand`
 
+`/game` 页面内置“实验指标（A/B）”面板，可查看累计局数、胜率、滑动占比、分享转化，并支持导出 `ux-analytics.json`。
+
 ### 3) 本地命令行游玩
 
 ```bash

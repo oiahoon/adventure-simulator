@@ -209,6 +209,35 @@
     .ending pre { margin: 0; padding: 10px; min-height: 84px; white-space: pre-wrap; font-size: .79rem; line-height: 1.45; }
     .ending-tools { padding: 10px; border-top: 1px solid #d8e3f1; display: flex; gap: 8px; flex-wrap: wrap; }
     #share-canvas-v2 { width: calc(100% - 20px); margin: 0 10px 10px; border-radius: 10px; border: 1px solid #d7e2f0; background: #faf5ea; display: block; }
+    .analytics {
+      margin: 10px;
+      border: 1px solid #ccd8ea;
+      border-radius: 12px;
+      background: linear-gradient(160deg, #fff, #f4f8ff);
+      overflow: hidden;
+    }
+    .analytics h3 {
+      margin: 0;
+      padding: 8px 10px;
+      font-size: .9rem;
+      border-bottom: 1px solid #d8e3f1;
+      background: #eef5ff;
+    }
+    .analytics pre {
+      margin: 0;
+      padding: 10px;
+      min-height: 88px;
+      white-space: pre-wrap;
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+    .analytics-tools {
+      padding: 8px 10px;
+      border-top: 1px solid #d8e3f1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .link-row { padding: 0 10px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; }
     .link-row a { color: #0f4da9; text-decoration: none; font-weight: 700; }
     .hidden { display: none !important; }
@@ -258,6 +287,14 @@
           <a id="download-share-btn" class="hidden" download="card-v2-report.png">下载战报图</a>
         </div>
         <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
+      </section>
+      <section class="analytics">
+        <h3>实验指标（A/B）</h3>
+        <pre id="analytics-box">等待数据...</pre>
+        <div class="analytics-tools">
+          <button id="export-analytics-btn">导出指标JSON</button>
+          <button id="reset-analytics-btn">重置累计指标</button>
+        </div>
       </section>
       <div class="link-row">
         <a href="/">← 返回主页</a>

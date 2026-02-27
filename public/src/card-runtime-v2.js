@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  const ANALYTICS_KEY = "mud_v2_ux_analytics_v1";
+
   const state = {
     run: null,
     info: "",
@@ -19,7 +21,11 @@
       shareBuild: 0
     },
     uiVariantRequested: "",
-    uiVariantResolved: "single"
+    uiVariantResolved: "single",
+    analytics: null,
+    runStartCounters: null,
+    lastRecordedEndKey: "",
+    lastQueueHintText: ""
   };
 
   const els = {
@@ -32,6 +38,9 @@
     newBtn: document.getElementById("new-btn"),
     drawBtn: document.getElementById("draw-btn"),
     layoutBtn: document.getElementById("layout-btn"),
+    analyticsBox: document.getElementById("analytics-box"),
+    exportAnalyticsBtn: document.getElementById("export-analytics-btn"),
+    resetAnalyticsBtn: document.getElementById("reset-analytics-btn"),
     ending: document.getElementById("ending"),
     copyShareBtn: document.getElementById("copy-share-btn"),
     buildShareBtn: document.getElementById("build-share-btn"),
@@ -39,6 +48,121 @@
     shareCanvas: document.getElementById("share-canvas-v2")
   };
   const shareCtx = els.shareCanvas.getContext("2d");
+
+  function newAnalyticsStore() {
+    return {
+      version: 1,
+      totals: {
+        runs: 0,
+        wins: 0,
+        totalTurns: 0,
+        totalPlays: 0,
+        swipePlays: 0,
+        buttonPlays: 0,
+        shareCopies: 0,
+        shareBuilds: 0
+      },
+      byVariant: {
+        single: { runs: 0, wins: 0, plays: 0, turns: 0 },
+        hand: { runs: 0, wins: 0, plays: 0, turns: 0 },
+        auto: { runs: 0, wins: 0, plays: 0, turns: 0 }
+      },
+      recentRuns: []
+    };
+  }
+
+  function loadAnalyticsStore() {
+    try {
+      const text = window.localStorage.getItem(ANALYTICS_KEY);
+      if (!text) return newAnalyticsStore();
+      const parsed = JSON.parse(text);
+      if (!parsed || typeof parsed !== "object") return newAnalyticsStore();
+      return {
+        ...newAnalyticsStore(),
+        ...parsed,
+        totals: { ...newAnalyticsStore().totals, ...(parsed.totals || {}) },
+        byVariant: {
+          single: { ...newAnalyticsStore().byVariant.single, ...((parsed.byVariant && parsed.byVariant.single) || {}) },
+          hand: { ...newAnalyticsStore().byVariant.hand, ...((parsed.byVariant && parsed.byVariant.hand) || {}) },
+          auto: { ...newAnalyticsStore().byVariant.auto, ...((parsed.byVariant && parsed.byVariant.auto) || {}) }
+        },
+        recentRuns: Array.isArray(parsed.recentRuns) ? parsed.recentRuns.slice(0, 24) : []
+      };
+    } catch (_) {
+      return newAnalyticsStore();
+    }
+  }
+
+  function saveAnalyticsStore() {
+    try {
+      window.localStorage.setItem(ANALYTICS_KEY, JSON.stringify(state.analytics || newAnalyticsStore()));
+    } catch (_) {
+      // Ignore storage errors.
+    }
+  }
+
+  function snapshotUx() {
+    return {
+      plays: state.uxMetrics.plays,
+      swipePlays: state.uxMetrics.swipePlays,
+      buttonPlays: state.uxMetrics.buttonPlays,
+      shareCopy: state.uxMetrics.shareCopy,
+      shareBuild: state.uxMetrics.shareBuild
+    };
+  }
+
+  function startRunTracking() {
+    state.runStartCounters = snapshotUx();
+  }
+
+  function runVariantLabel() {
+    if (state.uiVariantRequested === "single" || state.uiVariantRequested === "hand") return state.uiVariantRequested;
+    return "auto";
+  }
+
+  function accumulateRunAnalytics(run) {
+    if (!run || run.mode !== "ended" || !state.runStartCounters || !state.analytics) return;
+    const key = `${run.player && run.player.name ? run.player.name : "-"}:${run.day}:${run.turn}:${run.metrics && run.metrics.cardPlays ? run.metrics.cardPlays : 0}`;
+    if (state.lastRecordedEndKey === key) return;
+    state.lastRecordedEndKey = key;
+
+    const diff = {
+      plays: Math.max(0, state.uxMetrics.plays - state.runStartCounters.plays),
+      swipePlays: Math.max(0, state.uxMetrics.swipePlays - state.runStartCounters.swipePlays),
+      buttonPlays: Math.max(0, state.uxMetrics.buttonPlays - state.runStartCounters.buttonPlays),
+      shareCopies: Math.max(0, state.uxMetrics.shareCopy - state.runStartCounters.shareCopy),
+      shareBuilds: Math.max(0, state.uxMetrics.shareBuild - state.runStartCounters.shareBuild)
+    };
+    const win = run.day >= 36 ? 1 : 0;
+    const variant = runVariantLabel();
+
+    state.analytics.totals.runs += 1;
+    state.analytics.totals.wins += win;
+    state.analytics.totals.totalTurns += Number(run.turn || 0);
+    state.analytics.totals.totalPlays += diff.plays;
+    state.analytics.totals.swipePlays += diff.swipePlays;
+    state.analytics.totals.buttonPlays += diff.buttonPlays;
+    state.analytics.totals.shareCopies += diff.shareCopies;
+    state.analytics.totals.shareBuilds += diff.shareBuilds;
+
+    const bucket = state.analytics.byVariant[variant] || state.analytics.byVariant.auto;
+    bucket.runs += 1;
+    bucket.wins += win;
+    bucket.plays += diff.plays;
+    bucket.turns += Number(run.turn || 0);
+
+    state.analytics.recentRuns.unshift({
+      at: new Date().toISOString(),
+      variant,
+      day: run.day || 0,
+      turn: run.turn || 0,
+      win: !!win,
+      plays: diff.plays,
+      swipeRate: diff.plays > 0 ? Math.round((diff.swipePlays / diff.plays) * 1000) / 1000 : 0
+    });
+    state.analytics.recentRuns = state.analytics.recentRuns.slice(0, 24);
+    saveAnalyticsStore();
+  }
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
@@ -138,11 +262,15 @@
     if (!text) {
       els.queueHint.classList.remove("show");
       els.queueHint.textContent = "";
+      state.lastQueueHintText = "";
       return;
     }
     els.queueHint.classList.add("show");
     els.queueHint.textContent = text;
-    state.uxMetrics.queueHintsSeen += 1;
+    if (text !== state.lastQueueHintText) {
+      state.uxMetrics.queueHintsSeen += 1;
+      state.lastQueueHintText = text;
+    }
   }
 
   function renderMainCard() {
@@ -197,7 +325,7 @@
     els.handMini.innerHTML = list
       .map((card) => {
         const handActions = variant === "hand"
-          ? `<div class="actions"><button data-play-mini=\"${card.id}\" data-choice=\"left\">${card.leftLabel || "左选"}</button><button data-play-mini=\"${card.id}\" data-choice=\"right\">${card.rightLabel || "右选"}</button></div>`
+          ? `<div class="actions"><button data-play-mini="${card.id}" data-choice="left">${card.leftLabel || "左选"}</button><button data-play-mini="${card.id}" data-choice="right">${card.rightLabel || "右选"}</button></div>`
           : "";
         return `<article class="mini-card">
           <h4>${card.title || card.id}</h4>
@@ -293,6 +421,11 @@
       if (state.busy) return;
       dragging = true;
       startX = pointerX(e);
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("touchmove", onMove, { passive: true });
+      window.addEventListener("mouseup", onEnd);
+      window.addEventListener("touchend", onEnd, { passive: true });
+      window.addEventListener("touchcancel", onEnd, { passive: true });
     };
     const onMove = (e) => {
       if (!dragging) return;
@@ -315,15 +448,36 @@
 
     el.addEventListener("mousedown", onStart);
     el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("mousedown", () => {
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onEnd);
-    }, { once: true });
-    el.addEventListener("touchstart", () => {
-      window.addEventListener("touchmove", onMove, { passive: true });
-      window.addEventListener("touchend", onEnd, { passive: true });
-      window.addEventListener("touchcancel", onEnd, { passive: true });
-    }, { once: true });
+  }
+
+  function renderAnalytics() {
+    const a = state.analytics || newAnalyticsStore();
+    const t = a.totals || {};
+    const runs = Number(t.runs || 0);
+    const plays = Number(t.totalPlays || 0);
+    const swipeRate = plays > 0 ? Math.round((Number(t.swipePlays || 0) / plays) * 1000) / 1000 : 0;
+    const winRate = runs > 0 ? Math.round((Number(t.wins || 0) / runs) * 1000) / 1000 : 0;
+    const avgTurn = runs > 0 ? Math.round((Number(t.totalTurns || 0) / runs) * 10) / 10 : 0;
+    const shares = Number(t.shareCopies || 0) + Number(t.shareBuilds || 0);
+    const shareRate = runs > 0 ? Math.round((shares / runs) * 1000) / 1000 : 0;
+    const bSingle = (a.byVariant && a.byVariant.single) || { runs: 0, wins: 0, plays: 0, turns: 0 };
+    const bHand = (a.byVariant && a.byVariant.hand) || { runs: 0, wins: 0, plays: 0, turns: 0 };
+    const bAuto = (a.byVariant && a.byVariant.auto) || { runs: 0, wins: 0, plays: 0, turns: 0 };
+    const last = Array.isArray(a.recentRuns) ? a.recentRuns.slice(0, 3) : [];
+    const lastText = last.length
+      ? last.map((x) => `${x.at.slice(0, 16)} ${x.variant} D${x.day}/T${x.turn} plays=${x.plays} swipe=${x.swipeRate}`).join("\n")
+      : "-";
+
+    els.analyticsBox.textContent = [
+      `累计局数: ${runs}  胜率: ${winRate}  平均回合: ${avgTurn}`,
+      `累计出牌: ${plays}  滑动占比: ${swipeRate}  分享转化(粗略): ${shareRate}`,
+      `single: runs=${bSingle.runs} wins=${bSingle.wins} plays=${bSingle.plays} turns=${bSingle.turns}`,
+      `hand: runs=${bHand.runs} wins=${bHand.wins} plays=${bHand.plays} turns=${bHand.turns}`,
+      `auto: runs=${bAuto.runs} wins=${bAuto.wins} plays=${bAuto.plays} turns=${bAuto.turns}`,
+      "",
+      "最近3局：",
+      lastText
+    ].join("\n");
   }
 
   function renderInfo() {
@@ -523,6 +677,9 @@
       shareCtx.font = "500 36px 'Noto Sans SC'";
       shareCtx.fillText("本局结束后可生成战报图", 90, 120);
     }
+    if (run && run.mode === "ended") {
+      accumulateRunAnalytics(run);
+    }
   }
 
   function setBusy(v) {
@@ -535,10 +692,12 @@
     setBusy(true);
     state.lastError = "";
     state.activeCardId = "";
+    state.lastRecordedEndKey = "";
     try {
       const res = await callApi({ action: "new" });
       state.run = res.run;
       state.info = res.message || "新局已创建";
+      startRunTracking();
     } finally {
       setBusy(false);
       render();
@@ -588,6 +747,7 @@
     renderInfo();
     renderLog();
     renderEnding();
+    renderAnalytics();
     setBusy(state.busy);
   }
 
@@ -611,6 +771,25 @@
       state.uiVariantResolved = resolveVariant();
       const label = state.uiVariantRequested || "自动";
       els.layoutBtn.textContent = `布局：${label}`;
+      render();
+    });
+    els.exportAnalyticsBtn.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state.analytics || newAnalyticsStore(), null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ux-analytics.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      state.info = "指标 JSON 已导出";
+      render();
+    });
+    els.resetAnalyticsBtn.addEventListener("click", () => {
+      state.analytics = newAnalyticsStore();
+      saveAnalyticsStore();
+      state.info = "累计指标已重置";
       render();
     });
     els.copyShareBtn.addEventListener("click", () => {
@@ -642,7 +821,8 @@
       log_tail: state.run && state.run.log ? state.run.log.slice(-8) : [],
       info: state.info,
       error: state.lastError,
-      ux_metrics: state.uxMetrics
+      ux_metrics: state.uxMetrics,
+      ux_analytics_totals: state.analytics ? state.analytics.totals : {}
     });
   }
 
@@ -651,6 +831,7 @@
     render();
   };
 
+  state.analytics = loadAnalyticsStore();
   state.uiVariantRequested = readRequestedVariant();
   state.uiVariantResolved = resolveVariant();
   if (els.layoutBtn) {

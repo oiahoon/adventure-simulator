@@ -448,3 +448,17 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - `npm run check:replay:v2` passed.
+- UI/UX continuation: in-game A/B analytics panel and instrumentation added.
+  - Added `/game` analytics panel with cumulative metrics and recent run snippets.
+  - Added localStorage-backed analytics store (`mud_v2_ux_analytics_v1`) and run-end aggregation by variant (`single/hand/auto`).
+  - Added export/reset controls for analytics (`ux-analytics.json`).
+  - Added `ux_analytics_totals` to `render_game_to_text` for automation capture.
+  - Fixed swipe listener lifecycle to avoid one-time binding breakage in repeated interactions.
+  - Queue hint metric now increments only on text change (not every render frame).
+- Validation:
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `node --check core/card-v2/engine.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.
+  - `npm run check:replay:v2` passed.
