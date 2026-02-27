@@ -88,3 +88,9 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 测试：新增 `tests/mud-service.test.js` 并通过全量测试（14/14）。
 - Playwright 冒烟验证：`output/web-game-refactor-p1`，UI 与状态输出正常。
 - 下一阶段：Phase 2 将 Web UI 改为 action 协议驱动（不再直接依赖 run 内部结构）。
+
+## Docs Cleanup (architecture baseline)
+- 按职能重构 docs：`product / architecture / engineering / release`。
+- 删除过期与重复文档（旧 MUD/v2、重复计划、历史 schema/API 示例）。
+- 新文档核心统一为：面向中国玩家、都市生存题材、移动端优先卡牌 Web Game。
+- 文档入口：`docs/README.md`。
