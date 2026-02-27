@@ -19,6 +19,7 @@
         --mood: #9b4de0;
         --rep: #d3527e;
         --heat: #e08a1f;
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       }
       * {
         box-sizing: border-box;
@@ -53,6 +54,11 @@
         margin: 4px 0 0;
         color: var(--muted);
         font-size: 13px;
+        transition: color 220ms var(--ease-out), opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+      }
+      #subtitle.flash {
+        color: #2f6f3c;
+        animation: subtitleFlash 700ms var(--ease-out);
       }
       #main-panel {
         display: grid;
@@ -64,6 +70,7 @@
         border-radius: 14px;
         background: var(--card);
         padding: 12px;
+        animation: cardIn 220ms var(--ease-out);
       }
       .hero {
         padding: 16px;
@@ -171,9 +178,17 @@
         cursor: pointer;
         display: grid;
         gap: 4px;
+        transition:
+          transform 140ms var(--ease-out),
+          border-color 180ms ease,
+          box-shadow 180ms ease;
+      }
+      .option-btn:hover {
+        border-color: #c5ad89;
+        box-shadow: 0 4px 12px rgba(123, 93, 44, 0.12);
       }
       .option-btn:active {
-        transform: scale(0.99);
+        transform: scale(0.985) translateY(1px);
       }
       .opt-title {
         font-weight: 700;
@@ -195,15 +210,26 @@
         font-size: 14px;
         font-weight: 700;
         cursor: pointer;
+        transition:
+          transform 120ms var(--ease-out),
+          filter 160ms ease,
+          box-shadow 180ms ease;
       }
       .primary {
         background: var(--primary);
         color: var(--primary-ink);
+        box-shadow: 0 6px 16px rgba(239, 106, 58, 0.2);
       }
       .ghost {
         border: 1px solid #cbbda4;
         background: #fff8ec;
         color: var(--ink);
+      }
+      button:hover:not(:disabled) {
+        filter: brightness(1.02);
+      }
+      button:active:not(:disabled) {
+        transform: scale(0.985) translateY(1px);
       }
       button:disabled {
         opacity: 0.45;
@@ -254,6 +280,32 @@
         border-radius: 10px;
         padding: 10px;
       }
+      @keyframes cardIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes subtitleFlash {
+        0% {
+          opacity: 0.7;
+          transform: translateY(1px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
       @media (max-width: 540px) {
         .hud-layout {
           grid-template-columns: 1fr;
@@ -282,6 +334,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260227_2"></script>
+    <script type="module" src="./app/main.js?v=20260227_3"></script>
   </body>
 </html>

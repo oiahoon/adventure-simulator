@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_2";
+import { createGameUI } from "../ui/game-ui.js?v=20260227_3";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -1069,7 +1069,9 @@ function createSession(seed = Date.now()) {
 const state = {
   session: createSession(20260227),
   bestScore: Number(localStorage.getItem(STORAGE_KEY) || 0),
+  notice: "",
 };
+let noticeTimer = null;
 
 const root = document.querySelector("#app");
 
@@ -1304,6 +1306,7 @@ function buildView() {
     history: session.history.slice(-6),
     result: session.result,
     shareText: shareText(),
+    notice: state.notice,
   };
 }
 
@@ -1314,9 +1317,28 @@ function refresh() {
 function copyShare() {
   const text = shareText();
   if (!text) return;
-  navigator.clipboard?.writeText(text).catch(() => {
+  const writePromise = navigator.clipboard?.writeText?.(text);
+  if (!writePromise) {
     window.prompt("复制这段分享文案", text);
-  });
+    setNotice("已打开复制窗口");
+    return;
+  }
+  writePromise
+    .then(() => setNotice("分享文案已复制"))
+    .catch(() => {
+      window.prompt("复制这段分享文案", text);
+      setNotice("已打开复制窗口");
+    });
+}
+
+function setNotice(text) {
+  state.notice = text;
+  refresh();
+  if (noticeTimer) clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => {
+    state.notice = "";
+    refresh();
+  }, 1400);
 }
 
 const ui = createGameUI(root, {

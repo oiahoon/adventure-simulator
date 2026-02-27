@@ -53,6 +53,11 @@ export function createGameUI(root, actions) {
   return {
     render(view) {
       const panel = root.querySelector("#main-panel");
+      const subtitle = root.querySelector("#subtitle");
+      if (subtitle) {
+        subtitle.textContent = view.notice || "都市生存挑战";
+        subtitle.classList.toggle("flash", Boolean(view.notice));
+      }
 
       if (view.mode === "intro") {
         panel.innerHTML = `
