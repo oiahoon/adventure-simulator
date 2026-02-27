@@ -1,14 +1,15 @@
-import { createBattle } from "../core/battle/engine.js";
+import { CARD_LIBRARY } from "../content/cards.js";
+import { createRun } from "../core/run/engine.js";
 import { createGameUI } from "../ui/game-ui.js";
 
 const appState = {
-  battle: null,
+  run: createRun({ seed: 20260227 }),
 };
 
 const root = document.querySelector("#app");
 
-function buildView() {
-  const { state, getNextEnemyIntent, summaryStatuses } = appState.battle;
+function battleView(battle) {
+  const { state, getNextEnemyIntent, summaryStatuses } = battle;
   const statuses = summaryStatuses();
   return {
     phase: state.phase,
@@ -32,62 +33,113 @@ function buildView() {
       block: state.enemy.block,
       intent: getNextEnemyIntent(),
       statuses: statuses.enemy,
+      elite: state.enemy.elite,
     },
     logs: state.logs.slice(-12),
   };
 }
 
-function restartBattle(seed = Date.now()) {
-  appState.battle = createBattle({ seed });
+function buildView() {
+  const runState = appState.run.state;
+  const view = {
+    mode: runState.mode,
+    run: {
+      nodeIndex: runState.nodeIndex,
+      nodeTotal: runState.nodes.length,
+      deckSize: runState.deck.length,
+      playerHp: runState.playerHp,
+      playerMaxHp: runState.playerMaxHp,
+      currentNodeType: runState.nodes[runState.nodeIndex]?.type || null,
+      rewardOptions: runState.rewardOptions.map((id) => CARD_LIBRARY[id]),
+      deckCounts: Object.entries(
+        runState.deck.reduce((acc, id) => {
+          acc[id] = (acc[id] || 0) + 1;
+          return acc;
+        }, {})
+      )
+        .map(([id, count]) => ({ id, count }))
+        .sort((a, b) => a.id.localeCompare(b.id)),
+    },
+    battle: runState.battle ? battleView(runState.battle) : null,
+  };
+  return view;
+}
+
+function refresh() {
   ui.render(buildView());
 }
 
-function playCard(index) {
-  appState.battle.playCard(index);
-  ui.render(buildView());
-}
-
-function endTurn() {
-  appState.battle.endTurn();
-  ui.render(buildView());
+function restartRun() {
+  appState.run = createRun({ seed: Date.now() });
+  refresh();
 }
 
 const ui = createGameUI(root, {
-  onRestart: () => restartBattle(Date.now()),
-  onPlayCard: (idx) => playCard(idx),
-  onEndTurn: () => endTurn(),
+  onRestart: () => restartRun(),
+  onPlayCard: (idx) => {
+    appState.run.playCard(idx);
+    refresh();
+  },
+  onEndTurn: () => {
+    appState.run.endTurn();
+    refresh();
+  },
+  onChooseReward: (cardId) => {
+    appState.run.chooseReward(cardId);
+    refresh();
+  },
+  onRemoveCard: (cardId) => {
+    appState.run.removeCard(cardId);
+    refresh();
+  },
+  onNextNode: () => {
+    appState.run.nextNode();
+    refresh();
+  },
 });
 
 window.advanceTime = () => {
-  ui.render(buildView());
+  refresh();
 };
 
 window.render_game_to_text = () => {
   const v = buildView();
   return JSON.stringify({
     coordinateSystem: "UI board only; no world coordinates. top-left origin for layout.",
-    mode: v.winner ? "finished" : "battle",
-    turn: v.turn,
-    phase: v.phase,
-    player: {
-      hp: v.player.hp,
-      maxHp: v.player.maxHp,
-      block: v.player.block,
-      energy: v.player.energy,
-      statuses: v.player.statuses,
-      hand: v.player.hand.map((c) => ({ id: c.id, cost: c.cost })),
-      draw: v.player.drawPile,
-      discard: v.player.discardPile,
+    mode: v.mode,
+    node: {
+      index: v.run.nodeIndex + 1,
+      total: v.run.nodeTotal,
+      type: v.run.currentNodeType,
     },
-    enemy: {
-      name: v.enemy.name,
-      hp: v.enemy.hp,
-      block: v.enemy.block,
-      statuses: v.enemy.statuses,
-      intent: v.enemy.intent,
+    playerMeta: {
+      hp: v.run.playerHp,
+      maxHp: v.run.playerMaxHp,
+      deckSize: v.run.deckSize,
     },
-    logs: v.logs,
+    battle: v.battle
+      ? {
+          turn: v.battle.turn,
+          phase: v.battle.phase,
+          player: {
+            hp: v.battle.player.hp,
+            block: v.battle.player.block,
+            energy: v.battle.player.energy,
+            statuses: v.battle.player.statuses,
+            hand: v.battle.player.hand.map((c) => ({ id: c.id, cost: c.cost })),
+          },
+          enemy: {
+            name: v.battle.enemy.name,
+            hp: v.battle.enemy.hp,
+            block: v.battle.enemy.block,
+            statuses: v.battle.enemy.statuses,
+            intent: v.battle.enemy.intent,
+          },
+          logs: v.battle.logs,
+        }
+      : null,
+    rewardOptions: v.run.rewardOptions.map((card) => card.id),
   });
 };
 
-restartBattle(20260227);
+refresh();

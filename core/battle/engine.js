@@ -84,10 +84,18 @@ export function createSeededRandom(seed = 1) {
   };
 }
 
-export function createBattle({ seed = Date.now() } = {}) {
+export function createBattle({
+  seed = Date.now(),
+  deck = STARTER_DECK,
+  enemyId = null,
+  playerHp = 70,
+  playerMaxHp = 70,
+  enemyHpScale = 1,
+  elite = false,
+} = {}) {
   const random = createSeededRandom(seed);
-  const enemyId = ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)];
-  const enemyTemplate = ENEMY_LIBRARY[enemyId];
+  const selectedEnemyId = enemyId || ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)];
+  const enemyTemplate = ENEMY_LIBRARY[selectedEnemyId];
 
   const state = {
     seed,
@@ -97,23 +105,25 @@ export function createBattle({ seed = Date.now() } = {}) {
     winner: null,
     logs: [],
     player: {
-      maxHp: 70,
-      hp: 70,
+      maxHp: playerMaxHp,
+      hp: Math.min(playerHp, playerMaxHp),
       block: 0,
       maxEnergy: 3,
       energy: 3,
       hand: [],
-      drawPile: shuffle(STARTER_DECK, random),
+      drawPile: shuffle(deck, random),
       discardPile: [],
       exhaustPile: [],
       statuses: createBaseStatuses(),
     },
     enemy: {
       ...enemyTemplate,
-      hp: enemyTemplate.maxHp,
+      hp: Math.round(enemyTemplate.maxHp * enemyHpScale),
+      maxHp: Math.round(enemyTemplate.maxHp * enemyHpScale),
       block: 0,
       intentIndex: 0,
       statuses: createBaseStatuses(),
+      elite,
     },
   };
 
@@ -291,7 +301,7 @@ export function createBattle({ seed = Date.now() } = {}) {
   }
 
   drawCards(5);
-  addLog(`Encounter: ${state.enemy.name}.`);
+  addLog(`Encounter: ${state.enemy.name}${elite ? " (Elite)" : ""}.`);
   addLog("Turn 1 start.");
 
   return {
