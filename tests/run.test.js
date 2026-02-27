@@ -7,6 +7,7 @@ test("run starts at story mode with first node branch options", () => {
   const run = createRun({ seed: 3 });
   assert.equal(run.state.mode, "story");
   assert.equal(run.state.nodeIndex, 0);
+  assert.equal(run.state.nodeTotal, 8);
   assert.equal(run.state.story.current.id, "layoff_rumor");
   assert.ok(run.state.pendingStoryChoice.options.length >= 2);
 });
@@ -70,4 +71,23 @@ test("story chain is contiguous and recorded", () => {
   assert.equal(run.state.story.history[1].id, "hr_meeting");
   assert.ok(run.state.story.history[0].branch);
   assert.ok(run.state.story.history.length >= 2);
+});
+
+test("branch queue event has higher priority than arc", () => {
+  const run = createRun({ seed: 3, nodeTotal: 4 });
+  run.chooseStoryBranch("layoff_save_mode");
+  run.state.battle.state.enemy.hp = 1;
+  run.state.battle.state.player.hand = [{ id: "strike", name: "Strike", cost: 1, effects: [{ type: "damage", value: 6 }] }];
+  run.playCard(0);
+  run.chooseReward(null);
+  run.nextNode(); // node 2: hr_meeting
+  run.chooseStoryBranch("hr_quick_exit"); // enqueueBranch job_hunt_sprint
+  run.state.battle.state.enemy.hp = 1;
+  run.state.battle.state.player.hand = [{ id: "strike", name: "Strike", cost: 1, effects: [{ type: "damage", value: 6 }] }];
+  run.playCard(0);
+  run.chooseReward(null);
+  run.nextNode(); // node 3 should be branchQueue event
+
+  assert.equal(run.state.story.current.id, "job_hunt_sprint");
+  assert.equal(run.state.story.current.source, "branchQueue");
 });

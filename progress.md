@@ -137,3 +137,13 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 新增专项计划：`docs/engineering/story-branch-expansion-plan.md`。
 - 明确目标：8~12 节点、300+ 路径、40~60 条中文都市生存事件原型。
 - 分四阶段推进：运行时扩容 -> 内容扩容 -> 分支平衡 -> 测试与 lint 流水线。
+
+## Phase A 完成：运行时分支扩容
+- 节点长度从 5 提升到 8（默认 `nodeTotal=8`）。
+- 新增 `branchQueue` 优先级（`branchQueue > queue > arc > deck`）。
+- 事件门控支持：`requiresFlags/forbidFlags`。
+- 分支效果支持 `enqueueBranch`，用于注入分支专属后续剧情。
+- 新增分支专属事件：`compensation_stall/job_hunt_sprint/roommate_conflict/credit_card_trap`。
+- 测试新增“branchQueue 优先于 arc”断言，当前全量测试 16/16 通过。
+- Playwright 冒烟通过：`output/web-game-phaseA-runtime`。
+- 路径基线（8 节点）当前约 36 条，下一阶段需通过内容扩容提升到 300+。

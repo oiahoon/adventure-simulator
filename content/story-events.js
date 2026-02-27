@@ -55,6 +55,7 @@ export const STORY_EVENTS = {
         text: "你选择硬谈条件，精神压力变高但后手更稳。",
         effects: {
           enqueue: ["rent_hike_notice"],
+          enqueueBranch: ["compensation_stall"],
           setFlags: ["negotiation_path"],
           bias: [{ tag: "risk", delta: 1 }],
           playerHpDelta: -1,
@@ -66,6 +67,7 @@ export const STORY_EVENTS = {
         text: "你决定快速止损，把精力转到找机会。",
         effects: {
           enqueue: ["absurd_side_hustle"],
+          enqueueBranch: ["job_hunt_sprint"],
           setFlags: ["quick_exit_path"],
           bias: [{ tag: "career", delta: 2 }],
           playerHpDelta: 0,
@@ -198,6 +200,58 @@ export const STORY_EVENTS = {
     },
     runtimeEffects: { playerHpDelta: -1 },
     tags: ["tieba", "social"],
+  },
+  compensation_stall: {
+    id: "compensation_stall",
+    title: "补偿拖延",
+    text: "谈判进入拉扯期，你被迫投入更多时间和精力。",
+    nodeType: "battle",
+    enemyPool: ["enforcer"],
+    requiresFlags: ["negotiation_path"],
+    preEffects: {
+      bias: [{ tag: "survival", delta: 1 }],
+    },
+    runtimeEffects: { playerHpDelta: -2 },
+    tags: ["career", "risk"],
+  },
+  job_hunt_sprint: {
+    id: "job_hunt_sprint",
+    title: "求职冲刺",
+    text: "你连续投递和面试，短期压力拉满但机会也在增加。",
+    nodeType: "battle",
+    enemyPool: ["sniper", "enforcer"],
+    requiresFlags: ["quick_exit_path"],
+    preEffects: {
+      bias: [{ tag: "career", delta: 2 }],
+    },
+    runtimeEffects: { playerHpDelta: -1 },
+    tags: ["career", "survival"],
+  },
+  roommate_conflict: {
+    id: "roommate_conflict",
+    title: "合租冲突",
+    text: "新的合租方案节省了预算，但居住摩擦开始升级。",
+    nodeType: "battle",
+    enemyPool: ["scavenger", "sniper"],
+    requiresFlags: ["moving_out"],
+    preEffects: {
+      bias: [{ tag: "social", delta: 1 }],
+    },
+    runtimeEffects: { playerHpDelta: -1 },
+    tags: ["rent", "social"],
+  },
+  credit_card_trap: {
+    id: "credit_card_trap",
+    title: "信用卡分期陷阱",
+    text: "你以为分期能缓解压力，结果手续费悄悄吞掉了现金流。",
+    nodeType: "battle",
+    enemyPool: ["enforcer", "sniper"],
+    requiresFlags: ["borrow_to_hold"],
+    preEffects: {
+      bias: [{ tag: "debt", delta: 2 }],
+    },
+    runtimeEffects: { playerHpDelta: -2 },
+    tags: ["debt", "risk"],
   },
 };
 

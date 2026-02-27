@@ -3,7 +3,7 @@ import { ENEMY_ORDER } from "../../content/enemies.js";
 import { STORY_ARC_ORDER, STORY_DECK, STORY_EVENTS } from "../../content/story-events.js";
 import { createBattle, createSeededRandom } from "../battle/engine.js";
 
-const NODE_TOTAL = 5;
+const NODE_TOTAL = 8;
 
 function randomRewardCards(random, count) {
   const pool = Object.keys(CARD_LIBRARY);
@@ -20,7 +20,15 @@ function pickFromPool(pool, random) {
 }
 
 function chooseDeckEvent(planner, random) {
-  const weighted = STORY_DECK.map((eventId) => {
+  const candidates = STORY_DECK.filter((eventId) => {
+    const event = STORY_EVENTS[eventId];
+    if (event.requiresFlags?.some((flag) => !planner.flags[flag])) return false;
+    if (event.forbidFlags?.some((flag) => planner.flags[flag])) return false;
+    return true;
+  });
+  const pool = candidates.length ? candidates : STORY_DECK;
+
+  const weighted = pool.map((eventId) => {
     const event = STORY_EVENTS[eventId];
     const score = (event.tags || []).reduce((sum, tag) => sum + (planner.bias[tag] || 0), 0);
     return { eventId, weight: 1 + Math.max(0, score) };
@@ -35,6 +43,10 @@ function chooseDeckEvent(planner, random) {
 }
 
 function chooseStoryEvent(planner, random) {
+  if (planner.branchQueue.length) {
+    const branchEventId = planner.branchQueue.shift();
+    return { event: STORY_EVENTS[branchEventId], source: "branchQueue" };
+  }
   if (planner.queue.length) {
     const queuedId = planner.queue.shift();
     return { event: STORY_EVENTS[queuedId], source: "queue" };
@@ -53,6 +65,9 @@ function applyStoryEffects(planner, state, effects = {}) {
   });
   (effects.enqueue || []).forEach((eventId) => {
     planner.queue.push(eventId);
+  });
+  (effects.enqueueBranch || []).forEach((eventId) => {
+    planner.branchQueue.push(eventId);
   });
   (effects.bias || []).forEach((item) => {
     planner.bias[item.tag] = (planner.bias[item.tag] || 0) + item.delta;
@@ -81,10 +96,11 @@ function createNodeFromEvent(storyEvent, source, random) {
   };
 }
 
-export function createRun({ seed = Date.now() } = {}) {
+export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
   const random = createSeededRandom(seed);
   const planner = {
     arcIndex: 0,
+    branchQueue: [],
     queue: [],
     flags: {},
     bias: {},
@@ -94,7 +110,7 @@ export function createRun({ seed = Date.now() } = {}) {
     seed,
     mode: "battle",
     nodeIndex: 0,
-    nodeTotal: NODE_TOTAL,
+    nodeTotal,
     nodes: [],
     playerMaxHp: 70,
     playerHp: 70,
@@ -237,7 +253,7 @@ export function createRun({ seed = Date.now() } = {}) {
   }
 
   function restart(seedOverride = Date.now()) {
-    const fresh = createRun({ seed: seedOverride });
+    const fresh = createRun({ seed: seedOverride, nodeTotal: state.nodeTotal });
     Object.assign(state, fresh.state);
     beginNode();
   }
