@@ -19,22 +19,15 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  deploy-with-hook:
-    if: ${{ github.event_name != 'pull_request' && secrets.VERCEL_DEPLOY_HOOK_URL != '' }}
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Vercel Deploy Hook
-        run: curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
-
-  deploy-with-cli:
-    if: ${{ github.event_name != 'pull_request' && secrets.VERCEL_DEPLOY_HOOK_URL == '' && secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
+  deploy:
+    if: ${{ github.event_name != 'pull_request' }}
     needs: test
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,7 +35,18 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
-      - run: npm i -g vercel@latest
-      - run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-      - run: vercel build --prod --token="$VERCEL_TOKEN"
-      - run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+      - name: Deploy via Vercel Hook
+        if: ${{ env.VERCEL_DEPLOY_HOOK_URL != '' }}
+        run: curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
+      - name: Install Vercel CLI
+        if: ${{ env.VERCEL_DEPLOY_HOOK_URL == '' && env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        run: npm i -g vercel@latest
+      - name: Deploy via Vercel CLI
+        if: ${{ env.VERCEL_DEPLOY_HOOK_URL == '' && env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        run: |
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+      - name: No deploy credentials
+        if: ${{ env.VERCEL_DEPLOY_HOOK_URL == '' && (env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '') }}
+        run: echo "Skipping deploy: no Vercel hook or CLI credentials configured."
