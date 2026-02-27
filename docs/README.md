@@ -13,6 +13,7 @@
 
 - 事件因果链设计：`docs/product/event-causal-chain-design.md`
 - 贴吧内容引入策略（含弱智吧语感）：`docs/product/tieba-content-integration.md`
+- 剧情分支扩容计划：`docs/engineering/story-branch-expansion-plan.md`
 
 ## 文档约束
 

@@ -132,3 +132,8 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 结果：
   - `npm test` 15/15 通过。
   - Playwright 验证分支选择流通过（`output/web-game-story-branch-p2`）。
+
+## Planning: 剧情分支与贴吧内容扩容
+- 新增专项计划：`docs/engineering/story-branch-expansion-plan.md`。
+- 明确目标：8~12 节点、300+ 路径、40~60 条中文都市生存事件原型。
+- 分四阶段推进：运行时扩容 -> 内容扩容 -> 分支平衡 -> 测试与 lint 流水线。

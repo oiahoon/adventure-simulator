@@ -20,3 +20,8 @@
 
 - 文档与代码完全一致化
 - 完成发布前稳定性与平衡性收口
+
+## 内容扩容专项
+
+- 剧情分支与贴吧内容扩容执行计划见：
+  - `docs/engineering/story-branch-expansion-plan.md`
