@@ -94,7 +94,7 @@
 ## 当前状态
 
 - Phase 1: 已完成（v2 引擎骨架 + API/CLI 选择器 + 双版本 smoke test）
-- Phase 2: 待开始
-- Phase 3: 待开始
+- Phase 2: 已完成（JSON 内容包 + content-loader + check-cards-v2）
+- Phase 3: 进行中（Web 运行时替换准备）
 - Phase 4: 待开始
 - Phase 5: 待开始

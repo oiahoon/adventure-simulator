@@ -345,3 +345,21 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - Smoke tests passed for both `v1` and `v2` (`new -> play` loop).
   - `npm run check:events` passed.
   - `npm run check:replay` passed (v1 regression baseline intact).
+- Phase 2 completed (Card V2 schema/content externalization):
+  - Added data-driven content packs under `public/data/cards-v2/`:
+    - `index.json`, `deck-rules.json`, `base-stats.json`, `profiles.json`
+    - `cards/core-cards.json`, `arcs/core-arcs.json`
+  - Added loader: `core/card-v2/content-loader.js`
+    - v2 engine now loads JSON packs first, with fallback to built-in default content.
+  - Refactored v2 engine to consume injected content config instead of hardcoded module constants.
+  - Added v2 schema/runtime doc:
+    - `docs/schema/card-event-v2-schema.md`
+  - Added v2 content checker:
+    - `scripts/check-cards-v2.js`
+    - npm script: `npm run check:cards:v2`
+  - Updated docs references (`README.md`, `docs/api/cli-mud.md`).
+- Validation:
+  - `npm run check:cards:v2` passed (0 error / 0 warning)
+  - `npm run check:events` passed
+  - `npm run check:replay` passed (v1 baseline unchanged)
+  - v2 smoke test confirmed JSON pack source loaded (non-fallback) and `new -> play` loop works.

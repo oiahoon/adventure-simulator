@@ -1,0 +1,14 @@
+{
+  "cities": [
+    "beijing",
+    "shanghai",
+    "shenzhen",
+    "chengdu"
+  ],
+  "careers": [
+    "rider",
+    "coder",
+    "exam",
+    "freelancer"
+  ]
+}

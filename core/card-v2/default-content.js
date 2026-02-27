@@ -349,5 +349,13 @@ module.exports = {
   CITIES,
   CAREERS,
   CARDS,
-  ARCS
+  ARCS,
+  DEFAULT_CONTENT: {
+    DECK_RULES,
+    BASE_STATS,
+    CITIES,
+    CAREERS,
+    CARDS,
+    ARCS
+  }
 };

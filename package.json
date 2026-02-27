@@ -9,7 +9,8 @@
     "build": "echo 'Static files already in public directory - build complete'",
     "mud:cli": "mud-cli --mode local",
     "check:events": "node scripts/check-events.js",
-    "check:replay": "node scripts/check-replay.js"
+    "check:replay": "node scripts/check-replay.js",
+    "check:cards:v2": "node scripts/check-cards-v2.js"
   },
   "keywords": [
     "mud",

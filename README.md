@@ -11,6 +11,7 @@
 - Web 核心玩法：每回合 3 选 1 决策卡（手动推进）
 - 事件引擎：`Queue -> Arcs -> Decks`
 - 事件数据包：`public/data/events/*.json`
+- v2 卡牌数据包：`public/data/cards-v2/*.json`
 - 年度热点包：`public/data/events/hotpacks/*.json`（按日期自动激活）
 - 已有工程检查：
   - `npm run check:events`
@@ -77,6 +78,7 @@ CLI 与 API 现使用统一卡牌动作协议：`new / status / draw / play / ch
 
 ```bash
 npm run check:events
+npm run check:cards:v2
 ```
 
 ### 回放

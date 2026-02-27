@@ -49,7 +49,9 @@ app.get("/api/mud/status", (req, res) => {
     supportedActions: {
       v1: mud.constants.SUPPORTED_ACTIONS,
       v2: mudV2.constants.SUPPORTED_ACTIONS
-    }
+    },
+    v2ContentSource: mudV2.metadata ? mudV2.metadata.source : "unknown",
+    v2Warnings: mudV2.metadata ? mudV2.metadata.warnings : []
   });
 });
 

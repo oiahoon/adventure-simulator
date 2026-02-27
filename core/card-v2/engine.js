@@ -1,13 +1,7 @@
 "use strict";
 
-const {
-  DECK_RULES,
-  BASE_STATS,
-  CITIES,
-  CAREERS,
-  CARDS,
-  ARCS
-} = require("./default-content");
+const { DEFAULT_CONTENT } = require("./default-content");
+const { loadCardV2Content } = require("./content-loader");
 
 const SUPPORTED_ACTIONS = ["new", "status", "draw", "play", "choose"];
 
@@ -117,8 +111,8 @@ function weightedPick(rng, list) {
   return list[list.length - 1].card;
 }
 
-function cardById(cardId) {
-  return CARDS.find((c) => c.id === cardId) || null;
+function cardById(content, cardId) {
+  return content.CARDS.find((c) => c.id === cardId) || null;
 }
 
 function applyDeltas(run, deltas) {
@@ -236,13 +230,13 @@ function maybeActivateArcs(run) {
   if (run.stats.careerXP >= 8) activateArc(run, "jobhunt");
 }
 
-function runArcStep(run, rng) {
+function runArcStep(run, rng, content) {
   const order = ["unemployment", "mortgage", "parenting", "legal", "jobhunt"];
   for (let i = 0; i < order.length; i += 1) {
     const arcId = order[i];
     const arcState = run.activeArcs[arcId];
     if (!arcState || !arcState.active || arcState.done) continue;
-    const def = ARCS[arcId];
+    const def = content.ARCS[arcId];
     if (!def) continue;
     const stageId = Math.max(1, Math.min(3, arcState.stage));
     const node = def.stages[String(stageId)];
@@ -272,12 +266,12 @@ function runArcStep(run, rng) {
   return false;
 }
 
-function drawCards(run, rng) {
+function drawCards(run, rng, content) {
   if (run.pendingChoice) return { ok: false, message: "存在关键抉择，请先 choose。" };
 
   const forced = processForcedQueue(run);
   if (forced) {
-    const forcedCard = cardById(forced.cardId);
+    const forcedCard = cardById(content, forced.cardId);
     if (forcedCard) {
       run.hand = [forcedCard.id];
       run.handMeta = [{ id: forcedCard.id, title: forcedCard.event.title, tag: forcedCard.event.tags[0] || "forced", forced: true }];
@@ -286,13 +280,13 @@ function drawCards(run, rng) {
     }
   }
 
-  const size = clamp(DECK_RULES.baseHandSize, 1, DECK_RULES.maxHandSize);
-  const available = CARDS.filter((card) => {
+  const size = clamp(content.DECK_RULES.baseHandSize, 1, content.DECK_RULES.maxHandSize);
+  const available = content.CARDS.filter((card) => {
     const event = card.event || {};
     if (run.cooldowns[event.id] > 0) return false;
     if (event.when && !evalCondition(run, event.when, rng)) return false;
-    if (DECK_RULES.preventDuplicatesInHand && run.hand.includes(card.id)) return false;
-    if ((run.discardHistory[card.id] || -999) + DECK_RULES.discardCooldownTurns > run.turn) return false;
+    if (content.DECK_RULES.preventDuplicatesInHand && run.hand.includes(card.id)) return false;
+    if ((run.discardHistory[card.id] || -999) + content.DECK_RULES.discardCooldownTurns > run.turn) return false;
     return true;
   });
 
@@ -342,7 +336,7 @@ function checkEnd(run) {
   return "";
 }
 
-function playCard(run, rng, cardId, choiceId) {
+function playCard(run, rng, cardId, choiceId, content) {
   if (run.mode !== "running") return { ok: false, statusCode: 400, error: "本局已结束。" };
   if (run.pendingChoice) return { ok: false, statusCode: 400, error: "存在关键抉择，请先 choose。" };
   if (!run.hand.length) return { ok: false, statusCode: 400, error: "当前无手牌，请先 draw。" };
@@ -352,7 +346,7 @@ function playCard(run, rng, cardId, choiceId) {
     return { ok: false, statusCode: 400, error: "cardId 不在当前手牌中", hand: run.handMeta };
   }
 
-  const card = cardById(resolvedCardId);
+  const card = cardById(content, resolvedCardId);
   if (!card) return { ok: false, statusCode: 400, error: "未知 cardId" };
 
   const resolution = resolveChoice(run, card, choiceId, rng);
@@ -377,7 +371,7 @@ function playCard(run, rng, cardId, choiceId) {
   tickTTL(run);
   updateContextTags(run);
   maybeActivateArcs(run);
-  runArcStep(run, rng);
+  runArcStep(run, rng, content);
 
   const endReason = checkEnd(run);
   if (endReason) {
@@ -390,7 +384,7 @@ function playCard(run, rng, cardId, choiceId) {
   return { ok: true, statusCode: 200, message: `已打出卡牌 ${event.title}。` };
 }
 
-function createRun(rng, name) {
+function createRun(rng, name, content) {
   const run = {
     schemaVersion: 2,
     engineVersion: "v2",
@@ -399,8 +393,8 @@ function createRun(rng, name) {
     day: 1,
     profile: {
       name: name && String(name).trim() ? String(name).trim() : `打工人${randInt(rng, 100, 999)}`,
-      cityId: pick(rng, CITIES),
-      careerId: pick(rng, CAREERS),
+      cityId: pick(rng, content.CITIES),
+      careerId: pick(rng, content.CAREERS),
       goals: ["生存", "稳现金流"]
     },
     location: "城中村",
@@ -418,8 +412,13 @@ function createRun(rng, name) {
       sect: null,
       perk: null
     },
-    stats: { ...BASE_STATS },
-    city: { morale: BASE_STATS.san, fatigue: BASE_STATS.fatigue, debt: BASE_STATS.debt, heat: BASE_STATS.heat },
+    stats: { ...content.BASE_STATS },
+    city: {
+      morale: content.BASE_STATS.san,
+      fatigue: content.BASE_STATS.fatigue,
+      debt: content.BASE_STATS.debt,
+      heat: content.BASE_STATS.heat
+    },
     hand: [],
     handMeta: [],
     pendingChoice: null,
@@ -448,36 +447,36 @@ function createRun(rng, name) {
 
   pushLog(run, "你进入卡牌化人生循环：每回合抽牌并打出一个决定。");
   updateContextTags(run);
-  drawCards(run, rng);
+  drawCards(run, rng, content);
   return run;
 }
 
-function runAction(rng, payload) {
+function runAction(rng, payload, content) {
   const { action = "status", run, option, cardId, choiceId, name } = payload || {};
   let currentRun = run || null;
   let message = "";
 
   if (action === "new" || !currentRun) {
-    currentRun = createRun(rng, name);
+    currentRun = createRun(rng, name, content);
     message = "v2 引擎新局已创建。";
   } else if (action === "status") {
     message = "状态读取成功。";
   } else if (action === "choose") {
     message = "当前 v2 阶段未启用 choose 分支。";
   } else if (action === "draw") {
-    const drawRes = drawCards(currentRun, rng);
+    const drawRes = drawCards(currentRun, rng, content);
     if (!drawRes.ok) {
       return { ok: false, statusCode: 400, error: drawRes.message, supported: SUPPORTED_ACTIONS };
     }
     message = drawRes.message;
   } else if (action === "play") {
-    const playRes = playCard(currentRun, rng, cardId || option, choiceId || option);
+    const playRes = playCard(currentRun, rng, cardId || option, choiceId || option, content);
     if (!playRes.ok) {
       return { ok: false, statusCode: playRes.statusCode || 400, error: playRes.error, hand: playRes.hand, supported: SUPPORTED_ACTIONS };
     }
     message = playRes.message;
     if (currentRun.mode === "running" && !currentRun.hand.length && !currentRun.pendingChoice) {
-      const drawRes = drawCards(currentRun, rng);
+      const drawRes = drawCards(currentRun, rng, content);
       if (drawRes.ok) message += ` ${drawRes.message}`;
     }
   } else {
@@ -516,12 +515,19 @@ function runAction(rng, payload) {
 
 function createCardEngineV2(opts) {
   const random = opts && typeof opts.random === "function" ? opts.random : defaultRandom;
+  const loaded = loadCardV2Content(opts || {});
+  const content = loaded && loaded.content ? loaded.content : DEFAULT_CONTENT;
+  const warnings = loaded && Array.isArray(loaded.warnings) ? loaded.warnings : [];
   return {
-    runAction: (payload) => runAction(random, payload),
+    runAction: (payload) => runAction(random, payload, content),
     constants: {
       SUPPORTED_ACTIONS,
-      DECK_RULES,
-      BASE_STATS
+      DECK_RULES: content.DECK_RULES,
+      BASE_STATS: content.BASE_STATS
+    },
+    metadata: {
+      source: loaded ? loaded.source : "fallback-default",
+      warnings
     }
   };
 }

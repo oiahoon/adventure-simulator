@@ -1,0 +1,362 @@
+{
+  "cards": [
+    {
+      "id": "card_job_push",
+      "deckTags": [
+        "deck:main",
+        "tag:jobhunt"
+      ],
+      "rarity": "common",
+      "canDiscard": true,
+      "event": {
+        "id": "card_job_push",
+        "version": 1,
+        "category": "daily",
+        "tags": [
+          "jobhunt",
+          "career"
+        ],
+        "baseWeight": 1.2,
+        "cooldown": 1,
+        "title": "冲刺投递",
+        "text": "你把简历投向了更多岗位，换来一点机会和更多焦虑。",
+        "choices": [
+          {
+            "id": "left",
+            "label": "密集投递",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "careerXP",
+                    "add": 3
+                  },
+                  {
+                    "stat": "fatigue",
+                    "add": 4
+                  },
+                  {
+                    "stat": "san",
+                    "add": -2
+                  }
+                ],
+                "arcStep": {
+                  "jobhunt": 1,
+                  "unemployment": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "right",
+            "label": "挑着投",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "careerXP",
+                    "add": 2
+                  },
+                  {
+                    "stat": "fatigue",
+                    "add": 2
+                  },
+                  {
+                    "stat": "san",
+                    "add": 1
+                  }
+                ],
+                "arcStep": {
+                  "jobhunt": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "card_cash_defense",
+      "deckTags": [
+        "deck:main",
+        "tag:mortgage"
+      ],
+      "rarity": "common",
+      "canDiscard": true,
+      "event": {
+        "id": "card_cash_defense",
+        "version": 1,
+        "category": "daily",
+        "tags": [
+          "mortgage",
+          "debt"
+        ],
+        "baseWeight": 1,
+        "cooldown": 1,
+        "title": "现金防线",
+        "text": "你收紧开销，优先保证账单不断供。",
+        "choices": [
+          {
+            "id": "left",
+            "label": "极限节流",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "debt",
+                    "add": -10
+                  },
+                  {
+                    "stat": "san",
+                    "add": -2
+                  },
+                  {
+                    "stat": "social",
+                    "add": -1
+                  }
+                ],
+                "arcStep": {
+                  "mortgage": 2
+                }
+              }
+            ]
+          },
+          {
+            "id": "right",
+            "label": "温和节流",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "debt",
+                    "add": -6
+                  },
+                  {
+                    "stat": "san",
+                    "add": -1
+                  }
+                ],
+                "arcStep": {
+                  "mortgage": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "card_family_shift",
+      "deckTags": [
+        "deck:main",
+        "tag:parenting"
+      ],
+      "rarity": "common",
+      "canDiscard": true,
+      "event": {
+        "id": "card_family_shift",
+        "version": 1,
+        "category": "daily",
+        "tags": [
+          "family",
+          "parenting"
+        ],
+        "baseWeight": 0.95,
+        "cooldown": 2,
+        "title": "家庭夜班",
+        "text": "你接过了夜间照护任务，家庭没崩但身体更累。",
+        "choices": [
+          {
+            "id": "left",
+            "label": "硬扛",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "fatigue",
+                    "add": 6
+                  },
+                  {
+                    "stat": "san",
+                    "add": 1
+                  },
+                  {
+                    "stat": "cash",
+                    "add": -4
+                  }
+                ],
+                "arcStep": {
+                  "parenting": 2
+                }
+              }
+            ]
+          },
+          {
+            "id": "right",
+            "label": "请求支援",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "fatigue",
+                    "add": 2
+                  },
+                  {
+                    "stat": "san",
+                    "add": 2
+                  },
+                  {
+                    "stat": "debt",
+                    "add": 4
+                  }
+                ],
+                "arcStep": {
+                  "parenting": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "card_evidence_save",
+      "deckTags": [
+        "deck:opportunity",
+        "tag:legal"
+      ],
+      "rarity": "uncommon",
+      "canDiscard": true,
+      "event": {
+        "id": "card_evidence_save",
+        "version": 1,
+        "category": "system",
+        "tags": [
+          "legal",
+          "heat"
+        ],
+        "baseWeight": 0.86,
+        "cooldown": 4,
+        "title": "证据留存",
+        "text": "你整理监控、录音和聊天记录，给未来风波留后手。",
+        "choices": [
+          {
+            "id": "left",
+            "label": "完整归档",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "heat",
+                    "add": -3
+                  },
+                  {
+                    "stat": "fatigue",
+                    "add": 2
+                  }
+                ],
+                "setFlags": {
+                  "legal.prepared": {
+                    "v": true,
+                    "ttl": 8
+                  }
+                },
+                "arcStep": {
+                  "legal": 2
+                }
+              }
+            ]
+          },
+          {
+            "id": "right",
+            "label": "先存一半",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "heat",
+                    "add": -1
+                  },
+                  {
+                    "stat": "fatigue",
+                    "add": 1
+                  }
+                ],
+                "arcStep": {
+                  "legal": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "card_rest_halfday",
+      "deckTags": [
+        "deck:opportunity",
+        "tag:recover"
+      ],
+      "rarity": "common",
+      "canDiscard": true,
+      "event": {
+        "id": "card_rest_halfday",
+        "version": 1,
+        "category": "daily",
+        "tags": [
+          "recover"
+        ],
+        "baseWeight": 0.9,
+        "cooldown": 2,
+        "title": "半日休整",
+        "text": "你决定慢下来，把身体和情绪拉回安全区。",
+        "choices": [
+          {
+            "id": "left",
+            "label": "彻底休息",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "hp",
+                    "add": 10
+                  },
+                  {
+                    "stat": "fatigue",
+                    "add": -8
+                  },
+                  {
+                    "stat": "cash",
+                    "add": -6
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "right",
+            "label": "半休半工",
+            "outcomes": [
+              {
+                "deltas": [
+                  {
+                    "stat": "hp",
+                    "add": 5
+                  },
+                  {
+                    "stat": "fatigue",
+                    "add": -4
+                  },
+                  {
+                    "stat": "cash",
+                    "add": -2
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,269 @@
+{
+  "arcs": {
+    "unemployment": {
+      "title": "失业链",
+      "stages": {
+        "1": {
+          "text": "组织传出降本信号，你被卷入待岗名单。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "san",
+                "add": -6
+              },
+              {
+                "stat": "debt",
+                "add": 8
+              }
+            ],
+            "nextStage": 2
+          }
+        },
+        "2": {
+          "text": "面试与回绝交替出现，现金流持续波动。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "fatigue",
+                "add": 3
+              },
+              {
+                "stat": "cash",
+                "add": -8
+              }
+            ],
+            "nextStage": 3
+          }
+        },
+        "3": {
+          "text": "你终于拿到阶段性机会，失业链暂时收束。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "cash",
+                "add": 16
+              },
+              {
+                "stat": "san",
+                "add": 4
+              }
+            ],
+            "complete": true
+          }
+        }
+      }
+    },
+    "mortgage": {
+      "title": "房贷链",
+      "stages": {
+        "1": {
+          "text": "月供上浮通知到达，预算瞬间绷紧。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "debt",
+                "add": 10
+              },
+              {
+                "stat": "san",
+                "add": -3
+              }
+            ],
+            "nextStage": 2
+          }
+        },
+        "2": {
+          "text": "你尝试重算月供，银行给出短期方案。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "debt",
+                "add": -8
+              },
+              {
+                "stat": "cash",
+                "add": -6
+              }
+            ],
+            "nextStage": 3
+          }
+        },
+        "3": {
+          "text": "供款节奏暂稳，但家庭开支仍高压。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "san",
+                "add": 2
+              },
+              {
+                "stat": "fatigue",
+                "add": 2
+              }
+            ],
+            "complete": true
+          }
+        }
+      }
+    },
+    "parenting": {
+      "title": "育儿链",
+      "stages": {
+        "1": {
+          "text": "托育排号拉长，通勤和照护冲突加剧。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "fatigue",
+                "add": 6
+              },
+              {
+                "stat": "san",
+                "add": -2
+              }
+            ],
+            "nextStage": 2
+          }
+        },
+        "2": {
+          "text": "你重排照护班次，家庭协作仍不稳定。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "fatigue",
+                "add": 3
+              },
+              {
+                "stat": "debt",
+                "add": 4
+              }
+            ],
+            "nextStage": 3
+          }
+        },
+        "3": {
+          "text": "家庭协作建立，育儿链阶段性落地。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "san",
+                "add": 4
+              },
+              {
+                "stat": "fatigue",
+                "add": -3
+              }
+            ],
+            "complete": true
+          }
+        }
+      }
+    },
+    "legal": {
+      "title": "法律链",
+      "stages": {
+        "1": {
+          "text": "公共争议升温，你被迫进入应对流程。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "heat",
+                "add": 8
+              },
+              {
+                "stat": "san",
+                "add": -3
+              }
+            ],
+            "nextStage": 2
+          }
+        },
+        "2": {
+          "text": "证据审查开启，舆情走向开始分化。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "cash",
+                "add": -6
+              },
+              {
+                "stat": "heat",
+                "add": -2
+              }
+            ],
+            "nextStage": 3
+          }
+        },
+        "3": {
+          "text": "风波进入收束，代价仍然留在账本里。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "san",
+                "add": 3
+              },
+              {
+                "stat": "debt",
+                "add": 5
+              }
+            ],
+            "complete": true
+          }
+        }
+      }
+    },
+    "jobhunt": {
+      "title": "求职链",
+      "stages": {
+        "1": {
+          "text": "你进入高频投递周期，面试窗口陆续打开。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "fatigue",
+                "add": 3
+              },
+              {
+                "stat": "careerXP",
+                "add": 2
+              }
+            ],
+            "nextStage": 2
+          }
+        },
+        "2": {
+          "text": "二面与回绝并存，情绪波动明显。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "san",
+                "add": -2
+              },
+              {
+                "stat": "careerXP",
+                "add": 3
+              }
+            ],
+            "nextStage": 3
+          }
+        },
+        "3": {
+          "text": "你获得阶段成果，求职链进入下一轮准备。",
+          "outcome": {
+            "deltas": [
+              {
+                "stat": "cash",
+                "add": 10
+              },
+              {
+                "stat": "san",
+                "add": 3
+              }
+            ],
+            "complete": true
+          }
+        }
+      }
+    }
+  }
+}
