@@ -458,3 +458,11 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   - 更新根 `index.html` 文案为当前项目名。
   - 移除 `public/index.html` 中已废弃样式（挑战码导入相关样式残留）。
 - 质量验证：`npm test` 20/20 通过。
+
+## Baseline Decision Lock（文档基线统一）
+- 新增裁决文档：`docs/architecture/baseline-decisions.md`，明确三项基线：
+  1) 玩法目标统一为 100 天；
+  2) 不再保留挑战码复刻；
+  3) Core Action 架构定位为 Legacy 兼容层，前端事件模式为线上主路径。
+- `docs/README.md` 增加“基线决议”入口。
+- `docs/architecture/system-overview.md` 增加基线裁决引用。

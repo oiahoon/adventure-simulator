@@ -32,6 +32,8 @@
 
 ## 关键约束
 
+> 基线裁决见：`docs/architecture/baseline-decisions.md`
+
 - UI 层只做渲染和交互，不做复杂规则判断。
 - 对外部署以 `/public/index.html` 为主入口。
 - 线上结局叙事依赖 DeepSeek 环境变量配置。
