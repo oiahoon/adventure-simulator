@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_8";
+import { createGameUI } from "../ui/game-ui.js?v=20260227_9";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -1264,6 +1264,30 @@ function buildShareLink() {
   return url.toString();
 }
 
+function buildSharePayload() {
+  const result = state.session.result;
+  if (!result) return null;
+  return {
+    v: 1,
+    title: result.ending?.title || "本局结局",
+    subtitle: result.ending?.subtitle || "",
+    score: result.score || 0,
+    days: result.daysSurvived || 0,
+    avatarUrl: state.session.avatar?.url || "",
+    role: state.session.archetypeName || "都市求生者",
+  };
+}
+
+function buildSharePreviewLink() {
+  if (typeof window === "undefined") return "";
+  const payload = buildSharePayload();
+  if (!payload) return buildShareLink();
+  const url = new URL(window.location.href);
+  url.pathname = "/api/share";
+  url.searchParams.set("d", encodeURIComponent(JSON.stringify(payload)));
+  return url.toString();
+}
+
 function createSession(seed = Date.now()) {
   const random = seededRandom(seed);
   const archetype = randomPick(STARTER_ARCHETYPES, random);
@@ -1512,11 +1536,11 @@ function startNew(seed = Date.now()) {
 function shareText() {
   const result = state.session.result;
   if (!result) return "";
-  const shareLink = buildShareLink();
+  const shareLink = buildSharePreviewLink();
   return [
     `我在《是男人就坚持100天》坚持了 ${result.daysSurvived} 天，分数 ${result.score}，结局：${result.ending.title}`,
     `结局成因：${result.reason?.bullets?.[0] || "稳住了主要属性"}`,
-    shareLink ? `游戏链接：${shareLink}` : "游戏链接生成失败",
+    shareLink ? `分享链接：${shareLink}` : "分享链接生成失败",
   ].join("\n");
 }
 
@@ -1588,6 +1612,35 @@ function copyShare() {
     });
 }
 
+async function wechatShare() {
+  const result = state.session.result;
+  if (!result) return;
+  const url = buildSharePreviewLink();
+  const title = `我在《是男人就坚持100天》活了 ${result.daysSurvived} 天`;
+  const text = `分数 ${result.score}，结局：${result.ending.title}`;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text, url });
+      setNotice("已唤起系统分享面板");
+      return;
+    }
+  } catch {
+    // ignore and fallback
+  }
+  const writePromise = navigator.clipboard?.writeText?.(url);
+  if (!writePromise) {
+    window.prompt("复制这个分享链接", url);
+    setNotice("微信内请右上角分享，或手动复制链接");
+    return;
+  }
+  writePromise
+    .then(() => setNotice("已复制分享链接，可粘贴到微信"))
+    .catch(() => {
+      window.prompt("复制这个分享链接", url);
+      setNotice("微信内请右上角分享，或手动复制链接");
+    });
+}
+
 function setNotice(text) {
   state.notice = text;
   refresh();
@@ -1628,6 +1681,7 @@ const ui = createGameUI(root, {
     refresh();
   },
   onCopyShare: () => copyShare(),
+  onWeChatShare: () => wechatShare(),
 });
 
 window.render_game_to_text = () => {

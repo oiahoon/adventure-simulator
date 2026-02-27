@@ -72,6 +72,7 @@ export function createGameUI(root, actions) {
     });
 
     panel.querySelector("#start-btn")?.addEventListener("click", () => actions.onStart());
+    panel.querySelector("#wechat-share-btn")?.addEventListener("click", () => actions.onWeChatShare());
     panel.querySelector("#copy-share-btn")?.addEventListener("click", () => actions.onCopyShare());
   }
 
@@ -122,8 +123,9 @@ export function createGameUI(root, actions) {
           }
         </article>
         <p class="opt-impact">${restartLocked ? "结局刚生成，按钮短暂保护中，避免误触。" : restartConfirm ? "再次点击将立即重开新局。" : "点击“再来一局”后需二次确认，防止误触。"}</p>
-        <div class="action-grid">
+        <div class="action-grid end-actions">
           <button class="primary" id="start-btn" ${restartLocked ? "disabled" : ""}>${restartText}</button>
+          <button class="ghost" id="wechat-share-btn">微信分享</button>
           <button class="ghost" id="copy-share-btn">复制分享文案</button>
         </div>
       </article>
