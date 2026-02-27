@@ -58,3 +58,27 @@ test("enemy chooses block when hp is low", () => {
   const intent = battle.chooseEnemyIntent();
   assert.equal(intent.type, "block");
 });
+
+test("cycle card spends 1 energy and replaces card once per turn", () => {
+  const battle = createBattle({ seed: 11 });
+  const handBefore = battle.state.player.hand.map((card) => card.id);
+  const energyBefore = battle.state.player.energy;
+
+  const first = battle.cycleCard(0);
+  assert.equal(first.ok, true);
+  assert.equal(battle.state.player.energy, energyBefore - 1);
+  assert.equal(battle.state.player.cycleUsed, true);
+  assert.equal(battle.state.player.hand.length, handBefore.length);
+
+  const second = battle.cycleCard(0);
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, "cycle_used");
+});
+
+test("cycle resets after end turn", () => {
+  const battle = createBattle({ seed: 12 });
+  battle.cycleCard(0);
+  assert.equal(battle.state.player.cycleUsed, true);
+  battle.endTurn();
+  assert.equal(battle.state.player.cycleUsed, false);
+});

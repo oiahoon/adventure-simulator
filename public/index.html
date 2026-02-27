@@ -51,6 +51,7 @@
       }
       .subtle,
       #end-turn-btn,
+      #recommended-btn,
       select {
         border: 2px solid var(--line);
         background: var(--panel);
@@ -154,6 +155,44 @@
       .card-btn .text {
         font-size: 13px;
       }
+      .card-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .mini-btn {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: #fff2d7;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .mini-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .action-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 8px 0 4px;
+      }
+      #end-turn-btn {
+        background: #fdf1d6;
+      }
+      #recommended-btn {
+        background: #daf1e1;
+      }
+      .recommendation {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: #214a37;
+        background: #edf9f1;
+        border: 1px solid #b8dec6;
+        border-radius: 8px;
+        padding: 6px 8px;
+      }
       .log p {
         margin: 0 0 4px;
         font-size: 13px;
@@ -184,6 +223,9 @@
         .hand-grid,
         .reward-grid {
           grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+        .action-row {
+          grid-template-columns: 1fr;
         }
         .tune-row {
           flex-direction: column;

@@ -24,6 +24,7 @@ function battleView(battle) {
       block: state.player.block,
       energy: state.player.energy,
       maxEnergy: state.player.maxEnergy,
+      cycleUsed: Boolean(state.player.cycleUsed),
       drawPile: state.player.drawPile.length,
       discardPile: state.player.discardPile.length,
       hand: state.player.hand,
@@ -39,6 +40,50 @@ function battleView(battle) {
       elite: state.enemy.elite,
     },
     logs: state.logs.slice(-12),
+  };
+}
+
+function estimateCardValue(card, battle) {
+  const enemyIntent = battle.enemy.intent;
+  const incomingAttack = enemyIntent.type === "attack" ? enemyIntent.value : 0;
+  return (card.effects || []).reduce((sum, effect) => {
+    if (effect.type === "damage") return sum + effect.value * 1.2;
+    if (effect.type === "block") return sum + Math.min(effect.value, incomingAttack) * 1.1;
+    if (effect.type === "heal") return sum + effect.value;
+    if (effect.type === "status" && effect.target === "enemy") return sum + effect.value * 1.4;
+    if (effect.type === "draw") return sum + effect.value * 0.8;
+    if (effect.type === "energy") return sum + effect.value * 0.9;
+    return sum;
+  }, 0);
+}
+
+function buildBattleRecommendation(battle) {
+  if (!battle || battle.phase !== "player" || battle.winner) return null;
+  const playable = battle.player.hand
+    .map((card, idx) => ({ idx, card }))
+    .filter((item) => item.card.cost <= battle.player.energy);
+
+  if (!playable.length) {
+    return {
+      type: "end_turn",
+      label: "当前无可打出牌，建议结束回合",
+    };
+  }
+
+  let best = playable[0];
+  let bestScore = estimateCardValue(best.card, battle);
+  for (const item of playable.slice(1)) {
+    const score = estimateCardValue(item.card, battle);
+    if (score > bestScore) {
+      best = item;
+      bestScore = score;
+    }
+  }
+  return {
+    type: "play_card",
+    cardIndex: best.idx,
+    cardName: best.card.name,
+    label: `建议先打出：${best.card.name}`,
   };
 }
 
@@ -77,6 +122,7 @@ function buildView() {
     },
     battle: runState.battle ? battleView(runState.battle) : null,
   };
+  view.battleRecommendation = buildBattleRecommendation(view.battle);
   return view;
 }
 
@@ -119,6 +165,24 @@ const ui = createGameUI(root, {
     appState.run.endTurn();
     refresh();
   },
+  onCycleCard: (idx) => {
+    appState.run.cycleCard(idx);
+    refresh();
+  },
+  onPlayRecommended: () => {
+    const view = buildView();
+    const rec = view.battleRecommendation;
+    if (!rec) return;
+    if (rec.type === "play_card" && Number.isInteger(rec.cardIndex)) {
+      appState.run.playCard(rec.cardIndex);
+      refresh();
+      return;
+    }
+    if (rec.type === "end_turn") {
+      appState.run.endTurn();
+      refresh();
+    }
+  },
   onChooseReward: (cardId) => {
     appState.run.chooseReward(cardId);
     refresh();
@@ -149,6 +213,12 @@ window.addEventListener("keydown", (event) => {
   if (key === "enter" && mode === "battle") {
     event.preventDefault();
     appState.run.endTurn();
+    refresh();
+    return;
+  }
+  if (key === "c" && mode === "battle") {
+    event.preventDefault();
+    appState.run.cycleCard(0);
     refresh();
     return;
   }
@@ -224,6 +294,7 @@ window.render_game_to_text = () => {
             hp: v.battle.player.hp,
             block: v.battle.player.block,
             energy: v.battle.player.energy,
+            cycleUsed: v.battle.player.cycleUsed,
             statuses: v.battle.player.statuses,
             hand: v.battle.player.hand.map((c) => ({ id: c.id, cost: c.cost })),
           },
@@ -235,6 +306,7 @@ window.render_game_to_text = () => {
             intent: v.battle.enemy.intent,
           },
           logs: v.battle.logs,
+          recommendation: v.battleRecommendation,
         }
       : null,
     rewardOptions: v.run.rewardOptions.map((card) => card.id),

@@ -1,10 +1,14 @@
 function cardButton(card, idx, enabled) {
   const disabled = enabled ? "" : "disabled";
-  return `<button class="card-btn" data-card-index="${idx}" ${disabled}>
-    <span class="name">${card.name}</span>
-    <span class="meta">Cost ${card.cost}</span>
-    <span class="text">${card.text}</span>
-  </button>`;
+  const cycleDisabled = enabled ? "" : "disabled";
+  return `<div class="card-wrap">
+    <button class="card-btn" data-card-index="${idx}" ${disabled}>
+      <span class="name">${card.name}</span>
+      <span class="meta">Cost ${card.cost}</span>
+      <span class="text">${card.text}</span>
+    </button>
+    <button class="mini-btn" type="button" data-cycle-index="${idx}" ${cycleDisabled}>重抽此牌 (-1)</button>
+  </div>`;
 }
 
 function renderStatusBadges(statuses) {
@@ -51,6 +55,13 @@ export function createGameUI(root, actions) {
       el.addEventListener("click", () => actions.onPlayCard(Number(el.dataset.cardIndex)));
     });
     root.querySelector("#end-turn-btn")?.addEventListener("click", () => actions.onEndTurn());
+    root.querySelectorAll("[data-cycle-index]").forEach((el) => {
+      el.addEventListener("click", (event) => {
+        event.stopPropagation();
+        actions.onCycleCard(Number(el.dataset.cycleIndex));
+      });
+    });
+    root.querySelector("#recommended-btn")?.addEventListener("click", () => actions.onPlayRecommended());
   }
 
   function bindRewardActions() {
@@ -82,7 +93,7 @@ export function createGameUI(root, actions) {
       <ol>
         ${view.onboarding.steps.map((step) => `<li>${step}</li>`).join("")}
       </ol>
-      <p class="shortcut-hint">Hotkeys: <code>Enter</code> End Turn, <code>N</code> Next Node, <code>1/2</code> Story Branch, <code>G</code> Guide, <code>R</code> New Run</p>
+      <p class="shortcut-hint">Hotkeys: <code>Enter</code> End Turn, <code>C</code> Cycle first card, <code>N</code> Next Node, <code>1/2</code> Story Branch, <code>G</code> Guide, <code>R</code> New Run</p>
     `;
   }
 
@@ -126,8 +137,13 @@ export function createGameUI(root, actions) {
             <p>HP ${b.player.hp}/${b.player.maxHp} | Block ${b.player.block}</p>
             <p>Draw ${b.player.drawPile} | Discard ${b.player.discardPile}</p>
             <p>Energy ${b.player.energy}/${b.player.maxEnergy}</p>
+            <p>Cycle ${b.player.cycleUsed ? "Used" : "Ready"} (cost 1 energy, once/turn)</p>
             ${renderStatusBadges(b.player.statuses)}
-            <button id="end-turn-btn" ${b.phase !== "player" || b.winner ? "disabled" : ""}>End Turn</button>
+            <div class="action-row">
+              <button id="end-turn-btn" ${b.phase !== "player" || b.winner ? "disabled" : ""}>结束回合</button>
+              <button id="recommended-btn" ${b.phase !== "player" || b.winner ? "disabled" : ""}>执行建议</button>
+            </div>
+            ${view.battleRecommendation ? `<p class="recommendation">${view.battleRecommendation.label}</p>` : ""}
           </section>
           <section class="panel" id="hand-panel">
             <h2>Hand (${b.player.hand.length})</h2>
@@ -157,6 +173,7 @@ export function createGameUI(root, actions) {
                   (option, idx) => `<button class="card-btn" data-story-branch="${option.id}">
                     <span class="name">Option ${idx + 1}: ${option.label}</span>
                     <span class="text">${option.text}</span>
+                    ${option.impactText ? `<span class="meta">${option.impactText}</span>` : ""}
                   </button>`
                 )
                 .join("")}
@@ -206,7 +223,7 @@ export function createGameUI(root, actions) {
           <section class="panel">
             <h2>Node Cleared</h2>
             <p>Ready for next encounter.</p>
-            <button id="next-node-btn" class="subtle">Enter Next Node</button>
+            <button id="next-node-btn" class="subtle">继续剧情</button>
           </section>
         `;
         bindRewardActions();

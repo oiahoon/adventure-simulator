@@ -35,6 +35,17 @@ test("mud service can play and end turn", () => {
   assert.ok(["battle", "reward", "map", "victory", "defeat"].includes(ended.state.mode));
 });
 
+test("mud service supports cycle action", () => {
+  const service = createMudService();
+  const created = service.runAction({ action: "new", seed: 456 });
+  const sessionId = created.sessionId;
+  service.runAction({ action: "story_branch", sessionId, branchId: "layoff_save_mode" });
+
+  const cycled = service.runAction({ action: "cycle", sessionId, cardIndex: 0 });
+  assert.equal(cycled.ok, true);
+  assert.equal(cycled.state.mode, "battle");
+});
+
 test("mud service returns errors on unknown session", () => {
   const service = createMudService();
   const result = service.runAction({ action: "state", sessionId: "missing" });

@@ -186,3 +186,31 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 ## 后续建议
 - 优先优化 Deck 段重复率（尤其是中后期高频事件），将 `top10_event_repeat_ratio` 压至 <= 0.45。
 - 引入“剧情段落权重衰减/冷却”，降低同主题短期重复出现。
+
+## Hotfix: Vercel 线上 404 修复
+- 线上问题：
+  - `/app/main.js` 404
+  - `/favicon.ico` 404
+- 处理：
+  - `vercel.json` 增加资源级 rewrite（`/app|/core|/content|/ui|/favicon.ico` -> `/public/...`）。
+  - `public/favicon.ico` 改为真实文件（不再依赖符号链接）。
+- 结果：
+  - 线上验证通过：`/`、`/app/main.js`、`/favicon.ico` 均 200。
+
+## UX + Gameplay 改进（本轮）
+- 新增战斗战术操作：
+  - `cycle card`：每回合一次，消耗 1 能量，弃置并重抽指定手牌。
+  - 支持 API action：`cycle`。
+- 操作人性化：
+  - 新增“执行建议”按钮：根据当前手牌与敌方 Intent 给出并执行推荐动作。
+  - 新增卡牌级“重抽此牌(-1)”按钮。
+  - 新增快捷键：`C`（重抽第 1 张牌）。
+- UI 强化：
+  - 战斗面板新增推荐提示与主操作双按钮布局（结束回合 / 执行建议）。
+  - Story 分支选项增加“影响摘要”文案（HP、后续分支、奖励倾向等）。
+  - 移动端操作区改为更易点按布局。
+- 引擎去重复优化（进行中）：
+  - Deck 事件选择增加最近事件冷却与单事件次数上限，减少单局重复刷同事件。
+- 质量结果：
+  - `npm test` 20/20 通过。
+  - Playwright 冒烟通过：`output/web-game-ux-upgrade`。

@@ -30,6 +30,7 @@ function summarizeRun(runState) {
             hp: battle.player.hp,
             block: battle.player.block,
             energy: battle.player.energy,
+            cycleUsed: Boolean(battle.player.cycleUsed),
             hand: hand.map((card) => ({
               id: card.id,
               name: card.name,
@@ -121,6 +122,10 @@ export function createMudService() {
     }
     if (action === "end") {
       session.run.endTurn();
+      return response(sessionId, summarizeRun(session.run.state));
+    }
+    if (action === "cycle") {
+      session.run.cycleCard(toNumber(payload.cardIndex, -1));
       return response(sessionId, summarizeRun(session.run.state));
     }
     if (action === "reward") {

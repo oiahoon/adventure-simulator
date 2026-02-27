@@ -10,6 +10,7 @@
 - `new`: 新建会话
 - `state`: 获取当前状态
 - `play`: 出牌（`cardIndex`）
+- `cycle`: 战术重抽（`cardIndex`，每回合一次，消耗 1 能量）
 - `end`: 结束回合
 - `reward`: 选择奖励（`cardId|null`）
 - `remove`: 删除牌（`cardId`）

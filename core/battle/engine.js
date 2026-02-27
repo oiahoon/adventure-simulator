@@ -115,6 +115,7 @@ export function createBattle({
       discardPile: [],
       exhaustPile: [],
       statuses: createBaseStatuses(),
+      cycleUsed: false,
     },
     enemy: {
       ...enemyTemplate,
@@ -244,6 +245,30 @@ export function createBattle({
     return { ok: true };
   }
 
+  function cycleCard(handIndex) {
+    if (state.phase !== "player" || state.mode !== "battle") {
+      return { ok: false, reason: "not_player_phase" };
+    }
+    if (state.player.cycleUsed) {
+      return { ok: false, reason: "cycle_used" };
+    }
+    if (state.player.energy < 1) {
+      return { ok: false, reason: "no_energy" };
+    }
+    const card = state.player.hand[handIndex];
+    if (!card) {
+      return { ok: false, reason: "invalid_card" };
+    }
+
+    state.player.energy -= 1;
+    state.player.hand.splice(handIndex, 1);
+    state.player.discardPile.push(card.id);
+    drawCards(1);
+    state.player.cycleUsed = true;
+    addLog(`Cycle ${card.name} (-1 energy).`);
+    return { ok: true };
+  }
+
   function runEnemyTurn() {
     const intent = chooseEnemyIntent(state);
     state.enemy.intentIndex += 1;
@@ -291,6 +316,7 @@ export function createBattle({
     state.enemy.block = 0;
     state.turn += 1;
     state.player.energy = state.player.maxEnergy;
+    state.player.cycleUsed = false;
     drawCards(5);
     state.phase = "player";
     addLog(`Turn ${state.turn} start.`);
@@ -307,6 +333,7 @@ export function createBattle({
   return {
     state,
     playCard,
+    cycleCard,
     endTurn,
     getNextEnemyIntent,
     chooseEnemyIntent: () => chooseEnemyIntent(state),

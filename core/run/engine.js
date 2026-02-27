@@ -112,6 +112,19 @@ function applyStoryEffects(planner, state, effects = {}) {
   }
 }
 
+function summarizeBranchEffects(effects = {}) {
+  const tags = [];
+  const hpDelta = Number(effects.playerHpDelta || 0);
+  if (hpDelta > 0) tags.push(`HP +${hpDelta}`);
+  if (hpDelta < 0) tags.push(`HP ${hpDelta}`);
+  if ((effects.enqueueBranch || []).length) tags.push(`后续分支+${effects.enqueueBranch.length}`);
+  if ((effects.enqueue || []).length) tags.push(`后续剧情+${effects.enqueue.length}`);
+  if ((effects.rewardBias || []).length) tags.push("奖励倾向变化");
+  if ((effects.bias || []).length) tags.push("事件权重变化");
+  if ((effects.setFlags || []).length) tags.push("状态标记变化");
+  return tags.join(" · ");
+}
+
 function createNodeFromEvent(storyEvent, source, random) {
   const enemyPool = storyEvent.enemyPool?.length ? storyEvent.enemyPool : ENEMY_ORDER;
   return {
@@ -210,6 +223,7 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
           id: branch.id,
           label: branch.label,
           text: branch.text,
+          impactText: summarizeBranchEffects(branch.effects || {}),
         })),
       };
       state.mode = "story";
@@ -270,6 +284,12 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
     settleBattleIfDone();
   }
 
+  function cycleCard(index) {
+    if (state.mode !== "battle") return;
+    state.battle.cycleCard(index);
+    settleBattleIfDone();
+  }
+
   function chooseReward(cardId) {
     if (state.mode !== "reward") return;
     if (cardId && CARD_LIBRARY[cardId]) state.deck.push(cardId);
@@ -302,6 +322,7 @@ export function createRun({ seed = Date.now(), nodeTotal = NODE_TOTAL } = {}) {
   return {
     state,
     playCard,
+    cycleCard,
     endTurn,
     chooseReward,
     removeCard,
