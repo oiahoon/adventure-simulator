@@ -508,8 +508,8 @@ function buildAvatarConfig(random, seed) {
   };
 }
 
-function drawTempSkills(random, count = 2) {
-  const pool = [...TEMP_SKILL_POOL];
+function drawTempSkills(random, count = 2, sourcePool = TEMP_SKILL_POOL) {
+  const pool = [...sourcePool];
   const picks = [];
   const drawCount = Math.min(count, pool.length);
   for (let i = 0; i < drawCount; i += 1) {
@@ -518,6 +518,26 @@ function drawTempSkills(random, count = 2) {
     pool.splice(idx, 1);
   }
   return picks;
+}
+
+function drawTempSkillsWithCooldown(random, count = 2, cooldownIds = []) {
+  const cooldown = new Set(cooldownIds || []);
+  const preferred = TEMP_SKILL_POOL.filter((item) => !cooldown.has(item.id));
+  if (preferred.length >= count) {
+    return drawTempSkills(
+      random,
+      count,
+      preferred,
+    );
+  }
+  const mixed = [...preferred, ...TEMP_SKILL_POOL.filter((item) => cooldown.has(item.id))];
+  return drawTempSkills(random, count, mixed);
+}
+
+function pushSkillCooldown(session, offers) {
+  const ids = offers.map((item) => item.id);
+  const next = [...session.skillCooldownIds, ...ids];
+  session.skillCooldownIds = next.slice(-4);
 }
 
 function chooseOpening(archetype, random) {
@@ -573,6 +593,16 @@ function resolveEvent(session, dayIndex) {
   if (dayIndex === 0) return session.openingEvent;
   const loopStage = ((dayIndex - 1) % 5) + 1;
   return resolveCausalStageEvent(session, loopStage);
+}
+
+function getCurrentEvent(session) {
+  if (session.cachedEvent && session.cachedEventDayIndex === session.dayIndex) {
+    return session.cachedEvent;
+  }
+  const event = resolveEvent(session, session.dayIndex);
+  session.cachedEvent = event;
+  session.cachedEventDayIndex = session.dayIndex;
+  return event;
 }
 
 function computeScore(session) {
@@ -677,6 +707,7 @@ function createSession(seed = Date.now()) {
   const base = archetype.baseStats;
 
   const jitter = () => (random() < 0.5 ? -1 : 1);
+  const skillOffers = drawTempSkills(random, 2);
   return {
     seed,
     random,
@@ -694,8 +725,11 @@ function createSession(seed = Date.now()) {
     },
     flags: {},
     usedEventIds: new Set([openingEvent.id]),
-    skillOffers: drawTempSkills(random, 2),
+    skillOffers,
+    skillCooldownIds: skillOffers.map((item) => item.id),
     skillUsedDay: false,
+    cachedEvent: null,
+    cachedEventDayIndex: -1,
     history: [],
     sameTagCount: 0,
     lastTag: null,
@@ -805,7 +839,7 @@ function applyChoice(optionId) {
   const session = state.session;
   if (session.mode !== "playing") return;
 
-  const event = resolveEvent(session, session.dayIndex);
+  const event = getCurrentEvent(session);
   const option = event.options.find((item) => item.id === optionId);
   if (!option) return;
 
@@ -845,7 +879,10 @@ function applyChoice(optionId) {
   }
 
   session.dayIndex += 1;
-  session.skillOffers = drawTempSkills(session.random, 2);
+  session.cachedEvent = null;
+  session.cachedEventDayIndex = -1;
+  session.skillOffers = drawTempSkillsWithCooldown(session.random, 2, session.skillCooldownIds);
+  pushSkillCooldown(session, session.skillOffers);
   session.skillUsedDay = false;
 }
 
@@ -894,7 +931,7 @@ function shareText() {
 
 function buildView() {
   const session = state.session;
-  const event = resolveEvent(session, session.dayIndex);
+  const event = getCurrentEvent(session);
   const score = computeScore(session);
 
   return {

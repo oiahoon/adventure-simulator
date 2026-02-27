@@ -333,3 +333,14 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 新增 DiceBear 拟人化随机头像：每局随机风格与 seed，渲染 URL 注入 view（`adventurer / adventurer-neutral / avataaars`）。
 - 移动端适配：头像缩小并与状态条纵向排布，保持单手阅读体验。
 - 验证：`npm test` 20/20 通过。
+
+## V3.9 Hotfix：临时技能与日事件偶发冲突 + 技能重复率优化
+- 修复“点临时技能后日常事件偶发刷新/首击不生效”问题：
+  - 新增当日事件缓存 `cachedEvent/cachedEventDayIndex`。
+  - `buildView` 与 `applyChoice` 统一改用 `getCurrentEvent(session)`，同一天内事件固定，不再因 `refresh()` 随机变动。
+- 修复事件选项偶发需要点两次的问题：
+  - 由于之前 `applyChoice` 会再次随机解析事件，导致 UI 所见事件与逻辑事件不一致；已通过事件缓存彻底消除。
+- 优化临时技能重复问题：
+  - 新增技能冷却队列 `skillCooldownIds`（最近 4 个技能 ID）。
+  - 每日刷新时优先从非冷却池抽取，降低连续刷出同技能概率。
+- 验证：`npm test` 20/20 通过。
