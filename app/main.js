@@ -3,6 +3,10 @@ import { createGameUI } from "../ui/game-ui.js";
 const STORAGE_KEY = "wechat-survival-best";
 const DAY_TOTAL = 7;
 
+function clamp(value, min = 0, max = 12) {
+  return Math.max(min, Math.min(max, value));
+}
+
 const STARTER_ARCHETYPES = [
   {
     id: "office_worker",
