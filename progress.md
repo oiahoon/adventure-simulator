@@ -389,3 +389,16 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:cards:v2` passed.
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
+- Phase 4 completed (v2 replay + observability):
+  - Added v2 replay simulation library: `scripts/replay-v2-lib.js`.
+  - Added v2 replay checker: `scripts/check-replay-v2.js`.
+  - Added deterministic v2 golden cases: `tests/replay-v2/golden-cases.json`.
+  - Added npm command: `npm run check:replay:v2`.
+  - Added v2 runtime observability metrics in engine output (`run.observability`):
+    - `arcCompletionRate`, `queueHitRate`, `cardDiversity`, `repeatRate`, and detailed `counts`.
+- Validation:
+  - `node --check core/card-v2/engine.js` passed.
+  - `node --check scripts/replay-v2-lib.js` passed.
+  - `node --check scripts/check-replay-v2.js` passed.
+  - `npm run check:replay:v2` passed (3/3).
+- Playwright loop attempt (develop-web-game skill): blocked by skill client module format mismatch in current runtime (`web_game_playwright_client.js` is ESM and direct `node` execution fails with `Cannot use import statement outside a module`).

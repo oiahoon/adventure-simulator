@@ -21,6 +21,10 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function round3(v) {
+  return Math.round(v * 1000) / 1000;
+}
+
 function pushLog(run, text) {
   run.log.push(text);
   if (run.log.length > 100) run.log = run.log.slice(-100);
@@ -336,6 +340,45 @@ function checkEnd(run) {
   return "";
 }
 
+function buildObservability(run) {
+  const plays = Number(run.metrics && run.metrics.cardPlays) || 0;
+  const playHistory = Array.isArray(run.playHistory) ? run.playHistory : [];
+  const uniqueCards = new Set(playHistory);
+  const repeated = Math.max(0, plays - uniqueCards.size);
+
+  const events = Array.isArray(run.eventLog) ? run.eventLog : [];
+  let draws = 0;
+  let queueHits = 0;
+  for (let i = 0; i < events.length; i += 1) {
+    const t = events[i] && events[i].type;
+    if (t === "draw") draws += 1;
+    else if (t === "draw_forced") {
+      draws += 1;
+      queueHits += 1;
+    }
+  }
+
+  const arcs = run.activeArcs && typeof run.activeArcs === "object" ? run.activeArcs : {};
+  const arcIds = Object.keys(arcs);
+  const arcDone = arcIds.filter((id) => arcs[id] && arcs[id].done).length;
+
+  return {
+    arcCompletionRate: round3(arcIds.length ? arcDone / arcIds.length : 0),
+    queueHitRate: round3(draws ? queueHits / draws : 0),
+    cardDiversity: round3(plays ? uniqueCards.size / plays : 0),
+    repeatRate: round3(plays ? repeated / plays : 0),
+    counts: {
+      draws,
+      queueHits,
+      cardPlays: plays,
+      uniqueCards: uniqueCards.size,
+      repeated,
+      arcDone,
+      arcTotal: arcIds.length
+    }
+  };
+}
+
 function playCard(run, rng, cardId, choiceId, content) {
   if (run.mode !== "running") return { ok: false, statusCode: 400, error: "本局已结束。" };
   if (run.pendingChoice) return { ok: false, statusCode: 400, error: "存在关键抉择，请先 choose。" };
@@ -352,6 +395,8 @@ function playCard(run, rng, cardId, choiceId, content) {
   const resolution = resolveChoice(run, card, choiceId, rng);
   run.metrics.cardPlays += 1;
   run.lastPlayedCard = card.id;
+  run.playHistory.push(card.id);
+  if (run.playHistory.length > 400) run.playHistory = run.playHistory.slice(-400);
   run.recentCards.push(card.id);
   if (run.recentCards.length > 12) run.recentCards = run.recentCards.slice(-12);
 
@@ -435,11 +480,19 @@ function createRun(rng, name, content) {
     cooldowns: {},
     discardHistory: {},
     recentCards: [],
+    playHistory: [],
     storyStage: "初入社会",
     contextTags: [],
     metrics: { cardPlays: 0, keyEvents: 0, battles: 0, events: 0 },
     log: [],
-    eventLog: []
+    eventLog: [],
+    observability: {
+      arcCompletionRate: 0,
+      queueHitRate: 0,
+      cardDiversity: 0,
+      repeatRate: 0,
+      counts: { draws: 0, queueHits: 0, cardPlays: 0, uniqueCards: 0, repeated: 0, arcDone: 0, arcTotal: 0 }
+    }
   };
 
   run.player.name = run.profile.name;
@@ -498,6 +551,7 @@ function runAction(rng, payload, content) {
   currentRun.player.hp = currentRun.stats.hp;
   currentRun.player.maxHp = Math.max(currentRun.player.maxHp, currentRun.stats.hp);
   currentRun.player.gold = currentRun.stats.cash;
+  currentRun.observability = buildObservability(currentRun);
 
   return {
     ok: true,

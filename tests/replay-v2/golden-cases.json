@@ -1,0 +1,37 @@
+{
+  "cases": [
+    {
+      "name": "v2-baseline-left",
+      "seed": "v2-baseline-left",
+      "steps": 28,
+      "expectedHash": "99fb7ef5",
+      "cardPolicy": { "mode": "first" },
+      "choicePolicy": "left",
+      "mustContainCards": ["card_job_push", "card_cash_defense"],
+      "minCardPlays": 20,
+      "minArcCompletionRate": 0.2
+    },
+    {
+      "name": "v2-opportunity-priority",
+      "seed": "v2-opportunity-priority",
+      "steps": 30,
+      "expectedHash": "ff56e646",
+      "cardPolicy": { "preferTags": ["legal", "recover"], "mode": "middle" },
+      "choicePolicy": "alternate",
+      "mustContainCards": ["card_evidence_save", "card_rest_halfday"],
+      "minCardPlays": 22,
+      "minArcCompletionRate": 0.2
+    },
+    {
+      "name": "v2-debt-pressure",
+      "seed": "v2-debt-pressure",
+      "steps": 34,
+      "expectedHash": "2adff2e0",
+      "cardPolicy": { "preferTag": "mortgage", "mode": "first" },
+      "choicePolicy": "right",
+      "mustContainCards": ["card_cash_defense", "card_family_shift"],
+      "minCardPlays": 24,
+      "maxQueueHitRate": 0.5
+    }
+  ]
+}

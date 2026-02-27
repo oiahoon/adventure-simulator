@@ -77,6 +77,20 @@
 - 同 seed + 同选择可复现
 - 指标可用于 A/B 与质量回归
 
+当前进展：
+- 新增 v2 回放库与检查器：
+  - `scripts/replay-v2-lib.js`
+  - `scripts/check-replay-v2.js`
+- 新增 v2 golden cases：
+  - `tests/replay-v2/golden-cases.json`
+- v2 引擎补充观测指标输出（随 run 返回）：
+  - `arcCompletionRate`
+  - `queueHitRate`
+  - `cardDiversity`
+  - `repeatRate`
+  - `counts.*`
+- 已接入 npm 命令：`npm run check:replay:v2`
+
 ## Phase 5: 默认切换与清理
 
 目标：v2 成为默认，v1 归档。
@@ -101,6 +115,6 @@
 
 - Phase 1: 已完成（v2 引擎骨架 + API/CLI 选择器 + 双版本 smoke test）
 - Phase 2: 已完成（JSON 内容包 + content-loader + check-cards-v2）
-- Phase 3: 进行中（Web 运行时替换准备）
-- Phase 4: 待开始
+- Phase 3: 已完成（v2 独立 Web 壳层 + 结局/成就/分享）
+- Phase 4: 已完成（v2 回放校验 + 观测指标）
 - Phase 5: 待开始

@@ -18,6 +18,7 @@
 - 已有工程检查：
   - `npm run check:events`
   - `npm run check:replay`
+  - `npm run check:replay:v2`
 
 ## 快速开始
 
@@ -88,9 +89,11 @@ npm run check:cards:v2
 
 ```bash
 npm run check:replay
+npm run check:replay:v2
 ```
 
 golden cases：`tests/replay/golden-cases.json`
+golden cases(v2)：`tests/replay-v2/golden-cases.json`
 
 ## 部署（Vercel）
 
