@@ -18,8 +18,9 @@ function tempSkillCard(skill, disabled) {
 function statBar(label, value, tone) {
   const percent = Math.max(0, Math.min(100, Math.round((value / 10) * 100)));
   return `<div class="hud-bar ${tone}">
-    <div class="hud-label"><span>${label}</span><span>${value}/10</span></div>
+    <span class="hud-name">${label}</span>
     <div class="hud-track"><div class="hud-fill" style="width:${percent}%"></div></div>
+    <span class="hud-value">${value}/10</span>
   </div>`;
 }
 
@@ -115,10 +116,10 @@ export function createGameUI(root, actions) {
             <h2>Day ${view.day}/${view.dayTarget}</h2>
             <p>当前分数 ${view.score}</p>
           </div>
+          <p class="opt-impact">开局角色：${view.profileName}</p>
           <div class="hud-layout">
             <div class="avatar-card">
               <img class="avatar-img" src="${view.avatar.url}" alt="角色头像" />
-              <p class="opt-impact">开局角色：${view.profileName}</p>
             </div>
             <div class="hud-panel">
               ${statBar("现金", view.stats.money, "money")}
