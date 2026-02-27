@@ -3,93 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>都市生存卡牌 - 全新重构版</title>
-  <meta name="description" content="全新重构的都市生存卡牌 Web Game：主卡滑动、机会手牌、策略偏好、复盘分享。" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles/card-v3.css" />
+  <title>人生卡牌局 - 全新版本</title>
+  <meta name="description" content="全新卡牌决策游戏：每回合打出关键选择，承受后果并走向不同人生结局。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/styles/card-v4.css" />
 </head>
 <body>
-  <main class="app-shell">
-    <header class="app-head">
+  <main class="app">
+    <header class="hero panel">
       <div>
-        <p class="kicker">CARD STORY ENGINE</p>
-        <h1>都市生存卡牌</h1>
-        <p class="subtitle">重构版 · 主卡滑动 + 机会手牌 + 因果复盘</p>
+        <p class="eyebrow">CARD LIFE SIM</p>
+        <h1>人生卡牌局</h1>
+        <p class="lead">每一步都要出牌，每次选择都有代价。</p>
       </div>
-      <a class="home-link" href="/">返回主页</a>
+      <div class="hero-actions">
+        <button id="new-run-btn">新开一局</button>
+        <a href="/" class="ghost-link">返回主页</a>
+      </div>
     </header>
 
-    <section class="hud" id="kpi"></section>
+    <section id="stats" class="stats"></section>
 
-    <section class="board">
-      <article class="main-zone card-panel">
-        <section class="decision-toolbar">
-          <button id="new-btn">新开一局</button>
-          <button id="draw-btn">补牌</button>
-          <label for="pref-select">偏好</label>
-          <select id="pref-select">
-            <option value="balanced">均衡</option>
-            <option value="survival">求稳</option>
-            <option value="growth">成长</option>
-            <option value="debt">债务防线</option>
+    <section class="battlefield">
+      <article class="main panel">
+        <div class="top-tools">
+          <label for="focus-select">策略倾向</label>
+          <select id="focus-select">
+            <option value="steady">稳住现金流</option>
+            <option value="growth">赌成长</option>
+            <option value="risk">高风险快进</option>
           </select>
-          <button id="pref-btn">应用</button>
-          <button id="layout-btn">布局：自动</button>
-        </section>
-        <div id="queue-hint" class="queue-hint"></div>
-        <div class="main-card-wrap">
-          <div id="main-card-host"></div>
+          <button id="apply-focus-btn">应用</button>
         </div>
 
-        <div class="narrative-grid">
-          <section class="inline-panel">
-            <h2>回合状态</h2>
-            <pre id="info" class="info">等待初始化...</pre>
-          </section>
-          <section class="inline-panel">
-            <h2>事件轨迹</h2>
-            <pre id="log" class="log">日志为空</pre>
-          </section>
+        <div class="card-host" id="card-host"></div>
+
+        <div class="decision-row" id="decision-row">
+          <button id="left-btn">选择 A</button>
+          <button id="right-btn">选择 B</button>
         </div>
+
+        <pre id="turn-note" class="turn-note">等待开始...</pre>
       </article>
 
-      <aside class="side-zone">
-        <section class="card-panel">
-          <h2>机会手牌</h2>
-          <div id="hand-mini" class="hand"></div>
+      <aside class="side">
+        <section class="panel">
+          <h2>人生轨迹</h2>
+          <pre id="timeline" class="timeline">暂无记录</pre>
         </section>
 
-        <section class="card-panel">
-          <h2>实验指标</h2>
-          <pre id="analytics-box" class="analytics-box">等待数据...</pre>
-          <div class="analytics-tools">
-            <button id="copy-analytics-btn">复制实验摘要</button>
-            <button id="export-analytics-btn">导出JSON</button>
-            <button id="reset-analytics-btn">重置</button>
+        <section class="panel">
+          <h2>当前角色</h2>
+          <pre id="profile" class="profile">尚未生成</pre>
+        </section>
+
+        <section class="panel">
+          <h2>结局分享</h2>
+          <pre id="ending" class="ending">本局尚未结束</pre>
+          <div class="share-tools">
+            <button id="copy-share-btn" disabled>复制结局文案</button>
           </div>
         </section>
       </aside>
     </section>
 
-    <section class="ending card-panel">
-      <h2>结局与分享</h2>
-      <pre id="ending">本局尚未结束</pre>
-      <div class="ending-tools">
-        <button id="copy-share-btn" disabled>复制分享文案</button>
-        <button id="build-share-btn" disabled>生成战报图</button>
-        <a id="download-share-btn" class="hidden" download="card-v3-report.png">下载战报图</a>
-      </div>
-      <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
-    </section>
-
-    <footer class="foot-links">
-      <a href="/game-classic/">进入经典版</a>
-      <a href="/game-legacy/">进入 legacy 旧版本</a>
+    <footer class="foot panel">
+      <a href="/game-classic/">经典版</a>
+      <a href="/game-legacy/">Legacy</a>
     </footer>
   </main>
 
-  <script src="/src/card-runtime-v3.js"></script>
+  <script src="/src/card-runtime-v4.js"></script>
 </body>
 </html>

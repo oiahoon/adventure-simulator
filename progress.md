@@ -559,3 +559,20 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - 线上 API 可达性复核: `POST https://adventure-simulator.vercel.app/api/mud/run` 当前返回 200（CLI 文本结果），未复现 404。
 - Playwright status:
   - 技能脚本需要 ESM 入口（已通过 `.mjs` 规避）但 Chromium 在沙箱内启动失败（MachPortRendezvous 权限 1100），本轮无法完成自动截图回归。
+- 2026-02-27 v4 Reboot（按用户要求重开新卡牌游戏）:
+  - 放弃旧 `/game` UI 结构，直接替换为全新 v4 页面骨架（`public/game/index.html`）。
+  - 新增全新视觉系统 `public/assets/styles/card-v4.css`（移动端优先、决策区集中、深色高对比风格）。
+  - 新增独立前端引擎 `public/src/card-runtime-v4.js`：
+    - 内置随机角色生成（姓名/职业/出身）。
+    - 内置卡池 + 条件触发（失业/房贷/育儿/法律等链路节点）。
+    - 每回合出牌双选，附带数值后果、flag 因果、queue 跟进。
+    - 结束条件：生命/精神/精力归零、债务爆表，或达到阶段终局。
+    - 结局成就与分享文案生成。
+    - 输出 `window.render_game_to_text` 与 `window.advanceTime(ms)`。
+- Validation:
+  - `node --check public/src/card-runtime-v4.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+- Next:
+  - 将 v4 引擎抽离为 `core/card-v4`，并统一到 API/CLI draw/play 协议。
+  - 引入可配置化卡包（json packs）替代内嵌 CARDS。
