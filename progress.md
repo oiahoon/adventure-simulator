@@ -376,3 +376,16 @@ Original prompt: 那么我们换个思路，先不做多人互动，只考虑单
   - `npm run check:events` passed.
   - `npm run check:replay` passed.
   - v2 smoke test (`new -> play`) passed with JSON-pack source.
+- Phase 3.2 (v2 web shell gameplay completeness) completed:
+  - Enhanced `public/game-v2/index.html` with ending/share panel.
+  - Enhanced `public/src/card-runtime-v2.js`:
+    - ending summary generation
+    - lightweight achievement calculation
+    - share text generation + clipboard copy
+    - share card canvas rendering + downloadable PNG
+    - end-state UI lock (hide hand actions after run ended)
+- Validation:
+  - `node --check public/src/card-runtime-v2.js` passed.
+  - `npm run check:cards:v2` passed.
+  - `npm run check:events` passed.
+  - `npm run check:replay` passed.

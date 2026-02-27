@@ -143,6 +143,44 @@
       line-height: 1.45;
     }
     .error { color: var(--danger); }
+    .ending {
+      margin: 10px;
+      border: 1px solid #ccd8ea;
+      border-radius: 12px;
+      background: linear-gradient(160deg, #fff, #f6fbff);
+      overflow: hidden;
+    }
+    .ending h3 {
+      margin: 0;
+      padding: 8px 10px;
+      font-size: .9rem;
+      border-bottom: 1px solid #d8e3f1;
+      background: #f2f7ff;
+    }
+    .ending pre {
+      margin: 0;
+      padding: 10px;
+      min-height: 84px;
+      white-space: pre-wrap;
+      font-size: .79rem;
+      line-height: 1.45;
+    }
+    .ending-tools {
+      padding: 10px;
+      border-top: 1px solid #d8e3f1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #share-canvas-v2 {
+      width: calc(100% - 20px);
+      margin: 0 10px 10px;
+      border-radius: 10px;
+      border: 1px solid #d7e2f0;
+      background: #faf5ea;
+      display: block;
+    }
+    .hidden { display: none !important; }
     @media (max-width: 720px) {
       .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .cards { grid-template-columns: 1fr; }
@@ -168,6 +206,16 @@
       <div class="cards" id="cards"></div>
       <div class="info" id="info">等待初始化...</div>
       <div class="log" id="log"></div>
+      <section class="ending">
+        <h3>结局与分享</h3>
+        <pre id="ending">本局尚未结束</pre>
+        <div class="ending-tools">
+          <button id="copy-share-btn" disabled>复制分享文案</button>
+          <button id="build-share-btn" disabled>生成战报图</button>
+          <a id="download-share-btn" class="hidden" download="card-v2-report.png">下载战报图</a>
+        </div>
+        <canvas id="share-canvas-v2" width="1080" height="1520"></canvas>
+      </section>
     </section>
   </main>
 

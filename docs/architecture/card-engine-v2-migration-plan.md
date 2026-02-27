@@ -61,6 +61,7 @@
 当前进展：
 - 已新增 `public/game-v2/index.html` + `public/src/card-runtime-v2.js` 作为 v2 独立壳层。
 - 壳层通过 `/api/mud/run` + `engineVersion=v2` 运行抽牌/出牌循环。
+- 已接入 v2 结局摘要、基础成就、分享文案复制与战报图生成下载。
 - 下一步是把分享/成就/结算和 v2 runtime 对齐并接回主 `/game` 页面。
 
 ## Phase 4: 观测与回放

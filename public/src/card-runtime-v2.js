@@ -5,7 +5,9 @@
     run: null,
     info: "",
     busy: false,
-    lastError: ""
+    lastError: "",
+    shareText: "",
+    ending: null
   };
 
   const els = {
@@ -14,8 +16,14 @@
     info: document.getElementById("info"),
     log: document.getElementById("log"),
     newBtn: document.getElementById("new-btn"),
-    drawBtn: document.getElementById("draw-btn")
+    drawBtn: document.getElementById("draw-btn"),
+    ending: document.getElementById("ending"),
+    copyShareBtn: document.getElementById("copy-share-btn"),
+    buildShareBtn: document.getElementById("build-share-btn"),
+    downloadShareBtn: document.getElementById("download-share-btn"),
+    shareCanvas: document.getElementById("share-canvas-v2")
   };
+  const shareCtx = els.shareCanvas.getContext("2d");
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
@@ -68,7 +76,7 @@
 
   function renderCards() {
     const run = state.run;
-    if (!run || !Array.isArray(run.handMeta) || !run.handMeta.length) {
+    if (!run || run.mode === "ended" || !Array.isArray(run.handMeta) || !run.handMeta.length) {
       els.cards.innerHTML = `<div class="card"><h3>暂无手牌</h3><p>点击“抽牌”或先完成关键抉择。</p><span class="tag">empty</span></div>`;
       return;
     }
@@ -135,10 +143,138 @@
     els.log.scrollTop = els.log.scrollHeight;
   }
 
+  function computeAchievements(run) {
+    const stats = run.stats || {};
+    const arcs = run.activeArcs || {};
+    const done = Object.keys(arcs).filter((k) => arcs[k] && arcs[k].done).length;
+    const list = [];
+    if (run.day >= 20) list.push("熬过分流期");
+    if (done >= 3) list.push("链路收束者");
+    if ((run.metrics && run.metrics.cardPlays) >= 24) list.push("决策耐受体");
+    if ((stats.debt || 0) < 90) list.push("账本稳压");
+    if ((stats.san || 0) >= 45) list.push("精神稳态");
+    if ((stats.fatigue || 0) <= 45) list.push("体力调度员");
+    if (!list.length) list.push("持续求生");
+    return list.slice(0, 4);
+  }
+
+  function buildEnding(run) {
+    if (!run || run.mode !== "ended") {
+      return {
+        text: "本局尚未结束",
+        shareText: ""
+      };
+    }
+    const stats = run.stats || {};
+    const arcs = run.activeArcs || {};
+    const arcSummary = Object.keys(arcs)
+      .map((id) => {
+        const a = arcs[id];
+        if (!a) return null;
+        if (a.done) return `${id}:已收束`;
+        if (a.active) return `${id}:阶段${a.stage}`;
+        return null;
+      })
+      .filter(Boolean)
+      .join(" / ");
+    const ach = computeAchievements(run);
+    const title = run.day >= 36 ? "终盘幸存" : "阶段倒下";
+    const text = [
+      `结局: ${title}`,
+      `天数/回合: D${run.day} / T${run.turn}`,
+      `核心值: 生命${stats.hp} 精神${stats.san} 疲劳${stats.fatigue} 债务${stats.debt} 热度${stats.heat} 现金${stats.cash}`,
+      `决策数: ${run.metrics.cardPlays} 关键事件: ${run.metrics.keyEvents}`,
+      `剧情链: ${arcSummary || "无显著收束"}`,
+      `成就: ${ach.join("、")}`
+    ].join("\n");
+    const shareText = [
+      `我在《都市生存模拟器V2》打出了「${title}」`,
+      `坚持到 D${run.day}/T${run.turn}，决策 ${run.metrics.cardPlays} 次，关键事件 ${run.metrics.keyEvents} 次`,
+      `状态：生命${stats.hp} 精神${stats.san} 疲劳${stats.fatigue} 债务${stats.debt} 热度${stats.heat} 现金${stats.cash}`,
+      `成就：${ach.join("、")}`,
+      `来挑战我的卡牌命运线`
+    ].join("\n");
+    return { text, shareText, achievements: ach, title };
+  }
+
+  function renderShareCard(run, ending) {
+    const w = els.shareCanvas.width;
+    const h = els.shareCanvas.height;
+    shareCtx.clearRect(0, 0, w, h);
+    const bg = shareCtx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, "#f8edd7");
+    bg.addColorStop(1, "#ead9b7");
+    shareCtx.fillStyle = bg;
+    shareCtx.fillRect(0, 0, w, h);
+
+    shareCtx.fillStyle = "#2a2d36";
+    shareCtx.font = "700 62px 'Noto Sans SC'";
+    shareCtx.fillText("都市生存模拟器 V2", 70, 110);
+    shareCtx.font = "600 38px 'Noto Sans SC'";
+    shareCtx.fillText(ending.title || "结局", 70, 178);
+
+    const stats = run.stats || {};
+    const lines = [
+      `Day ${run.day} / Turn ${run.turn}`,
+      `生命 ${stats.hp}  精神 ${stats.san}  疲劳 ${stats.fatigue}`,
+      `债务 ${stats.debt}  热度 ${stats.heat}  现金 ${stats.cash}`,
+      `决策 ${run.metrics.cardPlays}  关键事件 ${run.metrics.keyEvents}`,
+      `成就: ${(ending.achievements || []).join("、")}`
+    ];
+    shareCtx.font = "500 34px 'Noto Sans SC'";
+    lines.forEach((line, i) => {
+      shareCtx.fillText(line, 70, 290 + i * 62);
+    });
+
+    shareCtx.font = "400 30px 'Noto Sans SC'";
+    const recent = (run.log || []).slice(-6);
+    shareCtx.fillText("剧情片段：", 70, 690);
+    recent.forEach((line, i) => {
+      shareCtx.fillText(`- ${String(line).slice(0, 36)}`, 70, 750 + i * 52);
+    });
+
+    els.downloadShareBtn.href = els.shareCanvas.toDataURL("image/png");
+    els.downloadShareBtn.classList.remove("hidden");
+  }
+
+  async function copyShare() {
+    if (!state.shareText) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(state.shareText);
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = state.shareText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    state.info = "分享文案已复制";
+  }
+
+  function renderEnding() {
+    const run = state.run;
+    state.ending = buildEnding(run);
+    state.shareText = state.ending.shareText || "";
+    els.ending.textContent = state.ending.text;
+    const ended = !!run && run.mode === "ended";
+    els.copyShareBtn.disabled = !ended;
+    els.buildShareBtn.disabled = !ended;
+    if (!ended) {
+      els.downloadShareBtn.classList.add("hidden");
+      shareCtx.clearRect(0, 0, els.shareCanvas.width, els.shareCanvas.height);
+      shareCtx.fillStyle = "#f7f2e7";
+      shareCtx.fillRect(0, 0, els.shareCanvas.width, els.shareCanvas.height);
+      shareCtx.fillStyle = "#4f5a67";
+      shareCtx.font = "500 36px 'Noto Sans SC'";
+      shareCtx.fillText("本局结束后可生成战报图", 90, 120);
+    }
+  }
+
   function setBusy(v) {
     state.busy = !!v;
     els.newBtn.disabled = state.busy;
-    els.drawBtn.disabled = state.busy;
+    els.drawBtn.disabled = state.busy || !state.run || state.run.mode === "ended";
   }
 
   async function newRun() {
@@ -187,6 +323,8 @@
     renderCards();
     renderInfo();
     renderLog();
+    renderEnding();
+    setBusy(state.busy);
   }
 
   function bind() {
@@ -201,6 +339,19 @@
         state.lastError = e.message;
         render();
       });
+    });
+    els.copyShareBtn.addEventListener("click", () => {
+      copyShare().then(render).catch((e) => {
+        state.lastError = e.message;
+        render();
+      });
+    });
+    els.buildShareBtn.addEventListener("click", () => {
+      if (state.run && state.run.mode === "ended" && state.ending) {
+        renderShareCard(state.run, state.ending);
+        state.info = "战报图已生成";
+        render();
+      }
     });
   }
 

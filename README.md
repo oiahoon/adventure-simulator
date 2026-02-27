@@ -10,6 +10,7 @@
 - CLI：`mud-cli`（远程/本地模式）
 - 共享核心：`core/mud-engine.js`（API/CLI 共用）
 - Web 核心玩法：每回合 3 选 1 决策卡（手动推进）
+  - `game-v2` 已支持结局摘要与分享战报图（实验版）
 - 事件引擎：`Queue -> Arcs -> Decks`
 - 事件数据包：`public/data/events/*.json`
 - v2 卡牌数据包：`public/data/cards-v2/*.json`
