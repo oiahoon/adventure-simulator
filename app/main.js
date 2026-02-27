@@ -71,6 +71,8 @@ function buildView() {
       )
         .map(([id, count]) => ({ id, count }))
         .sort((a, b) => a.id.localeCompare(b.id)),
+      storyCurrent: runState.story?.current || null,
+      storyHistory: runState.story?.history || [],
     },
     battle: runState.battle ? battleView(runState.battle) : null,
   };
@@ -180,6 +182,10 @@ window.render_game_to_text = () => {
       index: v.run.nodeIndex + 1,
       total: v.run.nodeTotal,
       type: v.run.currentNodeType,
+    },
+    story: {
+      current: v.run.storyCurrent,
+      history: v.run.storyHistory.slice(-5),
     },
     playerMeta: {
       hp: v.run.playerHp,

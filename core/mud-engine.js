@@ -17,6 +17,10 @@ function summarizeRun(runState) {
     playerMaxHp: runState.playerMaxHp,
     deckSize: runState.deck.length,
     rewardOptions: [...runState.rewardOptions],
+    story: {
+      current: runState.story?.current || null,
+      history: runState.story?.history?.slice(-5) || [],
+    },
     battle: battle
       ? {
           turn: battle.turn,

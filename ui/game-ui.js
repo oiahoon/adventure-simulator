@@ -101,6 +101,13 @@ export function createGameUI(root, actions) {
       runPanel.innerHTML = `
         <h2>Run Path</h2>
         ${renderNodes(view)}
+        <h3>Story Beat</h3>
+        <p><strong>${view.run.storyCurrent?.title || "Unknown"}</strong> <span class="tag">${view.run.storyCurrent?.source || "n/a"}</span></p>
+        <p>${view.run.storyCurrent?.text || "No story event."}</p>
+        <p class="story-chain">Chain: ${view.run.storyHistory
+          .slice(-4)
+          .map((item) => `#${item.node} ${item.title}`)
+          .join(" -> ")}</p>
       `;
 
       if (view.mode === "battle") {

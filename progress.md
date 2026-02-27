@@ -100,3 +100,18 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 新增贴吧内容引入策略文档（含弱智吧语感来源与风控边界）：`docs/product/tieba-content-integration.md`。
 - 更新 `docs/README.md`，将上述两份文档列为关键内容设计文档。
 - 更新 `docs/architecture/event-content-strategy.md`，补充因果回收与贴吧素材流水线目标。
+
+## Phase 2.1: 连续剧情链运行时（Queue -> Arc -> Deck）
+- 新增故事事件内容库：`content/story-events.js`。
+- `core/run/engine.js` 改为故事链驱动节点生成：
+  - 优先队列后续（Queue）
+  - 再推进主叙事弧（Arc）
+  - 最后才回落机会池（Deck）
+- 每个节点绑定 `story beat`（标题、正文、来源、标签），并写入 `story.history`。
+- 节点启动时应用剧情运行时影响（如开局 HP 压力），强化连续叙事体感。
+- UI 新增 Story Beat 区与 Chain 展示，`render_game_to_text` 输出 `story.current/history`。
+- `mud-engine` 汇总状态新增 story 字段，供 API/CLI 复用。
+- 测试增强：`tests/run.test.js` 增加剧情连续性断言（`layoff_rumor -> hr_meeting`）。
+- 结果：
+  - `npm test` 15/15 通过。
+  - Playwright 冒烟通过（`output/web-game-storychain-p2`）。

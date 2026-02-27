@@ -8,6 +8,7 @@ test("run starts at battle mode with first node", () => {
   assert.equal(run.state.mode, "battle");
   assert.equal(run.state.nodeIndex, 0);
   assert.ok(run.state.battle);
+  assert.equal(run.state.story.current.id, "layoff_rumor");
 });
 
 test("winning a battle enters reward mode", () => {
@@ -35,6 +36,7 @@ test("reward choose and next node progression", () => {
   run.nextNode();
   assert.equal(run.state.nodeIndex, 1);
   assert.equal(run.state.mode, "battle");
+  assert.equal(run.state.story.current.id, "hr_meeting");
 });
 
 test("remove card during reward tuning", () => {
@@ -49,4 +51,17 @@ test("remove card during reward tuning", () => {
 
   assert.equal(removed, true);
   assert.equal(countBefore - countAfter, 1);
+});
+
+test("story chain is contiguous and recorded", () => {
+  const run = createRun({ seed: 3 });
+  run.state.battle.state.enemy.hp = 1;
+  run.state.battle.state.player.hand = [{ id: "strike", name: "Strike", cost: 1, effects: [{ type: "damage", value: 6 }] }];
+  run.playCard(0); // to reward
+  run.chooseReward(null); // to map
+  run.nextNode(); // node 2
+
+  assert.equal(run.state.story.history[0].id, "layoff_rumor");
+  assert.equal(run.state.story.history[1].id, "hr_meeting");
+  assert.ok(run.state.story.history.length >= 2);
 });

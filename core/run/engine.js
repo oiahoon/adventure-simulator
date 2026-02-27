@@ -1,5 +1,6 @@
 import { CARD_LIBRARY, STARTER_DECK } from "../../content/cards.js";
 import { ENEMY_ORDER } from "../../content/enemies.js";
+import { STORY_ARC_ORDER, STORY_DECK, STORY_EVENTS } from "../../content/story-events.js";
 import { createBattle, createSeededRandom } from "../battle/engine.js";
 
 function randomRewardCards(random, count) {
@@ -14,14 +15,98 @@ function randomRewardCards(random, count) {
   return options;
 }
 
-function buildNodes(random) {
-  return [
-    { type: "battle", enemyId: ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)] },
-    { type: "battle", enemyId: ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)] },
-    { type: "battle", enemyId: ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)] },
-    { type: "elite", enemyId: ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)] },
-    { type: "battle", enemyId: ENEMY_ORDER[Math.floor(random() * ENEMY_ORDER.length)] },
-  ];
+function pickFromPool(pool, random) {
+  return pool[Math.floor(random() * pool.length)];
+}
+
+function hasFlag(storyState, flag) {
+  return Boolean(storyState.flags[flag]);
+}
+
+function applyPreEffects(storyState, event) {
+  const effects = event.preEffects || {};
+  (effects.setFlags || []).forEach((flag) => {
+    storyState.flags[flag] = true;
+  });
+  (effects.enqueue || []).forEach((eventId) => {
+    storyState.queue.push(eventId);
+  });
+  (effects.bias || []).forEach((item) => {
+    storyState.bias[item.tag] = (storyState.bias[item.tag] || 0) + item.delta;
+  });
+}
+
+function chooseDeckEvent(storyState, random) {
+  const weighted = STORY_DECK.map((eventId) => {
+    const event = STORY_EVENTS[eventId];
+    const score = (event.tags || []).reduce((sum, tag) => sum + (storyState.bias[tag] || 0), 0);
+    return { eventId, weight: 1 + Math.max(0, score) };
+  });
+  const total = weighted.reduce((sum, item) => sum + item.weight, 0);
+  let roll = random() * total;
+  for (const item of weighted) {
+    roll -= item.weight;
+    if (roll <= 0) {
+      return STORY_EVENTS[item.eventId];
+    }
+  }
+  return STORY_EVENTS[weighted[weighted.length - 1].eventId];
+}
+
+function chooseStoryEvent(storyState, random) {
+  if (storyState.queue.length) {
+    const queuedId = storyState.queue.shift();
+    return { event: STORY_EVENTS[queuedId], source: "queue" };
+  }
+
+  const arcEventId = STORY_ARC_ORDER[storyState.arcIndex];
+  if (arcEventId) {
+    const arcEvent = STORY_EVENTS[arcEventId];
+    storyState.arcIndex += 1;
+    return { event: arcEvent, source: "arc" };
+  }
+
+  return { event: chooseDeckEvent(storyState, random), source: "deck" };
+}
+
+function buildNodes(random, nodeTotal = 5) {
+  const storyState = {
+    arcIndex: 0,
+    queue: [],
+    flags: {},
+    bias: {},
+  };
+  const nodes = [];
+
+  for (let index = 0; index < nodeTotal; index += 1) {
+    const picked = chooseStoryEvent(storyState, random);
+    const storyEvent = picked.event;
+    applyPreEffects(storyState, storyEvent);
+
+    const enemyPool = storyEvent.enemyPool?.length ? storyEvent.enemyPool : ENEMY_ORDER;
+    nodes.push({
+      type: storyEvent.nodeType || "battle",
+      enemyId: pickFromPool(enemyPool, random),
+      story: {
+        id: storyEvent.id,
+        source: picked.source,
+        title: storyEvent.title,
+        text: storyEvent.text,
+        tags: [...(storyEvent.tags || [])],
+        runtimeEffects: { ...(storyEvent.runtimeEffects || {}) },
+      },
+    });
+  }
+
+  return nodes;
+}
+
+function applyRuntimeStoryEffects(state, node) {
+  const delta = Number(node.story.runtimeEffects?.playerHpDelta || 0);
+  if (!delta) {
+    return;
+  }
+  state.playerHp = Math.max(1, Math.min(state.playerMaxHp, state.playerHp + delta));
 }
 
 export function createRun({ seed = Date.now() } = {}) {
@@ -36,11 +121,29 @@ export function createRun({ seed = Date.now() } = {}) {
     deck: [...STARTER_DECK],
     battle: null,
     rewardOptions: [],
+    story: {
+      current: null,
+      history: [],
+    },
   };
 
   function startNode() {
     const node = state.nodes[state.nodeIndex];
     const battleSeed = Math.floor(random() * 1_000_000_000);
+
+    applyRuntimeStoryEffects(state, node);
+    state.story.current = {
+      id: node.story.id,
+      source: node.story.source,
+      title: node.story.title,
+      text: node.story.text,
+      tags: node.story.tags,
+    };
+    state.story.history.push({
+      node: state.nodeIndex + 1,
+      ...state.story.current,
+    });
+
     state.battle = createBattle({
       seed: battleSeed,
       deck: state.deck,
