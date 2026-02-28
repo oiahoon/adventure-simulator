@@ -38,6 +38,9 @@ function parsePayload(raw = "") {
 }
 
 export default function handler(req, res) {
+  const host = req.headers.host || "";
+  const proto = req.headers["x-forwarded-proto"] || "https";
+  const origin = `${proto}://${host}`;
   const payload = parsePayload(req.query?.d || "");
   const title = escapeXml(payload.title).slice(0, 24);
   const subtitle = escapeXml(payload.subtitle).slice(0, 40);
@@ -46,6 +49,7 @@ export default function handler(req, res) {
   const topDecision = escapeXml(payload.topDecision || "").slice(0, 54);
   const poem = escapeXml(payload.poem || "正所谓：山重水复疑无路，柳暗花明又一村。").slice(0, 60);
   const avatar = escapeXml(payload.avatarUrl);
+  const logoMark = escapeXml(`${origin}/assets/pixel/brand/logo-mark.png`);
 
   const avatarNode = avatar
     ? `<image href="${avatar}" x="80" y="175" width="190" height="190" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice" />`
@@ -64,6 +68,7 @@ export default function handler(req, res) {
   </defs>
   <rect width="1200" height="630" fill="url(#bg)" />
   <rect x="52" y="52" width="1096" height="526" rx="32" fill="#fffaf0" stroke="#d8c8aa" stroke-width="4" />
+  <image href="${logoMark}" x="74" y="74" width="86" height="86" preserveAspectRatio="xMidYMid slice" />
   <text x="330" y="180" fill="#1d2638" font-size="62" font-weight="800">是男人就坚持100天</text>
   <text x="330" y="238" fill="#5f6573" font-size="36">${role}</text>
   <text x="330" y="340" fill="#1d2638" font-size="54" font-weight="700">${title}</text>

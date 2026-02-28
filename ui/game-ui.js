@@ -50,7 +50,7 @@ function simpleList(items = []) {
 }
 
 function tempSkillCard(skill, disabled) {
-  return `<button class="ghost" data-skill-id="${skill.id}" ${disabled ? "disabled" : ""}>
+  return `<button class="ghost module-btn skill-btn" data-skill-id="${skill.id}" ${disabled ? "disabled" : ""}>
     <span class="icon-line">
       <img class="pixel-icon" src="${skill.icon}" alt="" loading="lazy" decoding="async" />
       <span>${skill.name}</span>
@@ -60,7 +60,7 @@ function tempSkillCard(skill, disabled) {
 }
 
 function foodCard(food, disabled) {
-  return `<button class="ghost" data-food-id="${food.id}" ${disabled ? "disabled" : ""}>
+  return `<button class="ghost module-btn supply-btn" data-food-id="${food.id}" ${disabled ? "disabled" : ""}>
     <span class="icon-line">
       <img class="pixel-icon" src="${food.icon}" alt="" loading="lazy" decoding="async" />
       <span>${food.name}</span>
@@ -84,8 +84,9 @@ export function createGameUI(root, actions) {
   root.innerHTML = `
     <section class="shell">
       <header class="topbar">
-        <div>
-          <h1>是男人就坚持100天</h1>
+        <div class="brand-wrap">
+          <img class="logo-main" src="./assets/pixel/brand/logo-main.png" alt="是男人就坚持100天" decoding="async" loading="eager" />
+          <h1 class="sr-only">是男人就坚持100天</h1>
           <p id="subtitle">都市生存挑战</p>
         </div>
         <button class="ghost" id="restart-btn">重开</button>

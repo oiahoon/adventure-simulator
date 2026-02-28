@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>是男人就坚持100天</title>
-    <link rel="icon" href="./favicon.ico" />
+    <link rel="icon" type="image/png" href="./assets/pixel/brand/favicon-mark.png" />
+    <link rel="apple-touch-icon" href="./assets/pixel/brand/favicon-mark.png" />
     <style>
       :root {
         --bg: #f4f1e8;
@@ -46,6 +47,27 @@
         justify-content: space-between;
         align-items: flex-start;
         gap: 10px;
+      }
+      .brand-wrap {
+        display: grid;
+        gap: 2px;
+      }
+      .logo-main {
+        width: min(88vw, 380px);
+        max-width: 100%;
+        height: auto;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
       }
       h1 {
         margin: 0;
@@ -261,7 +283,9 @@
         border-radius: 12px;
         padding: 10px 11px;
         text-align: left;
-        background: linear-gradient(180deg, #fcfbf7 0%, #f7f2e6 100%);
+        background:
+          linear-gradient(180deg, rgba(252, 251, 247, 0.84) 0%, rgba(247, 242, 230, 0.84) 100%),
+          url("./assets/pixel/cards/event-option-card.png") center/cover no-repeat;
         cursor: pointer;
         display: grid;
         gap: 4px;
@@ -362,6 +386,25 @@
         border: 1px solid #cdc2ad;
         background: #f8f3e8;
         color: var(--ink);
+      }
+      .module-btn {
+        position: relative;
+        text-align: left;
+        display: grid;
+        gap: 5px;
+        overflow: hidden;
+      }
+      .module-btn.skill-btn {
+        border-color: #b9c8dc;
+        background:
+          linear-gradient(180deg, rgba(239, 245, 252, 0.86) 0%, rgba(231, 240, 250, 0.9) 100%),
+          url("./assets/pixel/cards/skill-card.png") center/cover no-repeat;
+      }
+      .module-btn.supply-btn {
+        border-color: #bfd1bd;
+        background:
+          linear-gradient(180deg, rgba(240, 248, 236, 0.86) 0%, rgba(236, 245, 227, 0.9) 100%),
+          url("./assets/pixel/cards/supply-card.png") center/cover no-repeat;
       }
       .icon-line {
         display: inline-flex;
@@ -476,14 +519,12 @@
         .action-grid {
           grid-template-columns: 1fr;
         }
-        h1 {
-          font-size: 22px;
-        }
+        .logo-main { width: min(80vw, 300px); }
       }
     </style>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_17"></script>
+    <script type="module" src="./app/main.js?v=20260228_18"></script>
   </body>
 </html>

@@ -47,6 +47,7 @@ export default function handler(req, res) {
   const image = `${origin}/api/share-image?d=${encodeURIComponent(rawD)}`;
   const url = `${origin}/api/share?d=${encodeURIComponent(rawD)}`;
   const redirect = `${origin}/public/index.html`;
+  const logoMark = `${origin}/assets/pixel/brand/logo-mark.png`;
 
   const html = `<!doctype html>
 <html lang="zh-CN">
@@ -65,10 +66,10 @@ export default function handler(req, res) {
     <meta name="twitter:description" content="${htmlEscape(desc)}" />
     <meta name="twitter:image" content="${htmlEscape(image)}" />
     <meta http-equiv="refresh" content="0;url=${htmlEscape(redirect)}" />
-    <style>body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC',sans-serif;padding:16px;color:#1d2638;background:#f8f6ef}a{color:#ef6a3a}</style>
+    <style>body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC',sans-serif;padding:16px;color:#1d2638;background:#f8f6ef}.row{display:flex;align-items:center;gap:10px}img{width:28px;height:28px;image-rendering:pixelated}a{color:#ef6a3a}</style>
   </head>
   <body>
-    <p>正在进入游戏：<a href="${htmlEscape(redirect)}">是男人就坚持100天</a></p>
+    <p class="row"><img src="${htmlEscape(logoMark)}" alt="" />正在进入游戏：<a href="${htmlEscape(redirect)}">是男人就坚持100天</a></p>
   </body>
 </html>`;
 
