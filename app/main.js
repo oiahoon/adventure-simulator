@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_20";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_21";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -159,27 +159,31 @@ const TEMP_SKILL_POOL = [
   },
 ];
 
-const PIXEL_AVATAR_POOLS = {
-  debt_runner: [
-    "./assets/pixel/avatars/runner.png",
-    "./assets/pixel/avatars/runner-2.png",
-    "./assets/pixel/avatars/runner-3.png",
-  ],
-  office_worker: [
-    "./assets/pixel/avatars/coder.png",
-    "./assets/pixel/avatars/coder-2.png",
-    "./assets/pixel/avatars/coder-3.png",
-  ],
-  content_hustler: [
-    "./assets/pixel/avatars/streamer.png",
-    "./assets/pixel/avatars/streamer-2.png",
-    "./assets/pixel/avatars/streamer-3.png",
-  ],
-  network_player: [
-    "./assets/pixel/avatars/broker.png",
-    "./assets/pixel/avatars/broker-2.png",
-    "./assets/pixel/avatars/broker-3.png",
-  ],
+const PIXEL_AVATAR_STAGE_POOLS = {
+  office_worker: {
+    early: ["./assets/pixel/avatars/stages/office-early.png", "./assets/pixel/avatars/coder.png"],
+    mid: ["./assets/pixel/avatars/stages/office-mid.png", "./assets/pixel/avatars/coder-2.png"],
+    late: ["./assets/pixel/avatars/stages/office-late.png", "./assets/pixel/avatars/coder-3.png"],
+    crisis: ["./assets/pixel/avatars/stages/office-crisis.png", "./assets/pixel/avatars/coder.png"],
+  },
+  content_hustler: {
+    early: ["./assets/pixel/avatars/stages/content-early.png", "./assets/pixel/avatars/streamer.png"],
+    mid: ["./assets/pixel/avatars/stages/content-mid.png", "./assets/pixel/avatars/streamer-2.png"],
+    late: ["./assets/pixel/avatars/stages/content-late.png", "./assets/pixel/avatars/streamer-3.png"],
+    crisis: ["./assets/pixel/avatars/stages/content-crisis.png", "./assets/pixel/avatars/streamer.png"],
+  },
+  debt_runner: {
+    early: ["./assets/pixel/avatars/stages/debt-early.png", "./assets/pixel/avatars/runner.png"],
+    mid: ["./assets/pixel/avatars/stages/debt-mid.png", "./assets/pixel/avatars/runner-2.png"],
+    late: ["./assets/pixel/avatars/stages/debt-late.png", "./assets/pixel/avatars/runner-3.png"],
+    crisis: ["./assets/pixel/avatars/stages/debt-crisis.png", "./assets/pixel/avatars/runner.png"],
+  },
+  network_player: {
+    early: ["./assets/pixel/avatars/stages/network-early.png", "./assets/pixel/avatars/broker.png"],
+    mid: ["./assets/pixel/avatars/stages/network-mid.png", "./assets/pixel/avatars/broker-2.png"],
+    late: ["./assets/pixel/avatars/stages/network-late.png", "./assets/pixel/avatars/broker-3.png"],
+    crisis: ["./assets/pixel/avatars/stages/network-crisis.png", "./assets/pixel/avatars/broker.png"],
+  },
 };
 
 const FOOD_ICON_VARIANTS = {
@@ -1167,8 +1171,8 @@ function resolveOptionOutcome(session, option) {
 
 function buildAvatarConfig(random, seed, archetypeId) {
   const avatarSeed = `${seed}-${Math.floor(random() * 100000)}`;
-  const pool = PIXEL_AVATAR_POOLS[archetypeId] || PIXEL_AVATAR_POOLS.office_worker;
-  const baseUrl = randomPick(pool, random);
+  const stagePool = PIXEL_AVATAR_STAGE_POOLS[archetypeId] || PIXEL_AVATAR_STAGE_POOLS.office_worker;
+  const baseUrl = randomPick(stagePool.early || [], random) || PIXEL_AVATAR_STAGE_POOLS.office_worker.early[0];
   return {
     style: "pixel",
     seed: avatarSeed,
@@ -1187,8 +1191,40 @@ const DOLL_BADGES = {
   growth: "./assets/pixel/doll/badge-crown.svg",
 };
 
+const AVATAR_PROFILE_LABEL = {
+  early: "新手期",
+  mid: "进阶期",
+  late: "成熟期",
+  crisis: "危机期",
+};
+
+function resolveAvatarProfile(session) {
+  const day = session.dayIndex + 1;
+  const stats = session.stats;
+  const pressure = session.pressure;
+  if (
+    session.activeForcedEventId ||
+    stats.energy <= 2 ||
+    stats.money <= 1 ||
+    pressure.burnout >= 4 ||
+    pressure.debt >= 4 ||
+    pressure.scrutiny >= 4 ||
+    session.flags.burnout_risk ||
+    session.flags.debt_overhang ||
+    session.flags.trust_break
+  ) {
+    return "crisis";
+  }
+  if (day >= 45 || session.milestones.stability_reached) return "late";
+  if (day >= 16 || Object.values(session.milestones).some(Boolean)) return "mid";
+  return "early";
+}
+
 function buildAvatarPaperDoll(session) {
-  const baseUrl = session.avatar.baseUrl || PIXEL_AVATAR_POOLS.office_worker[0];
+  const archetypePools = PIXEL_AVATAR_STAGE_POOLS[session.archetypeId] || PIXEL_AVATAR_STAGE_POOLS.office_worker;
+  const profile = resolveAvatarProfile(session);
+  const basePool = archetypePools[profile] || archetypePools.early || PIXEL_AVATAR_STAGE_POOLS.office_worker.early;
+  const baseUrl = pickStableVariant(basePool, `${session.seed}|avatar|${session.archetypeId}|${profile}`);
   const overlays = [];
   const slots = new Set();
   const put = (slot, key) => {
@@ -1220,6 +1256,8 @@ function buildAvatarPaperDoll(session) {
   return {
     seed: `${session.avatar.seed}|${stateTag}`,
     baseUrl,
+    profile,
+    profileLabel: AVATAR_PROFILE_LABEL[profile] || "生存期",
     overlays,
   };
 }

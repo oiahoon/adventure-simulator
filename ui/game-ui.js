@@ -263,7 +263,7 @@ export function createGameUI(root, actions) {
   function updatePlaying(view) {
     refs.dayText.textContent = `Day ${view.day}/${view.dayTarget}`;
     refs.scoreText.textContent = `当前分数 ${view.score}`;
-    refs.profileText.textContent = `开局角色：${view.profileName}`;
+    refs.profileText.textContent = `开局角色：${view.profileName} · 当前形态：${view.avatar.profileLabel || "生存期"}`;
     refs.elementRow.innerHTML = [
       `<span class="element-pill money"><b>金</b> 财流</span>`,
       `<span class="element-pill energy"><b>木</b> 生机</span>`,
