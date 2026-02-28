@@ -98,7 +98,7 @@ export function createGameUI(root, actions) {
         <p class="badge">结局</p>
         <h2>${view.result.ending.title}</h2>
         <p>${view.result.ending.subtitle}</p>
-        <p class="score">本局分数 ${view.result.score} | 历史最高 ${view.bestScore}</p>
+        <p class="score">本局坚持 ${view.result.daysSurvived} 天</p>
         <article class="reason-block">
           <h3>结局成因</h3>
           <ul class="history">

@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_10";
+import { createGameUI } from "../ui/game-ui.js?v=20260227_11";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -1281,10 +1281,38 @@ function colloquialStatName(key) {
 }
 
 function endingByScore(score, alive) {
-  if (!alive) return { id: "collapse", title: "城市崩溃线", subtitle: "你被现实按下了暂停键。" };
-  if (score >= 42) return { id: "legend", title: "都市传说线", subtitle: "你活成了群聊里的样本。" };
-  if (score >= 32) return { id: "steady", title: "稳住节奏线", subtitle: "你在高压里找到了平衡。" };
-  return { id: "drift", title: "随波求生线", subtitle: "你撑过了这周，但还没破局。" };
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  if (!alive) {
+    return {
+      id: "collapse",
+      title: pick(["都市掉线线", "生活脱轨线", "现实失速线", "断电停摆线"]),
+      subtitle: pick([
+        "现实给你来了个强制下线。",
+        "你这把被生活打成了观战席。",
+        "这回合你被现实直接请出战场。",
+        "城市节奏没停，但你先被甩下车了。",
+      ]),
+    };
+  }
+  if (score >= 42) {
+    return {
+      id: "legend",
+      title: pick(["群聊样本线", "都市硬核线", "人间抗压线"]),
+      subtitle: pick(["你活成了群里被转发的那种狠人。", "这局你把高压日常玩成了教学局。", "别人还在崩溃，你已经开始复盘方法论。"]),
+    };
+  }
+  if (score >= 32) {
+    return {
+      id: "steady",
+      title: pick(["稳住基本盘线", "节奏可控线", "日常续命线"]),
+      subtitle: pick(["你没起飞，但也没让日子把你掀翻。", "在高压里稳住了自己的步频。", "这局不是爽文，但你把局面控住了。"]),
+    };
+  }
+  return {
+    id: "drift",
+    title: pick(["随波硬撑线", "边走边补线", "磕绊求生线"]),
+    subtitle: pick(["你一路缝缝补补，先把今天活过去。", "风浪还在，但你没有直接散架。", "这局不体面，但很真实。"]),
+  };
 }
 
 function buildEndingReason(session, alive) {
