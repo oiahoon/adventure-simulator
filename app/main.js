@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_19";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_20";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -159,34 +159,64 @@ const TEMP_SKILL_POOL = [
   },
 ];
 
-const PIXEL_AVATARS = [
-  "./assets/pixel/avatars/runner.png",
-  "./assets/pixel/avatars/coder.png",
-  "./assets/pixel/avatars/streamer.png",
-  "./assets/pixel/avatars/broker.png",
-];
-
-const FOOD_ICON_MAP = {
-  food_bun: "./assets/pixel/items/food-bun.png",
-  food_bento: "./assets/pixel/items/food-bento.png",
-  food_hotpot: "./assets/pixel/items/food-hotpot.png",
+const PIXEL_AVATAR_POOLS = {
+  debt_runner: [
+    "./assets/pixel/avatars/runner.png",
+    "./assets/pixel/avatars/runner-2.png",
+    "./assets/pixel/avatars/runner-3.png",
+  ],
+  office_worker: [
+    "./assets/pixel/avatars/coder.png",
+    "./assets/pixel/avatars/coder-2.png",
+    "./assets/pixel/avatars/coder-3.png",
+  ],
+  content_hustler: [
+    "./assets/pixel/avatars/streamer.png",
+    "./assets/pixel/avatars/streamer-2.png",
+    "./assets/pixel/avatars/streamer-3.png",
+  ],
+  network_player: [
+    "./assets/pixel/avatars/broker.png",
+    "./assets/pixel/avatars/broker-2.png",
+    "./assets/pixel/avatars/broker-3.png",
+  ],
 };
 
-const SKILL_ICON_MAP = {
-  sprint_transfer: "./assets/pixel/skills/skill-sprint.png",
-  late_night_gig: "./assets/pixel/skills/skill-gig.png",
-  borrow_face: "./assets/pixel/skills/skill-network.png",
-  silent_mode: "./assets/pixel/skills/skill-calm.png",
-  coupon_hunt: "./assets/pixel/skills/skill-coupon.png",
-  hot_take_post: "./assets/pixel/skills/skill-hot.png",
-  group_cleanup: "./assets/pixel/skills/skill-calm.png",
-  credit_roll: "./assets/pixel/skills/skill-credit.png",
-  wb_hot_search: "./assets/pixel/skills/skill-hot.png",
-  group_mute_99: "./assets/pixel/skills/skill-calm.png",
-  friends_circle_flex: "./assets/pixel/skills/skill-flex.png",
-  ai_side_hustle: "./assets/pixel/skills/skill-ai.png",
-  late_night_emo_post: "./assets/pixel/skills/skill-emo.png",
-  bargain_king: "./assets/pixel/skills/skill-coupon.png",
+const FOOD_ICON_VARIANTS = {
+  food_bun: [
+    "./assets/pixel/items/food-bun.png",
+    "./assets/pixel/items/food-bun-2.png",
+    "./assets/pixel/items/food-bun-3.png",
+  ],
+  food_bento: [
+    "./assets/pixel/items/food-bento.png",
+    "./assets/pixel/items/food-bento-2.png",
+    "./assets/pixel/items/food-bento-3.png",
+  ],
+  food_hotpot: [
+    "./assets/pixel/items/food-hotpot.png",
+    "./assets/pixel/items/food-hotpot-2.png",
+    "./assets/pixel/items/food-hotpot-3.png",
+  ],
+  default: ["./assets/pixel/items/food-default.png", "./assets/pixel/items/food-default-2.png"],
+};
+
+const SKILL_ICON_VARIANTS = {
+  sprint_transfer: ["./assets/pixel/skills/skill-sprint.png", "./assets/pixel/skills/skill-sprint-2.png"],
+  late_night_gig: ["./assets/pixel/skills/skill-gig.png", "./assets/pixel/skills/skill-gig-2.png"],
+  borrow_face: ["./assets/pixel/skills/skill-network.png", "./assets/pixel/skills/skill-network-2.png"],
+  silent_mode: ["./assets/pixel/skills/skill-calm.png", "./assets/pixel/skills/skill-calm-2.png"],
+  coupon_hunt: ["./assets/pixel/skills/skill-coupon.png", "./assets/pixel/skills/skill-coupon-2.png"],
+  hot_take_post: ["./assets/pixel/skills/skill-hot.png", "./assets/pixel/skills/skill-hot-2.png"],
+  group_cleanup: ["./assets/pixel/skills/skill-calm.png", "./assets/pixel/skills/skill-calm-2.png"],
+  credit_roll: ["./assets/pixel/skills/skill-credit.png", "./assets/pixel/skills/skill-credit-2.png"],
+  wb_hot_search: ["./assets/pixel/skills/skill-hot.png", "./assets/pixel/skills/skill-hot-2.png"],
+  group_mute_99: ["./assets/pixel/skills/skill-calm.png", "./assets/pixel/skills/skill-calm-2.png"],
+  friends_circle_flex: ["./assets/pixel/skills/skill-flex.png", "./assets/pixel/skills/skill-flex-2.png"],
+  ai_side_hustle: ["./assets/pixel/skills/skill-ai.png", "./assets/pixel/skills/skill-ai-2.png"],
+  late_night_emo_post: ["./assets/pixel/skills/skill-emo.png", "./assets/pixel/skills/skill-emo-2.png"],
+  bargain_king: ["./assets/pixel/skills/skill-coupon.png", "./assets/pixel/skills/skill-coupon-2.png"],
+  default: ["./assets/pixel/skills/skill-default.png", "./assets/pixel/skills/skill-default-2.png"],
 };
 
 const FOOD_OPTIONS = [
@@ -925,6 +955,21 @@ function randomPick(list, random) {
   return list[Math.floor(random() * list.length)];
 }
 
+function hashString(input = "") {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function pickStableVariant(pool = [], key = "") {
+  if (!Array.isArray(pool) || !pool.length) return "";
+  const idx = hashString(key) % pool.length;
+  return pool[idx];
+}
+
 function addPressure(session, key, delta) {
   session.pressure[key] = clamp((session.pressure[key] || 0) + delta, 0, 8);
 }
@@ -1120,14 +1165,15 @@ function resolveOptionOutcome(session, option) {
   return outcome;
 }
 
-function buildAvatarConfig(random, seed) {
+function buildAvatarConfig(random, seed, archetypeId) {
   const avatarSeed = `${seed}-${Math.floor(random() * 100000)}`;
-  const baseIndex = Math.floor(random() * PIXEL_AVATARS.length);
+  const pool = PIXEL_AVATAR_POOLS[archetypeId] || PIXEL_AVATAR_POOLS.office_worker;
+  const baseUrl = randomPick(pool, random);
   return {
     style: "pixel",
     seed: avatarSeed,
-    baseIndex,
-    url: PIXEL_AVATARS[baseIndex],
+    baseUrl,
+    url: baseUrl,
   };
 }
 
@@ -1141,16 +1187,8 @@ const DOLL_BADGES = {
   growth: "./assets/pixel/doll/badge-crown.svg",
 };
 
-const ARCHETYPE_BASE_INDEX = {
-  office_worker: 1,
-  content_hustler: 2,
-  debt_runner: 0,
-  network_player: 3,
-};
-
 function buildAvatarPaperDoll(session) {
-  const baseIndex = ARCHETYPE_BASE_INDEX[session.archetypeId] ?? session.avatar.baseIndex ?? 0;
-  const baseUrl = PIXEL_AVATARS[baseIndex] || PIXEL_AVATARS[0];
+  const baseUrl = session.avatar.baseUrl || PIXEL_AVATAR_POOLS.office_worker[0];
   const overlays = [];
   const slots = new Set();
   const put = (slot, key) => {
@@ -1612,6 +1650,7 @@ function extractPoemLine(story = "") {
 function buildSharePayload() {
   const result = state.session.result;
   if (!result) return null;
+  const avatarPaperDoll = buildAvatarPaperDoll(state.session);
   const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "", 80);
   const poem = extractPoemLine(result.storyNarrative || "");
   const topDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 72);
@@ -1621,7 +1660,7 @@ function buildSharePayload() {
     subtitle: result.ending?.subtitle || "",
     score: result.score || 0,
     days: result.daysSurvived || 0,
-    avatarUrl: state.session.avatar?.url || "",
+    avatarUrl: avatarPaperDoll.baseUrl || state.session.avatar?.baseUrl || state.session.avatar?.url || "",
     role: state.session.archetypeName || "都市求生者",
     reason,
     topDecision,
@@ -1685,7 +1724,7 @@ function createSession(seed = Date.now()) {
   const random = seededRandom(seed);
   const archetype = randomPick(STARTER_ARCHETYPES, random);
   const openingEvent = chooseOpening(archetype, random);
-  const avatar = buildAvatarConfig(random, seed);
+  const avatar = buildAvatarConfig(random, seed, archetype.id);
   const base = archetype.baseStats;
 
   const jitter = () => (random() < 0.5 ? -1 : 1);
@@ -2034,7 +2073,10 @@ function buildView() {
       offers: session.skillOffers.map((item) => ({
         id: item.id,
         name: item.name,
-        icon: SKILL_ICON_MAP[item.id] || "./assets/pixel/skills/skill-default.png",
+        icon: pickStableVariant(
+          SKILL_ICON_VARIANTS[item.id] || SKILL_ICON_VARIANTS.default,
+          `${session.seed}|skill|${item.id}|day-${session.dayIndex + 1}`
+        ),
         text: item.text,
         impactText: effectToText(item.effects),
       })),
@@ -2044,7 +2086,10 @@ function buildView() {
       options: FOOD_OPTIONS.map((item) => ({
         id: item.id,
         name: item.name,
-        icon: FOOD_ICON_MAP[item.id] || "./assets/pixel/items/food-default.png",
+        icon: pickStableVariant(
+          FOOD_ICON_VARIANTS[item.id] || FOOD_ICON_VARIANTS.default,
+          `${session.seed}|food|${item.id}|day-${session.dayIndex + 1}`
+        ),
         text: item.text,
         impactText: effectToText(item.effects),
         affordable: session.stats.money >= Math.abs(item.effects.money || 0),
