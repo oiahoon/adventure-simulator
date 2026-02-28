@@ -188,7 +188,7 @@ export function createGameUI(root, actions) {
         </div>
       </article>
       <article class="card">
-        <h3>最近决策</h3>
+        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-history.svg" alt="" />最近决策</h3>
         <ul class="history">${view.history.map(historyItem).join("")}</ul>
       </article>
     `;
@@ -214,7 +214,7 @@ export function createGameUI(root, actions) {
       </article>
 
       <article class="card event-card">
-        <p class="badge">今日事件</p>
+        <p class="badge badge-event"><img class="badge-icon" src="./assets/pixel/decor/icon-event.svg" alt="" />今日事件</p>
         <p class="opt-impact" id="event-chapter"></p>
         <h3 id="event-title"></h3>
         <p id="event-text"></p>
@@ -222,20 +222,20 @@ export function createGameUI(root, actions) {
         <div class="option-list" id="event-options"></div>
       </article>
 
-      <article class="card tools-card">
-        <h3>补给商店（每日限购一次）</h3>
+      <article class="card tools-card supply-module">
+        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-supply.svg" alt="" />补给商店（每日限购一次）</h3>
         <p class="opt-impact" id="food-tip"></p>
         <div class="action-grid" id="food-list"></div>
       </article>
 
-      <article class="card tools-card">
-        <h3>临时技能（每日刷新，限用一次）</h3>
+      <article class="card tools-card skill-module">
+        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-skill.svg" alt="" />临时技能（每日刷新，限用一次）</h3>
         <p class="opt-impact" id="skills-tip"></p>
         <div class="action-grid" id="skills-list"></div>
       </article>
 
       <article class="card">
-        <h3>最近决策链</h3>
+        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-history.svg" alt="" />最近决策链</h3>
         <ul class="history" id="history-list"></ul>
       </article>
     `;

@@ -115,6 +115,24 @@
             transparent 7px
           );
       }
+      .event-card::before,
+      .skill-module::before,
+      .supply-module::before {
+        content: "";
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 24px;
+        height: 24px;
+        background-size: cover;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        opacity: 0.9;
+        pointer-events: none;
+      }
+      .event-card::before { background-image: url("./assets/pixel/decor/corner-gold.svg"); }
+      .skill-module::before { background-image: url("./assets/pixel/decor/corner-blue.svg"); }
+      .supply-module::before { background-image: url("./assets/pixel/decor/corner-green.svg"); }
       .hero {
         padding: 20px 18px;
       }
@@ -132,6 +150,17 @@
         background: #f3dfb7;
         border-radius: 999px;
         padding: 4px 10px;
+      }
+      .badge-event {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .badge-icon {
+        width: 16px;
+        height: 16px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
       }
       .head-row {
         display: flex;
@@ -270,9 +299,29 @@
       .card h3 {
         margin: 8px 0;
       }
+      .mod-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .mod-icon {
+        width: 18px;
+        height: 18px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
       .event-card p {
         margin: 0 0 6px;
         line-height: 1.45;
+      }
+      .skill-module,
+      .supply-module {
+        background-image:
+          url("./assets/pixel/decor/divider-runic.svg"),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+        background-repeat: no-repeat, no-repeat;
+        background-size: calc(100% - 28px) 8px, 100% 100%;
+        background-position: center 44px, 0 0;
       }
       .option-list {
         display: grid;
@@ -525,6 +574,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_18"></script>
+    <script type="module" src="./app/main.js?v=20260228_19"></script>
   </body>
 </html>
