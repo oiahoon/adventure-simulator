@@ -61,8 +61,21 @@ function pickPoeticFallback(payload = {}) {
 
 function ensurePoeticEnding(story, payload) {
   if (!story) return story;
-  if (story.includes("正所谓：")) return story;
+  if (/正所谓[:：]/.test(story)) return story;
   return `${story}\n${pickPoeticFallback(payload)}`;
+}
+
+function sanitizeStoryText(text = "") {
+  return String(text)
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/^\s{0,3}#{1,6}\s*/gm, "")
+    .replace(/^\s*>\s*/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/[*_`~]/g, "")
+    .replace(/\r/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export default async function handler(req, res) {
@@ -111,7 +124,7 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: false, error: "deepseek_empty_response" });
       return;
     }
-    const normalizedStory = ensurePoeticEnding(story, payload);
+    const normalizedStory = ensurePoeticEnding(sanitizeStoryText(story), payload);
     res.status(200).json({ ok: true, story: normalizedStory });
   } catch (error) {
     res.status(200).json({ ok: false, error: "deepseek_exception", detail: String(error?.message || error) });

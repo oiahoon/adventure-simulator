@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_12";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_13";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;

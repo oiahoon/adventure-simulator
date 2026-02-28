@@ -130,7 +130,7 @@ export function createGameUI(root, actions) {
             view.result.storyLoading
               ? "<p>正在生成本局剧情总结...</p>"
               : view.result.storyNarrative
-                ? `<p>${view.result.storyNarrative}</p>`
+                ? `<p class="story-text">${view.result.storyNarrative}</p>`
                 : `<p>暂未生成（${view.result.storyError || "unknown"}）</p>`
           }
         </article>

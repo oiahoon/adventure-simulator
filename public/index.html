@@ -7,18 +7,18 @@
     <link rel="icon" href="./favicon.ico" />
     <style>
       :root {
-        --bg: #f8f6ef;
-        --ink: #1d2638;
-        --muted: #5f6573;
-        --card: #fffdf8;
-        --line: #d8cfba;
-        --primary: #ef6a3a;
+        --bg: #f4f1e8;
+        --ink: #1f2b26;
+        --muted: #66726c;
+        --card: #fbfaf5;
+        --line: #cdc5b3;
+        --primary: #d27643;
         --primary-ink: #ffffff;
-        --money: #3d8b4d;
-        --energy: #3a7ae0;
-        --mood: #9b4de0;
-        --rep: #d3527e;
-        --heat: #e08a1f;
+        --money: #437d54;
+        --energy: #537fb7;
+        --mood: #8661b4;
+        --rep: #b5637f;
+        --heat: #bf8a3d;
         --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
         --avatar-size: 124px;
       }
@@ -30,10 +30,11 @@
         margin: 0;
         color: var(--ink);
         background:
-          radial-gradient(circle at 15% -5%, #ffe6cf 0%, transparent 45%),
-          radial-gradient(circle at 85% -10%, #ffeecf 0%, transparent 45%),
+          radial-gradient(circle at 18% -6%, #f8efe0 0%, transparent 52%),
+          radial-gradient(circle at 84% -8%, #efe8d8 0%, transparent 48%),
+          linear-gradient(180deg, #f6f3ea 0%, #f1ece0 100%),
           var(--bg);
-        font-family: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+        font-family: "Source Han Sans SC", "PingFang SC", "Noto Sans SC", sans-serif;
       }
       #app {
         max-width: 640px;
@@ -49,7 +50,9 @@
       h1 {
         margin: 0;
         font-size: 24px;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
+        font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", serif;
+        font-weight: 700;
       }
       #subtitle {
         margin: 4px 0 0;
@@ -67,26 +70,29 @@
         margin-top: 10px;
       }
       .card {
-        border: 2px solid var(--line);
-        border-radius: 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
         background: var(--card);
-        padding: 12px;
+        padding: 14px;
+        box-shadow: 0 2px 10px rgba(39, 45, 40, 0.04);
       }
       .hero {
-        padding: 16px;
+        padding: 20px 18px;
       }
       .hero h2 {
-        margin: 8px 0;
+        margin: 10px 0;
         font-size: 22px;
         line-height: 1.35;
+        font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", serif;
+        font-weight: 700;
       }
       .badge {
         display: inline-block;
         font-size: 12px;
-        color: #8b5d26;
-        background: #ffe6bf;
+        color: #7b5f36;
+        background: #f3dfb7;
         border-radius: 999px;
-        padding: 3px 10px;
+        padding: 4px 10px;
       }
       .head-row {
         display: flex;
@@ -132,10 +138,10 @@
         align-content: space-between;
       }
       .hud-bar {
-        border: 1px solid #cebfa2;
+        border: 1px solid #d7cebc;
         border-radius: 9px;
         padding: 5px 7px;
-        background: #fff8ec;
+        background: #f9f5eb;
         display: grid;
         grid-template-columns: 42px 1fr 40px;
         align-items: center;
@@ -153,7 +159,7 @@
       .hud-track {
         height: 8px;
         border-radius: 999px;
-        background: #eadfca;
+        background: #e9e1d0;
         overflow: hidden;
       }
       .hud-fill {
@@ -180,11 +186,11 @@
         gap: 8px;
       }
       .option-btn {
-        border: 2px solid #d7c5aa;
+        border: 1px solid #d3c8b3;
         border-radius: 12px;
-        padding: 9px 10px;
+        padding: 10px 11px;
         text-align: left;
-        background: linear-gradient(180deg, #fffefb 0%, #fff6e8 100%);
+        background: linear-gradient(180deg, #fcfbf7 0%, #f7f2e6 100%);
         cursor: pointer;
         display: grid;
         gap: 4px;
@@ -194,8 +200,8 @@
           box-shadow 180ms ease;
       }
       .option-btn:hover {
-        border-color: #c5ad89;
-        box-shadow: 0 4px 12px rgba(123, 93, 44, 0.12);
+        border-color: #bfb29b;
+        box-shadow: 0 6px 14px rgba(73, 61, 45, 0.08);
       }
       .option-btn:active {
         transform: scale(0.985) translateY(1px);
@@ -211,7 +217,7 @@
       }
       .opt-impact {
         font-size: 11px;
-        color: #7a5d34;
+        color: #76664c;
       }
       .action-grid {
         display: grid;
@@ -236,11 +242,11 @@
       .primary {
         background: var(--primary);
         color: var(--primary-ink);
-        box-shadow: 0 6px 16px rgba(239, 106, 58, 0.2);
+        box-shadow: 0 8px 20px rgba(170, 100, 48, 0.2);
       }
       .ghost {
-        border: 1px solid #cbbda4;
-        background: #fff8ec;
+        border: 1px solid #cdc2ad;
+        background: #f8f3e8;
         color: var(--ink);
       }
       button:hover:not(:disabled) {
@@ -269,14 +275,19 @@
       }
       .reason-block {
         margin: 10px 0;
-        border: 1px solid #dcccae;
+        border: 1px solid #d9ceb8;
         border-radius: 10px;
-        background: #fff8eb;
-        padding: 8px 10px;
+        background: #f9f4e9;
+        padding: 10px 11px;
       }
       .reason-block h3 {
         margin: 0 0 6px;
         font-size: 15px;
+        font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", serif;
+      }
+      .story-text {
+        white-space: pre-line;
+        line-height: 1.6;
       }
       @keyframes subtitleFlash {
         0% {
@@ -323,6 +334,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_12"></script>
+    <script type="module" src="./app/main.js?v=20260228_13"></script>
   </body>
 </html>
