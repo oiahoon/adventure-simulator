@@ -1,4 +1,22 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "http"
+        },
+        {
+          "type": "host",
+          "value": "game.miaowu.org"
+        }
+      ],
+      "destination": "https://game.miaowu.org/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/favicon.ico",
