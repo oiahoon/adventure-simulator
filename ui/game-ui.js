@@ -1,6 +1,41 @@
-function optionCard(option) {
-  return `<button class="option-btn" data-option-id="${option.id}">
-    <span class="opt-title">${option.label}</span>
+const TAG_META = {
+  work: { label: "硬扛流", cls: "tag-work" },
+  risk: { label: "梭哈流", cls: "tag-risk" },
+  control: { label: "控场流", cls: "tag-control" },
+  network: { label: "关系流", cls: "tag-network" },
+  social: { label: "社交流", cls: "tag-social" },
+  content: { label: "内容流", cls: "tag-content" },
+  rest: { label: "续命流", cls: "tag-rest" },
+  money: { label: "现金流", cls: "tag-money" },
+};
+
+const STAT_META = {
+  money: { label: "现金", element: "金", subtitle: "财流" },
+  energy: { label: "体力", element: "木", subtitle: "生机" },
+  mood: { label: "心态", element: "水", subtitle: "心湖" },
+  reputation: { label: "人设", element: "火", subtitle: "声望" },
+  heat: { label: "热度", element: "土", subtitle: "势能" },
+};
+
+function chapterTone(chapter = "") {
+  if (chapter.includes("第一章")) return "tone-wood";
+  if (chapter.includes("第二章")) return "tone-fire";
+  if (chapter.includes("第三章")) return "tone-earth";
+  if (chapter.includes("第四章")) return "tone-metal";
+  if (chapter.includes("第五章")) return "tone-water";
+  if (chapter.includes("第六章")) return "tone-dark";
+  if (chapter.includes("成长节点")) return "tone-growth";
+  if (chapter.includes("强制事件")) return "tone-force";
+  return "tone-plain";
+}
+
+function optionCard(option, index) {
+  const tag = TAG_META[option.tag] || { label: "行动流", cls: "tag-generic" };
+  return `<button class="option-btn ${tag.cls}" data-option-id="${option.id}" style="--stagger:${index}">
+    <span class="opt-head">
+      <span class="opt-title">${option.label}</span>
+      <span class="opt-tag">${tag.label}</span>
+    </span>
     <span class="opt-impact">${option.impactText}</span>
   </button>`;
 }
@@ -34,10 +69,12 @@ function foodCard(food, disabled) {
   </button>`;
 }
 
-function statBar(label, value, tone) {
+function statBar(key, value, tone) {
+  const meta = STAT_META[key];
   const percent = Math.max(0, Math.min(100, Math.round((value / 10) * 100)));
-  return `<div class="hud-bar ${tone}">
-    <span class="hud-name">${label}</span>
+  const rankClass = value <= 2 ? "is-critical" : value >= 8 ? "is-strong" : "is-normal";
+  return `<div class="hud-bar ${tone} ${rankClass}">
+    <span class="hud-name"><span class="hud-ele">${meta.element}</span>${meta.label}</span>
     <div class="hud-track"><div class="hud-fill" style="width:${percent}%"></div></div>
     <span class="hud-value">${value}/10</span>
   </div>`;
@@ -166,6 +203,7 @@ export function createGameUI(root, actions) {
           <p id="score-text"></p>
         </div>
         <p class="opt-impact" id="profile-text"></p>
+        <div class="element-row" id="element-row"></div>
         <div class="hud-layout">
           <div class="avatar-card">
             <img class="avatar-img" id="avatar-img" alt="角色头像" decoding="async" loading="eager" />
@@ -205,6 +243,7 @@ export function createGameUI(root, actions) {
       dayText: panel.querySelector("#day-text"),
       scoreText: panel.querySelector("#score-text"),
       profileText: panel.querySelector("#profile-text"),
+      elementRow: panel.querySelector("#element-row"),
       avatarImg: panel.querySelector("#avatar-img"),
       statsPanel: panel.querySelector("#stats-panel"),
       eventChapter: panel.querySelector("#event-chapter"),
@@ -224,6 +263,13 @@ export function createGameUI(root, actions) {
     refs.dayText.textContent = `Day ${view.day}/${view.dayTarget}`;
     refs.scoreText.textContent = `当前分数 ${view.score}`;
     refs.profileText.textContent = `开局角色：${view.profileName}`;
+    refs.elementRow.innerHTML = [
+      `<span class="element-pill money"><b>金</b> 财流</span>`,
+      `<span class="element-pill energy"><b>木</b> 生机</span>`,
+      `<span class="element-pill mood"><b>水</b> 心湖</span>`,
+      `<span class="element-pill rep"><b>火</b> 声望</span>`,
+      `<span class="element-pill heat"><b>土</b> 势能</span>`,
+    ].join("");
 
     if (refs.avatarImg.dataset.avatarSeed !== view.avatar.seed) {
       refs.avatarImg.src = view.avatar.url;
@@ -231,18 +277,19 @@ export function createGameUI(root, actions) {
     }
 
     refs.statsPanel.innerHTML = [
-      statBar("现金", view.stats.money, "money"),
-      statBar("体力", view.stats.energy, "energy"),
-      statBar("心态", view.stats.mood, "mood"),
-      statBar("人设", view.stats.reputation, "rep"),
-      statBar("热度", view.stats.heat, "heat"),
+      statBar("money", view.stats.money, "money"),
+      statBar("energy", view.stats.energy, "energy"),
+      statBar("mood", view.stats.mood, "mood"),
+      statBar("reputation", view.stats.reputation, "rep"),
+      statBar("heat", view.stats.heat, "heat"),
     ].join("");
 
     refs.eventChapter.textContent = view.event.chapter;
+    refs.eventChapter.className = `opt-impact chapter-chip ${chapterTone(view.event.chapter)}`;
     refs.eventTitle.textContent = view.event.title;
     refs.eventText.textContent = view.event.text;
     refs.eventCause.textContent = `因果线：${view.event.causeText}`;
-    refs.eventOptions.innerHTML = view.event.options.map(optionCard).join("");
+    refs.eventOptions.innerHTML = view.event.options.map((item, index) => optionCard(item, index)).join("");
 
     refs.foodTip.textContent = view.foodShop.usedToday
       ? "今天已补给，明天可再次购买。"

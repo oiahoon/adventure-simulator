@@ -75,6 +75,23 @@
         background: var(--card);
         padding: 14px;
         box-shadow: 0 2px 10px rgba(39, 45, 40, 0.04);
+        position: relative;
+        overflow: hidden;
+      }
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(120deg, rgba(255, 255, 255, 0.2) 0%, transparent 28%),
+          repeating-linear-gradient(
+            0deg,
+            rgba(202, 193, 175, 0.05) 0px,
+            rgba(202, 193, 175, 0.05) 1px,
+            transparent 1px,
+            transparent 7px
+          );
       }
       .hero {
         padding: 20px 18px;
@@ -99,6 +116,24 @@
         justify-content: space-between;
         align-items: center;
         gap: 8px;
+      }
+      .element-row {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .element-pill {
+        font-size: 10px;
+        line-height: 1;
+        border: 1px solid #d7cebc;
+        border-radius: 999px;
+        padding: 3px 7px;
+        background: #f5efe2;
+        color: #5e6055;
+      }
+      .element-pill b {
+        margin-right: 4px;
       }
       .head-row h2 {
         margin: 0;
@@ -155,6 +190,10 @@
         color: var(--ink);
         line-height: 1;
       }
+      .hud-ele {
+        margin-right: 3px;
+        opacity: 0.8;
+      }
       .hud-value {
         text-align: right;
       }
@@ -168,6 +207,12 @@
         height: 100%;
         border-radius: inherit;
         transition: width 180ms ease;
+      }
+      .hud-bar.is-critical .hud-fill {
+        animation: criticalPulse 1.2s ease-in-out infinite;
+      }
+      .hud-bar.is-strong {
+        box-shadow: inset 0 0 0 1px rgba(130, 152, 102, 0.2);
       }
       .hud-bar.money .hud-fill { background: linear-gradient(90deg, #2f6f3c, #4db064); }
       .hud-bar.energy .hud-fill { background: linear-gradient(90deg, #2e63b6, #4d91ff); }
@@ -200,7 +245,34 @@
           transform 140ms var(--ease-out),
           border-color 180ms ease,
           box-shadow 180ms ease;
+        animation: optionSlide 260ms var(--ease-out) both;
+        animation-delay: calc(var(--stagger, 0) * 45ms);
       }
+      .opt-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .opt-tag {
+        display: inline-block;
+        font-size: 10px;
+        line-height: 1;
+        padding: 4px 7px;
+        border-radius: 999px;
+        border: 1px solid #d3c8b5;
+        color: #6b624f;
+        background: #f9f2e6;
+      }
+      .tag-work .opt-tag { color: #315783; border-color: #b3c8df; background: #eaf2fc; }
+      .tag-risk .opt-tag { color: #924747; border-color: #dfb8b8; background: #fceeee; }
+      .tag-control .opt-tag { color: #556446; border-color: #bfd0ae; background: #edf7e5; }
+      .tag-network .opt-tag { color: #5a4b7a; border-color: #ccbfe2; background: #f4edfb; }
+      .tag-social .opt-tag { color: #7f4c60; border-color: #dfc1cc; background: #fbedf3; }
+      .tag-content .opt-tag { color: #82572a; border-color: #e2c8aa; background: #fcf2e8; }
+      .tag-rest .opt-tag { color: #4e6a65; border-color: #bad3ce; background: #ebf8f5; }
+      .tag-money .opt-tag { color: #2f6b47; border-color: #b3d7c0; background: #e9f7ef; }
+      .tag-generic .opt-tag { color: #615842; border-color: #d0c7b6; background: #f6f1e6; }
       .option-btn:hover {
         border-color: #bfb29b;
         box-shadow: 0 6px 14px rgba(73, 61, 45, 0.08);
@@ -221,6 +293,22 @@
         font-size: 11px;
         color: #76664c;
       }
+      .chapter-chip {
+        display: inline-block;
+        width: fit-content;
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid #d8cdae;
+        background: #f6efdf;
+      }
+      .chapter-chip.tone-wood { color: #35574a; background: #eaf6ef; border-color: #b7d5c5; }
+      .chapter-chip.tone-fire { color: #7a4b3d; background: #faeee8; border-color: #dfc2b5; }
+      .chapter-chip.tone-earth { color: #705d3a; background: #f8f1e5; border-color: #dbc9a9; }
+      .chapter-chip.tone-metal { color: #50535d; background: #eff1f7; border-color: #c4cbde; }
+      .chapter-chip.tone-water { color: #3a5c78; background: #ebf2f8; border-color: #b9cfe0; }
+      .chapter-chip.tone-dark { color: #4f4660; background: #f0edf8; border-color: #c9bfde; }
+      .chapter-chip.tone-growth { color: #3f6a45; background: #ecf8ee; border-color: #b8d8bc; }
+      .chapter-chip.tone-force { color: #7a3f47; background: #f9ecef; border-color: #dfbcc4; }
       .action-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -306,6 +394,27 @@
         white-space: pre-line;
         line-height: 1.6;
       }
+      @keyframes optionSlide {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes criticalPulse {
+        0% {
+          filter: saturate(1);
+        }
+        50% {
+          filter: saturate(1.35) brightness(1.05);
+        }
+        100% {
+          filter: saturate(1);
+        }
+      }
       @keyframes subtitleFlash {
         0% {
           opacity: 0.7;
@@ -351,6 +460,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_15"></script>
+    <script type="module" src="./app/main.js?v=20260228_16"></script>
   </body>
 </html>
