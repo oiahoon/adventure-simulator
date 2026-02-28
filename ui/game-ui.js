@@ -206,7 +206,7 @@ export function createGameUI(root, actions) {
         <div class="element-row" id="element-row"></div>
         <div class="hud-layout">
           <div class="avatar-card">
-            <img class="avatar-img" id="avatar-img" alt="角色头像" decoding="async" loading="eager" />
+            <div class="avatar-stack" id="avatar-stack"></div>
           </div>
           <div class="hud-panel" id="stats-panel"></div>
         </div>
@@ -244,7 +244,7 @@ export function createGameUI(root, actions) {
       scoreText: panel.querySelector("#score-text"),
       profileText: panel.querySelector("#profile-text"),
       elementRow: panel.querySelector("#element-row"),
-      avatarImg: panel.querySelector("#avatar-img"),
+      avatarStack: panel.querySelector("#avatar-stack"),
       statsPanel: panel.querySelector("#stats-panel"),
       eventChapter: panel.querySelector("#event-chapter"),
       eventTitle: panel.querySelector("#event-title"),
@@ -271,9 +271,15 @@ export function createGameUI(root, actions) {
       `<span class="element-pill heat"><b>土</b> 势能</span>`,
     ].join("");
 
-    if (refs.avatarImg.dataset.avatarSeed !== view.avatar.seed) {
-      refs.avatarImg.src = view.avatar.url;
-      refs.avatarImg.dataset.avatarSeed = view.avatar.seed;
+    if (refs.avatarStack.dataset.avatarSeed !== view.avatar.seed) {
+      const badges = (view.avatar.overlays || [])
+        .map(
+          (item) =>
+            `<img class="avatar-badge ${item.slot}" src="${item.url}" alt="" loading="lazy" decoding="async" />`
+        )
+        .join("");
+      refs.avatarStack.innerHTML = `<img class="avatar-img" src="${view.avatar.baseUrl}" alt="角色头像" decoding="async" loading="eager" />${badges}`;
+      refs.avatarStack.dataset.avatarSeed = view.avatar.seed;
     }
 
     refs.statsPanel.innerHTML = [

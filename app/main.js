@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_16";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_17";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -1122,11 +1122,67 @@ function resolveOptionOutcome(session, option) {
 
 function buildAvatarConfig(random, seed) {
   const avatarSeed = `${seed}-${Math.floor(random() * 100000)}`;
-  const url = randomPick(PIXEL_AVATARS, random);
+  const baseIndex = Math.floor(random() * PIXEL_AVATARS.length);
   return {
     style: "pixel",
     seed: avatarSeed,
-    url,
+    baseIndex,
+    url: PIXEL_AVATARS[baseIndex],
+  };
+}
+
+const DOLL_BADGES = {
+  moodLow: "./assets/pixel/doll/badge-rain.svg",
+  moodHigh: "./assets/pixel/doll/badge-spark.svg",
+  energyLow: "./assets/pixel/doll/badge-zzz.svg",
+  moneyLow: "./assets/pixel/doll/badge-coin-crack.svg",
+  heatHigh: "./assets/pixel/doll/badge-fire.svg",
+  sick: "./assets/pixel/doll/badge-bandage.svg",
+  growth: "./assets/pixel/doll/badge-crown.svg",
+};
+
+const ARCHETYPE_BASE_INDEX = {
+  office_worker: 1,
+  content_hustler: 2,
+  debt_runner: 0,
+  network_player: 3,
+};
+
+function buildAvatarPaperDoll(session) {
+  const baseIndex = ARCHETYPE_BASE_INDEX[session.archetypeId] ?? session.avatar.baseIndex ?? 0;
+  const baseUrl = PIXEL_AVATARS[baseIndex] || PIXEL_AVATARS[0];
+  const overlays = [];
+  const slots = new Set();
+  const put = (slot, key) => {
+    if (slots.has(slot)) return;
+    const url = DOLL_BADGES[key];
+    if (!url) return;
+    slots.add(slot);
+    overlays.push({ slot, url, key });
+  };
+
+  if (session.stats.mood <= 3) put("tl", "moodLow");
+  else if (session.stats.mood >= 8) put("tl", "moodHigh");
+  if (session.stats.energy <= 3) put("tr", "energyLow");
+  if (session.stats.money <= 2) put("bl", "moneyLow");
+  if (session.stats.heat >= 7) put("br", "heatHigh");
+  if (session.flags.burnout_risk || session.activeForcedEventId) put("tr", "sick");
+  if (session.milestones.stability_reached || session.milestones.public_figure) put("top", "growth");
+
+  const stateTag = [
+    session.stats.money,
+    session.stats.energy,
+    session.stats.mood,
+    session.stats.reputation,
+    session.stats.heat,
+    session.dayIndex + 1,
+    overlays.map((item) => `${item.slot}:${item.key}`).join(","),
+  ].join("|");
+
+  return {
+    seed: `${session.avatar.seed}|${stateTag}`,
+    baseUrl,
+    overlays,
   };
 }
 
@@ -1638,6 +1694,7 @@ function createSession(seed = Date.now()) {
     seed,
     random,
     avatar,
+    archetypeId: archetype.id,
     archetypeName: archetype.name,
     openingEvent,
     dayIndex: 0,
@@ -1949,6 +2006,7 @@ function buildView() {
   const session = state.session;
   const event = session.mode === "playing" ? getCurrentEvent(session) : null;
   const score = computeScore(session);
+  const avatar = buildAvatarPaperDoll(session);
 
   return {
     mode: session.mode,
@@ -1956,7 +2014,7 @@ function buildView() {
     dayTarget: TARGET_DAY,
     reachedTarget: session.dayIndex + 1 >= TARGET_DAY,
     profileName: session.archetypeName,
-    avatar: session.avatar,
+    avatar,
     bestScore: state.bestScore,
     score,
     stats: { ...session.stats },

@@ -156,6 +156,11 @@
         justify-content: center;
         height: var(--avatar-size);
       }
+      .avatar-stack {
+        width: var(--avatar-size);
+        height: var(--avatar-size);
+        position: relative;
+      }
       .avatar-img {
         width: var(--avatar-size);
         height: var(--avatar-size);
@@ -165,6 +170,25 @@
         object-fit: cover;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
+      }
+      .avatar-badge {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        background: #fbf5e6;
+        border: 1px solid #cfbe9e;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(45, 39, 30, 0.2);
+      }
+      .avatar-badge.tl { left: -6px; top: -6px; }
+      .avatar-badge.tr { right: -6px; top: -6px; }
+      .avatar-badge.bl { left: -6px; bottom: -6px; }
+      .avatar-badge.br { right: -6px; bottom: -6px; }
+      .avatar-badge.top {
+        left: calc(50% - 14px);
+        top: -10px;
       }
       .hud-panel {
         justify-self: end;
@@ -460,6 +484,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_16"></script>
+    <script type="module" src="./app/main.js?v=20260228_17"></script>
   </body>
 </html>
