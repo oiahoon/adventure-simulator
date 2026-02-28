@@ -16,13 +16,21 @@ function simpleList(items = []) {
 
 function tempSkillCard(skill, disabled) {
   return `<button class="ghost" data-skill-id="${skill.id}" ${disabled ? "disabled" : ""}>
-    ${skill.name} (${skill.impactText})
+    <span class="icon-line">
+      <img class="pixel-icon" src="${skill.icon}" alt="" loading="lazy" decoding="async" />
+      <span>${skill.name}</span>
+    </span>
+    <span class="opt-impact">${skill.impactText}</span>
   </button>`;
 }
 
 function foodCard(food, disabled) {
   return `<button class="ghost" data-food-id="${food.id}" ${disabled ? "disabled" : ""}>
-    ${food.name} (${food.impactText})${food.affordable ? "" : " · 现金不足"}
+    <span class="icon-line">
+      <img class="pixel-icon" src="${food.icon}" alt="" loading="lazy" decoding="async" />
+      <span>${food.name}</span>
+    </span>
+    <span class="opt-impact">${food.impactText}${food.affordable ? "" : " · 现金不足"}</span>
   </button>`;
 }
 
