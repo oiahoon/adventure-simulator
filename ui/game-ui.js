@@ -20,6 +20,12 @@ function tempSkillCard(skill, disabled) {
   </button>`;
 }
 
+function foodCard(food, disabled) {
+  return `<button class="ghost" data-food-id="${food.id}" ${disabled ? "disabled" : ""}>
+    ${food.name} (${food.impactText})${food.affordable ? "" : " · 现金不足"}
+  </button>`;
+}
+
 function statBar(label, value, tone) {
   const percent = Math.max(0, Math.min(100, Math.round((value / 10) * 100)));
   return `<div class="hud-bar ${tone}">
@@ -68,6 +74,12 @@ export function createGameUI(root, actions) {
       el.addEventListener("click", () => {
         const skillId = el.dataset.skillId;
         withTapFeedback(el, () => actions.onUseSkill(skillId));
+      });
+    });
+    panel.querySelectorAll("[data-food-id]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const foodId = el.dataset.foodId;
+        withTapFeedback(el, () => actions.onBuyFood(foodId));
       });
     });
 
@@ -164,6 +176,12 @@ export function createGameUI(root, actions) {
       </article>
 
       <article class="card tools-card">
+        <h3>补给商店（每日限购一次）</h3>
+        <p class="opt-impact" id="food-tip"></p>
+        <div class="action-grid" id="food-list"></div>
+      </article>
+
+      <article class="card tools-card">
         <h3>临时技能（每日刷新，限用一次）</h3>
         <p class="opt-impact" id="skills-tip"></p>
         <div class="action-grid" id="skills-list"></div>
@@ -186,6 +204,8 @@ export function createGameUI(root, actions) {
       eventText: panel.querySelector("#event-text"),
       eventCause: panel.querySelector("#event-cause"),
       eventOptions: panel.querySelector("#event-options"),
+      foodTip: panel.querySelector("#food-tip"),
+      foodList: panel.querySelector("#food-list"),
       skillsTip: panel.querySelector("#skills-tip"),
       skillsList: panel.querySelector("#skills-list"),
       historyList: panel.querySelector("#history-list"),
@@ -215,6 +235,11 @@ export function createGameUI(root, actions) {
     refs.eventText.textContent = view.event.text;
     refs.eventCause.textContent = `因果线：${view.event.causeText}`;
     refs.eventOptions.innerHTML = view.event.options.map(optionCard).join("");
+
+    refs.foodTip.textContent = view.foodShop.usedToday
+      ? "今天已补给，明天可再次购买。"
+      : "补给会立即生效，但一天只能买一次。";
+    refs.foodList.innerHTML = view.foodShop.options.map((item) => foodCard(item, view.foodShop.usedToday || !item.affordable)).join("");
 
     refs.skillsTip.textContent = view.skills.usedToday
       ? "本回合已使用，明天刷新新技能。"

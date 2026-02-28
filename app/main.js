@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260227_11";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_12";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -158,6 +158,66 @@ const TEMP_SKILL_POOL = [
     effects: { money: 2, energy: -1, reputation: -1, mood: 1 },
   },
 ];
+
+const FOOD_OPTIONS = [
+  {
+    id: "food_bun",
+    name: "馒头配榨菜",
+    text: "先把肚子垫住，开销最小。",
+    effects: { money: -1, energy: 1, mood: -1 },
+  },
+  {
+    id: "food_bento",
+    name: "便利店便当",
+    text: "花销中等，恢复更稳。",
+    effects: { money: -2, energy: 2, mood: 1 },
+  },
+  {
+    id: "food_hotpot",
+    name: "深夜小火锅",
+    text: "回血明显，但钱包会痛。",
+    effects: { money: -3, energy: 3, mood: 1, heat: 1 },
+  },
+];
+
+const FORCED_EVENTS = {
+  forced_sick_mild: {
+    id: "forced_sick_mild",
+    chapter: "强制事件：身体报警",
+    title: "低电量直接宕机",
+    text: "你今天起床就头重脚轻，常规安排基本干不动。",
+    causeText: "由低体力触发，今天必须先处理身体问题。",
+    options: [
+      { id: "sick_hospital", label: "去医院挂号", tag: "rest", effects: { money: -2, energy: 3, mood: -1, reputation: -1 } },
+      { id: "sick_clinic", label: "社区门诊先顶住", tag: "control", effects: { money: -1, energy: 2, mood: 0 } },
+      { id: "sick_ask_help", label: "发圈求助众筹药费", tag: "social", effects: { money: 1, energy: 1, reputation: -1, heat: 1, mood: -1 } },
+    ],
+  },
+  forced_sick_heavy: {
+    id: "forced_sick_heavy",
+    chapter: "强制事件：重度透支",
+    title: "你被现实按进病床",
+    text: "体力连续见底后，今天只能先处理病情，日常事件暂停。",
+    causeText: "由长期低体力触发的强制剧情。",
+    options: [
+      { id: "heavy_hospital", label: "急诊处理", tag: "rest", effects: { money: -3, energy: 4, mood: -1, reputation: -1 } },
+      { id: "heavy_short_stay", label: "开药回家躺平", tag: "control", effects: { money: -2, energy: 3, mood: 1, heat: -1 } },
+      { id: "heavy_social_help", label: "向朋友借钱看病", tag: "network", effects: { money: 2, energy: 2, reputation: -2, mood: -1 } },
+    ],
+  },
+  forced_cash_crunch: {
+    id: "forced_cash_crunch",
+    chapter: "强制事件：断粮预警",
+    title: "兜里见底只能街头求生",
+    text: "现金快归零，你今天先得解决吃饭和交通，不然连日常都开不了。",
+    causeText: "由低现金触发，今日行动受限。",
+    options: [
+      { id: "cash_busk", label: "地铁口才艺讨赏", tag: "content", effects: { money: 1, heat: 1, reputation: -1, energy: -1 } },
+      { id: "cash_borrow", label: "找熟人先借100", tag: "network", effects: { money: 2, reputation: -1, mood: -1 } },
+      { id: "cash_skip_meal", label: "饿一顿硬撑", tag: "risk", effects: { money: 1, energy: -2, mood: -1 } },
+    ],
+  },
+};
 
 const OPENING_EVENTS = {
   opening_rent_kpi: {
@@ -1227,8 +1287,27 @@ function resolveStateIncidentEvent(session, dayIndex) {
   return incident;
 }
 
+function enqueueForcedEvent(session, eventId) {
+  if (!FORCED_EVENTS[eventId]) return;
+  if (session.activeForcedEventId === eventId) return;
+  if (session.forcedEventQueue.includes(eventId)) return;
+  session.forcedEventQueue.push(eventId);
+}
+
+function resolveForcedEvent(session) {
+  if (session.activeForcedEventId) {
+    return FORCED_EVENTS[session.activeForcedEventId] || null;
+  }
+  const nextId = session.forcedEventQueue.shift();
+  if (!nextId) return null;
+  session.activeForcedEventId = nextId;
+  return FORCED_EVENTS[nextId] || null;
+}
+
 function resolveEvent(session, dayIndex) {
   if (dayIndex === 0) return session.openingEvent;
+  const forced = resolveForcedEvent(session);
+  if (forced) return forced;
   updateMilestones(session);
   const growth = resolveGrowthEvent(session, dayIndex);
   if (growth) return growth;
@@ -1452,6 +1531,48 @@ function buildSharePreviewLink() {
   return url.toString();
 }
 
+function applyDailyUpkeep(session) {
+  const effects = { money: -1, energy: -1, mood: 0, reputation: 0, heat: 0 };
+  if (session.stats.money <= 2) effects.mood -= 1;
+  if (session.stats.heat >= 8) effects.mood -= 1;
+
+  const before = cloneStats(session.stats);
+  applyEffects(session.stats, effects);
+  const delta = statsDelta(before, session.stats);
+  const logs = [];
+  if (effectToText(delta)) {
+    logs.push({
+      day: session.dayIndex + 1,
+      optionLabel: "日常消耗：房租、通勤、吃喝和精神负担自动结算。",
+      impactText: effectToText(delta),
+      delta,
+    });
+  }
+
+  if (session.stats.energy <= 2) {
+    let sickChance = session.stats.energy <= 1 ? 0.65 : 0.35;
+    if (session.flags.burnout_risk || session.pressure.burnout >= 3) sickChance += 0.1;
+    if (session.random() < Math.min(0.85, sickChance)) {
+      const heavy = session.stats.energy <= 1 || session.pressure.burnout >= 4;
+      enqueueForcedEvent(session, heavy ? "forced_sick_heavy" : "forced_sick_mild");
+      logs.push({
+        day: session.dayIndex + 1,
+        optionLabel: "后果预告：体力过低，明天可能进入看病强制事件。",
+        impactText: "已写入因果链",
+        delta: { money: 0, energy: 0, mood: 0, reputation: 0, heat: 0 },
+      });
+    }
+  }
+
+  if (session.stats.money <= 1) {
+    const cashChance = session.stats.money === 0 ? 0.45 : 0.25;
+    if (session.random() < cashChance) {
+      enqueueForcedEvent(session, "forced_cash_crunch");
+    }
+  }
+  return logs;
+}
+
 function createSession(seed = Date.now()) {
   const random = seededRandom(seed);
   const archetype = randomPick(STARTER_ARCHETYPES, random);
@@ -1482,10 +1603,13 @@ function createSession(seed = Date.now()) {
     eventSeenCount: {},
     tagUsage: {},
     pendingConsequences: [],
+    forcedEventQueue: [],
+    activeForcedEventId: "",
     usedEventIds: new Set([openingEvent.id]),
     skillOffers,
     skillCooldownIds: skillOffers.map((item) => item.id),
     skillUsedDay: false,
+    foodUsedDay: false,
     cachedEvent: null,
     cachedEventDayIndex: -1,
     history: [],
@@ -1639,6 +1763,9 @@ function applyChoice(optionId) {
   session.eventSeenCount[event.id] = (session.eventSeenCount[event.id] || 0) + 1;
   updatePressureFromAction(session, option, finalEffects);
   scheduleDelayedConsequence(session, event, option);
+  if (event.id.startsWith("forced_")) {
+    session.activeForcedEventId = "";
+  }
   const chainEntries = applyEndOfDayConsequences(session);
   chainEntries.forEach((item) => {
     session.history.push({
@@ -1646,6 +1773,19 @@ function applyChoice(optionId) {
       eventId: "chain_effect",
       eventTitle: "因果链回收",
       optionId: "chain_auto",
+      optionLabel: item.optionLabel,
+      tag: "chain",
+      impactText: item.impactText,
+      delta: item.delta,
+    });
+  });
+  const upkeepEntries = applyDailyUpkeep(session);
+  upkeepEntries.forEach((item) => {
+    session.history.push({
+      day: item.day,
+      eventId: "daily_upkeep",
+      eventTitle: "日常消耗",
+      optionId: "daily_upkeep",
       optionLabel: item.optionLabel,
       tag: "chain",
       impactText: item.impactText,
@@ -1665,6 +1805,7 @@ function applyChoice(optionId) {
   session.skillOffers = drawTempSkillsWithCooldown(session.random, 2, session.skillCooldownIds);
   pushSkillCooldown(session, session.skillOffers);
   session.skillUsedDay = false;
+  session.foodUsedDay = false;
 }
 
 function useSkill(skillId) {
@@ -1694,6 +1835,39 @@ function useSkill(skillId) {
   if (dead) finishSession(false);
 }
 
+function buyFood(foodId) {
+  const session = state.session;
+  if (session.mode !== "playing") return;
+  if (session.foodUsedDay) {
+    setNotice("今天已经吃过了");
+    return;
+  }
+  const food = FOOD_OPTIONS.find((item) => item.id === foodId);
+  if (!food) return;
+  const cost = Math.abs(food.effects.money || 0);
+  if (session.stats.money < cost) {
+    setNotice("现金不够，买不起这个");
+    return;
+  }
+
+  const before = cloneStats(session.stats);
+  applyEffects(session.stats, food.effects);
+  const after = cloneStats(session.stats);
+  session.foodUsedDay = true;
+
+  session.history.push({
+    day: session.dayIndex + 1,
+    eventId: "food_use",
+    eventTitle: `补给：${food.name}`,
+    optionId: food.id,
+    optionLabel: food.name,
+    tag: "food",
+    impactText: effectToText(statsDelta(before, after)),
+    delta: statsDelta(before, after),
+  });
+  setNotice(`已补给：${food.name}`);
+}
+
 function startNew(seed = Date.now()) {
   state.session = createSession(seed);
   state.session.mode = "playing";
@@ -1714,7 +1888,7 @@ function shareText() {
 
 function buildView() {
   const session = state.session;
-  const event = getCurrentEvent(session);
+  const event = session.mode === "playing" ? getCurrentEvent(session) : null;
   const score = computeScore(session);
 
   return {
@@ -1745,6 +1919,16 @@ function buildView() {
         name: item.name,
         text: item.text,
         impactText: effectToText(item.effects),
+      })),
+    },
+    foodShop: {
+      usedToday: session.foodUsedDay,
+      options: FOOD_OPTIONS.map((item) => ({
+        id: item.id,
+        name: item.name,
+        text: item.text,
+        impactText: effectToText(item.effects),
+        affordable: session.stats.money >= Math.abs(item.effects.money || 0),
       })),
     },
     history: session.history.slice(-6),
@@ -1844,6 +2028,10 @@ const ui = createGameUI(root, {
     useSkill(skillId);
     refresh();
   },
+  onBuyFood: (foodId) => {
+    buyFood(foodId);
+    refresh();
+  },
   onRestart: () => {
     startNew(Date.now());
     refresh();
@@ -1873,6 +2061,7 @@ window.render_game_to_text = () => {
         }
       : null,
     currentSkills: v.skills,
+    foodShop: v.foodShop,
     history: v.history,
     result: v.result,
     runtimeMode: v.runtimeMode,
