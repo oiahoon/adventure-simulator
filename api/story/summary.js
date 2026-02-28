@@ -18,7 +18,7 @@ function buildPrompt(payload = {}) {
 
   return [
     "你是都市生存题材剧情文案编辑。",
-    `请把以下这局“目标坚持${targetDay}天、实际坚持${daysSurvived}天”的决策记录改写成一段120-220字的中文小故事，第一人称，语气参考贴吧老哥：有点调侃、有点刺激、但不低俗。`,
+    `请把以下这局“目标坚持${targetDay}天、实际坚持${daysSurvived}天”的决策记录改写成一段140-260字的中文小故事，第一人称，语气参考贴吧老哥：有点调侃、有点刺激、但不低俗。`,
     "要求：",
     "1) 必须解释为什么会走到这个结局；",
     "2) 必须出现至少1个转折点；",
@@ -26,6 +26,9 @@ function buildPrompt(payload = {}) {
     "4) 要有轻微阴阳怪气和自嘲感，但不能攻击具体人群；",
     "5) 不要使用 Markdown，不要分点。",
     "6) 禁止直接使用“现金/体力/心态/人设/热度”这组游戏术语，改用生活化表达：现金=兜里余额，体力=精力槽，心态=情绪值，人设=口碑面子，热度=围观热度。",
+    "7) 在故事最后另起一行，必须以“正所谓：”开头，再给两句诗词做总结。",
+    "8) 这两句优先使用中国历史上真实古诗词原句；如果确实找不到贴切的，再仿古创作两句。",
+    "9) 最终输出只包含两部分：第一段故事 + 最后一行“正所谓：......”。",
     `结局：${ending.title || "未知结局"}；结局说明：${ending.subtitle || ""}`,
     `最终状态：${colloquialStats}`,
     `成因摘要：${reasonBullets.join("；") || "无"}`,
@@ -35,6 +38,31 @@ function buildPrompt(payload = {}) {
     "时间线：",
     timeline || "无记录",
   ].join("\n");
+}
+
+function pickPoeticFallback(payload = {}) {
+  const days = Number(payload.daysSurvived) || 0;
+  const stats = payload.stats || {};
+  const lowEnergy = Number(stats.energy) <= 2;
+  const lowMoney = Number(stats.money) <= 2;
+  const highHeat = Number(stats.heat) >= 7;
+
+  if (days >= 100) {
+    return "正所谓：长风破浪会有时，直挂云帆济沧海。山重水复疑无路，柳暗花明又一村。";
+  }
+  if (lowEnergy || lowMoney) {
+    return "正所谓：行到水穷处，坐看云起时。千磨万击还坚劲，任尔东西南北风。";
+  }
+  if (highHeat) {
+    return "正所谓：不畏浮云遮望眼，自缘身在最高层。沉舟侧畔千帆过，病树前头万木春。";
+  }
+  return "正所谓：山重水复疑无路，柳暗花明又一村。长风破浪会有时，直挂云帆济沧海。";
+}
+
+function ensurePoeticEnding(story, payload) {
+  if (!story) return story;
+  if (story.includes("正所谓：")) return story;
+  return `${story}\n${pickPoeticFallback(payload)}`;
 }
 
 export default async function handler(req, res) {
@@ -83,8 +111,8 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: false, error: "deepseek_empty_response" });
       return;
     }
-
-    res.status(200).json({ ok: true, story });
+    const normalizedStory = ensurePoeticEnding(story, payload);
+    res.status(200).json({ ok: true, story: normalizedStory });
   } catch (error) {
     res.status(200).json({ ok: false, error: "deepseek_exception", detail: String(error?.message || error) });
   }
