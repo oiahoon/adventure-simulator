@@ -18,6 +18,9 @@ function parsePayload(raw = "") {
       days: Number(parsed?.days || 0),
       avatarUrl: String(parsed?.avatarUrl || ""),
       role: String(parsed?.role || "都市求生者"),
+      reason: String(parsed?.reason || ""),
+      topDecision: String(parsed?.topDecision || ""),
+      poem: String(parsed?.poem || ""),
     };
   } catch {
     return {
@@ -27,6 +30,9 @@ function parsePayload(raw = "") {
       days: 0,
       avatarUrl: "",
       role: "都市求生者",
+      reason: "",
+      topDecision: "",
+      poem: "",
     };
   }
 }
@@ -36,6 +42,9 @@ export default function handler(req, res) {
   const title = escapeXml(payload.title).slice(0, 24);
   const subtitle = escapeXml(payload.subtitle).slice(0, 40);
   const role = escapeXml(payload.role).slice(0, 20);
+  const reason = escapeXml(payload.reason || "翻车主因：这局后劲很大。").slice(0, 48);
+  const topDecision = escapeXml(payload.topDecision || "").slice(0, 54);
+  const poem = escapeXml(payload.poem || "正所谓：山重水复疑无路，柳暗花明又一村。").slice(0, 60);
   const avatar = escapeXml(payload.avatarUrl);
 
   const avatarNode = avatar
@@ -59,8 +68,10 @@ export default function handler(req, res) {
   <text x="330" y="238" fill="#5f6573" font-size="36">${role}</text>
   <text x="330" y="340" fill="#1d2638" font-size="54" font-weight="700">${title}</text>
   <text x="330" y="398" fill="#7a5d34" font-size="32">${subtitle}</text>
-  <text x="330" y="480" fill="#ef6a3a" font-size="42" font-weight="700">生存 ${payload.days} 天 · 分数 ${payload.score}</text>
-  <text x="330" y="542" fill="#5f6573" font-size="28">点击链接立即开玩</text>
+  <text x="330" y="470" fill="#ef6a3a" font-size="42" font-weight="700">生存 ${payload.days} 天 · 分数 ${payload.score}</text>
+  <text x="330" y="518" fill="#5f6573" font-size="26">${reason}</text>
+  <text x="330" y="556" fill="#5f6573" font-size="24">${topDecision}</text>
+  <text x="330" y="592" fill="#7a5d34" font-size="22">${poem}</text>
   <rect x="80" y="175" width="190" height="190" rx="24" fill="#f7f1e4" stroke="#d8cfba" stroke-width="3" />
   ${avatarNode}
 </svg>`;

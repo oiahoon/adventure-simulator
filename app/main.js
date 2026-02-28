@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_13";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_14";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -1507,17 +1507,40 @@ function buildShareLink() {
   return url.toString();
 }
 
+function sanitizeShareLine(text = "", maxLen = 64) {
+  const cleaned = String(text)
+    .replace(/[*_`~#>\[\]\(\)]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1)}…` : cleaned;
+}
+
+function extractPoemLine(story = "") {
+  const lines = String(story)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const hit = lines.find((line) => /正所谓[:：]/.test(line));
+  return hit ? sanitizeShareLine(hit, 90) : "";
+}
+
 function buildSharePayload() {
   const result = state.session.result;
   if (!result) return null;
+  const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "", 80);
+  const poem = extractPoemLine(result.storyNarrative || "");
+  const topDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 72);
   return {
-    v: 1,
+    v: 2,
     title: result.ending?.title || "本局结局",
     subtitle: result.ending?.subtitle || "",
     score: result.score || 0,
     days: result.daysSurvived || 0,
     avatarUrl: state.session.avatar?.url || "",
     role: state.session.archetypeName || "都市求生者",
+    reason,
+    topDecision,
+    poem,
   };
 }
 
@@ -1879,10 +1902,17 @@ function shareText() {
   const result = state.session.result;
   if (!result) return "";
   const shareLink = buildSharePreviewLink();
+  const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "这一局主要是被连续连锁后果反噬。", 90);
+  const keyDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 90);
+  const poem = extractPoemLine(result.storyNarrative || "");
   return [
-    `我在《是男人就坚持100天》坚持了 ${result.daysSurvived} 天，分数 ${result.score}，结局：${result.ending.title}`,
-    `结局成因：${result.reason?.bullets?.[0] || "稳住了主要属性"}`,
+    `我在《是男人就坚持100天》硬扛了 ${result.daysSurvived} 天，结局：${result.ending.title}`,
+    `本局画像：${state.session.archetypeName}｜当前分 ${result.score}`,
+    `翻车主因：${reason}`,
+    keyDecision ? `关键一手：${keyDecision}` : "关键一手：这局每一步都在给后续埋雷。",
+    poem || "正所谓：山重水复疑无路，柳暗花明又一村。",
     shareLink ? `分享链接：${shareLink}` : "分享链接生成失败",
+    "#是男人就坚持100天 #都市生存挑战",
   ].join("\n");
 }
 
@@ -1968,8 +1998,8 @@ async function wechatShare() {
   const result = state.session.result;
   if (!result) return;
   const url = buildSharePreviewLink();
-  const title = `我在《是男人就坚持100天》活了 ${result.daysSurvived} 天`;
-  const text = `分数 ${result.score}，结局：${result.ending.title}`;
+  const title = `我在《是男人就坚持100天》扛了 ${result.daysSurvived} 天`;
+  const text = `结局：${result.ending.title}｜分数 ${result.score}｜${sanitizeShareLine(result.reason?.bullets?.[0] || "这局后劲很大。", 28)}`;
   try {
     if (navigator.share) {
       await navigator.share({ title, text, url });

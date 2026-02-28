@@ -8,6 +8,9 @@ function parsePayload(raw = "") {
       score: Number(parsed?.score || 0),
       days: Number(parsed?.days || 0),
       role: String(parsed?.role || "都市求生者"),
+      reason: String(parsed?.reason || ""),
+      topDecision: String(parsed?.topDecision || ""),
+      poem: String(parsed?.poem || ""),
     };
   } catch {
     return {
@@ -16,6 +19,9 @@ function parsePayload(raw = "") {
       score: 0,
       days: 0,
       role: "都市求生者",
+      reason: "",
+      topDecision: "",
+      poem: "",
     };
   }
 }
@@ -36,8 +42,8 @@ export default function handler(req, res) {
 
   const rawD = req.query?.d || "";
   const payload = parsePayload(rawD);
-  const title = `我在《是男人就坚持100天》活了 ${payload.days} 天`;
-  const desc = `结局：${payload.title}｜分数 ${payload.score}`;
+  const title = `我在《是男人就坚持100天》扛了 ${payload.days} 天`;
+  const desc = [payload.title, `分数 ${payload.score}`, payload.reason || payload.subtitle].filter(Boolean).join("｜");
   const image = `${origin}/api/share-image?d=${encodeURIComponent(rawD)}`;
   const url = `${origin}/api/share?d=${encodeURIComponent(rawD)}`;
   const redirect = `${origin}/public/index.html`;
