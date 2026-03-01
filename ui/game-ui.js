@@ -32,6 +32,7 @@ function chapterTone(chapter = "") {
 function optionCard(option, index) {
   const tag = TAG_META[option.tag] || { label: "行动流", cls: "tag-generic" };
   return `<button class="option-btn ${tag.cls}" data-option-id="${option.id}" style="--stagger:${index}">
+    <span class="opt-emblem" aria-hidden="true"></span>
     <span class="opt-head">
       <span class="opt-title">${option.label}</span>
       <span class="opt-tag">${tag.label}</span>
@@ -85,8 +86,10 @@ export function createGameUI(root, actions) {
     <section class="shell">
       <header class="topbar">
         <div class="brand-wrap">
-          <img class="logo-main" src="./assets/pixel/brand/logo-main.png" alt="是男人就坚持100天" decoding="async" loading="eager" />
-          <h1 class="sr-only">是男人就坚持100天</h1>
+          <div class="brand-line">
+            <img class="logo-mark" src="./assets/pixel/brand/logo-mark.png" alt="" decoding="async" loading="eager" />
+            <h1>是男人就坚持100天</h1>
+          </div>
           <p id="subtitle">都市生存挑战</p>
         </div>
         <button class="ghost" id="restart-btn">重开</button>
