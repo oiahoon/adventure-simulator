@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_33";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_34";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -72,8 +72,8 @@ const STARTER_ARCHETYPES = [
   },
   {
     id: "wang_saozhu",
-    name: "王骚猪（中年危机打工人）",
-    baseStats: { money: 5, energy: 4, mood: 5, reputation: 6, heat: 2 },
+    name: "王骚猪（30岁小有成就打工人）",
+    baseStats: { money: 6, energy: 5, mood: 4, reputation: 7, heat: 2 },
     openingIds: ["opening_wang_midlife_alarm"],
   },
 ];
@@ -165,6 +165,45 @@ const TEMP_SKILL_POOL = [
   },
 ];
 
+const WANG_SAOZHU_SKILL_POOL = [
+  {
+    id: "wang_ex_buffer",
+    name: "前任已读缓冲术",
+    text: "先把情绪摁住再回消息，心态回血但面子和热度会波动。",
+    effects: { mood: 2, heat: -1, reputation: -1, money: -1 },
+  },
+  {
+    id: "wang_resume_polish",
+    name: "简历抛光冲刺",
+    text: "把近三年成果重写一遍，口碑能涨但精力会被榨干。",
+    effects: { reputation: 2, money: 1, energy: -2, mood: -1 },
+  },
+  {
+    id: "wang_firefight",
+    name: "老本行救火",
+    text: "临危接锅能保住收入，但体力和情绪都要掉。",
+    effects: { money: 2, reputation: 1, energy: -2, mood: -1 },
+  },
+  {
+    id: "wang_night_walk",
+    name: "深夜散步断网",
+    text: "绕河走一圈，脑雾少了但你会错过一些关系节点。",
+    effects: { mood: 2, energy: 1, reputation: -1, heat: -1 },
+  },
+  {
+    id: "wang_apartment_downgrade",
+    name: "合租降本重排",
+    text: "马上省下一笔，但体面和舒适度会降级。",
+    effects: { money: 2, mood: -1, reputation: -1, heat: 1 },
+  },
+  {
+    id: "wang_rebound_post",
+    name: "朋友圈体面更新",
+    text: "看起来你还很稳，实际是拿现金和心态去换面子。",
+    effects: { reputation: 2, heat: 1, money: -2, mood: -1 },
+  },
+];
+
 const PIXEL_AVATAR_STAGE_POOLS = {
   office_worker: {
     early: ["./assets/pixel/avatars/stages/office-early.png", "./assets/pixel/avatars/coder.png"],
@@ -191,10 +230,10 @@ const PIXEL_AVATAR_STAGE_POOLS = {
     crisis: ["./assets/pixel/avatars/stages/network-crisis.png", "./assets/pixel/avatars/broker.png"],
   },
   wang_saozhu: {
-    early: ["./assets/pixel/avatars/stages/office-early.png", "./assets/pixel/avatars/coder.png"],
-    mid: ["./assets/pixel/avatars/stages/debt-mid.png", "./assets/pixel/avatars/runner-2.png"],
-    late: ["./assets/pixel/avatars/stages/network-late.png", "./assets/pixel/avatars/broker-3.png"],
-    crisis: ["./assets/pixel/avatars/stages/debt-crisis.png", "./assets/pixel/avatars/runner.png"],
+    early: ["./assets/pixel/avatars/wang-saozhu/wang-early.png"],
+    mid: ["./assets/pixel/avatars/wang-saozhu/wang-mid.png"],
+    late: ["./assets/pixel/avatars/wang-saozhu/wang-late.png"],
+    crisis: ["./assets/pixel/avatars/wang-saozhu/wang-crisis.png"],
   },
 };
 
@@ -232,6 +271,12 @@ const SKILL_ICON_VARIANTS = {
   ai_side_hustle: ["./assets/pixel/skills/skill-ai.png", "./assets/pixel/skills/skill-ai-2.png"],
   late_night_emo_post: ["./assets/pixel/skills/skill-emo.png", "./assets/pixel/skills/skill-emo-2.png"],
   bargain_king: ["./assets/pixel/skills/skill-coupon.png", "./assets/pixel/skills/skill-coupon-2.png"],
+  wang_ex_buffer: ["./assets/pixel/skills/wang-saozhu/wang-skill-ex-buffer.png"],
+  wang_resume_polish: ["./assets/pixel/skills/wang-saozhu/wang-skill-resume.png"],
+  wang_firefight: ["./assets/pixel/skills/wang-saozhu/wang-skill-firefight.png"],
+  wang_night_walk: ["./assets/pixel/skills/wang-saozhu/wang-skill-nightwalk.png"],
+  wang_apartment_downgrade: ["./assets/pixel/skills/wang-saozhu/wang-skill-resume.png"],
+  wang_rebound_post: ["./assets/pixel/skills/wang-saozhu/wang-skill-ex-buffer.png"],
   default: ["./assets/pixel/skills/skill-default.png", "./assets/pixel/skills/skill-default-2.png"],
 };
 
@@ -383,13 +428,13 @@ const OPENING_EVENTS = {
   opening_wang_midlife_alarm: {
     id: "opening_wang_midlife_alarm",
     chapter: "第一章：开局压力",
-    title: "王骚猪的周一暴击",
-    text: "王骚猪一早就收到“组织优化”通知，孩子补习费和房贷提醒同屏弹出。",
-    causeText: "由中年危机打工人开局触发。",
+    title: "王骚猪的分手后周一",
+    text: "分手后的第一个周一，王骚猪刚到工位就收到项目压缩通知，合租续租和搬家开销也同时弹窗。",
+    causeText: "由30岁小有成就打工人、刚分手的开局触发。",
     options: [
-      { id: "wang_hold_job", label: "先稳住工位", tag: "work", effects: { reputation: 1, mood: -1, energy: -1 }, setFlags: ["wang_line", "work_focus"] },
-      { id: "wang_find_side", label: "晚上找副业补坑", tag: "money", effects: { money: 1, energy: -2, mood: -1 }, setFlags: ["wang_line", "grind_path"] },
-      { id: "wang_call_old_friend", label: "联系老同事找后路", tag: "network", effects: { reputation: 1, money: 1, mood: -1 }, setFlags: ["wang_line", "network_mode"] },
+      { id: "wang_hold_job", label: "先稳住主业节奏", tag: "work", effects: { reputation: 1, mood: -1, energy: -1 }, setFlags: ["wang_line", "work_focus"] },
+      { id: "wang_find_side", label: "晚上开副业补现金", tag: "money", effects: { money: 1, energy: -2, mood: -1 }, setFlags: ["wang_line", "grind_path"] },
+      { id: "wang_call_old_friend", label: "找老同事探机会", tag: "network", effects: { reputation: 1, money: 1, mood: -1 }, setFlags: ["wang_line", "network_mode"] },
     ],
   },
 };
@@ -912,7 +957,7 @@ const WANG_CHAPTER_POOLS = {
         chapter: "第二章：工位保卫",
         title: "季度述职临时加码",
         text: "王骚猪刚坐下就被通知：述职要补一页“AI提效成果”，下午就要交。",
-        causeText: "由中年危机打工人主线触发。",
+        causeText: "由30岁职场转折主线触发。",
         options: [
           { id: "wang_s1_job_hard", label: "硬做一版先交", tag: "work", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
           { id: "wang_s1_job_scope", label: "砍范围保质量", tag: "control", effects: { reputation: 1, mood: 1 }, setFlags: ["scope_control"] },
@@ -978,25 +1023,25 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage2_pressure_a",
         chapter: "第三章：家庭与账单",
-        title: "补习费和房贷同天到期",
-        text: "手机提醒一排红点，王骚猪发现本月现金流直接打结。",
-        causeText: "由中年角色家庭账单压力触发。",
+        title: "分手后单人账单爆发",
+        text: "少了两个人分摊后，房租、通勤、外卖和搬家尾款一起压上来，现金流突然变窄。",
+        causeText: "由分手后单人现金流压力触发。",
         options: [
-          { id: "wang_s2_pay_mortgage", label: "先保房贷", tag: "money", effects: { money: -2, mood: -1, reputation: 1 }, setFlags: ["rent_secured"] },
-          { id: "wang_s2_cut_course", label: "压缩补习支出", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
+          { id: "wang_s2_pay_mortgage", label: "先保房租与通勤", tag: "money", effects: { money: -2, mood: -1, reputation: 1 }, setFlags: ["rent_secured"] },
+          { id: "wang_s2_cut_course", label: "全面降本生活", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
           { id: "wang_s2_credit_roll", label: "信用卡先周转", tag: "risk", effects: { money: 2, mood: -1, reputation: -1, heat: 1 }, setFlags: ["debt_spiral"] },
         ],
       },
       {
         id: "wang_stage2_pressure_b",
         chapter: "第三章：家庭与账单",
-        title: "家里问你要不要换工作",
-        text: "晚饭桌上大家都在问“要不要趁早跳槽”，你却拿不定主意。",
+        title: "分手消息传到同事圈",
+        text: "午休时你被同事关心“还好吗”，明明想装没事，情绪还是被拽出来。",
         causeText: "由家庭压力与职业不确定性触发。",
         options: [
-          { id: "wang_s2_job_search", label: "立刻投简历", tag: "work", effects: { reputation: 1, energy: -1, mood: 1 }, setFlags: ["upgrade_route"] },
-          { id: "wang_s2_hold_position", label: "先稳住当前工作", tag: "control", effects: { mood: 1, reputation: 1, money: 0 }, setFlags: ["work_focus"] },
-          { id: "wang_s2_start_sidebiz", label: "副业先跑起来", tag: "money", effects: { money: 1, energy: -1, heat: 1 }, setFlags: ["grind_path"] },
+          { id: "wang_s2_job_search", label: "把情绪转成行动", tag: "work", effects: { reputation: 1, energy: -1, mood: 1 }, setFlags: ["upgrade_route"] },
+          { id: "wang_s2_hold_position", label: "保持体面低调", tag: "control", effects: { mood: 1, reputation: 1, money: 0 }, setFlags: ["work_focus"] },
+          { id: "wang_s2_start_sidebiz", label: "深夜副业转移注意", tag: "money", effects: { money: 1, energy: -1, heat: 1 }, setFlags: ["grind_path"] },
         ],
       },
     ],
@@ -1004,7 +1049,7 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage2_backlash_a",
         chapter: "第三章：舆论和职场反噬",
-        title: "中年优化传言扩散",
+        title: "骨干优化传言扩散",
         text: "公司内部群开始流传“下一轮优化名单”，你的名字被多次提到。",
         causeText: "由高风险选择或高压状态反噬触发。",
         options: [
@@ -1046,13 +1091,13 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage3_relation_a",
         chapter: "第四章：关系拉扯",
-        title: "家人埋怨你总在加班",
-        text: "家里聚餐你又迟到，气氛一下变成了“谁都不开心”。",
+        title: "前任来拿剩下的东西",
+        text: "你下班回到家，门口放着待取的纸箱，消息框里是“今晚方便吗”。",
         causeText: "由关系线和高压节奏叠加触发。",
         options: [
-          { id: "wang_s3_relation_apology", label: "认真沟通道歉", tag: "social", effects: { reputation: 2, mood: 1, energy: -1 }, setFlags: ["reputation_stable"] },
-          { id: "wang_s3_relation_ignore", label: "先不解释", tag: "risk", effects: { mood: -1, reputation: -2, heat: 1 }, setFlags: ["trust_break"] },
-          { id: "wang_s3_relation_schedule", label: "固定家庭时间", tag: "control", effects: { mood: 1, reputation: 1, money: -1 }, setFlags: ["boundary_mode"] },
+          { id: "wang_s3_relation_apology", label: "平和交接好聚好散", tag: "social", effects: { reputation: 2, mood: 1, energy: -1 }, setFlags: ["reputation_stable"] },
+          { id: "wang_s3_relation_ignore", label: "拖着不回消息", tag: "risk", effects: { mood: -1, reputation: -2, heat: 1 }, setFlags: ["trust_break"] },
+          { id: "wang_s3_relation_schedule", label: "找朋友代为处理", tag: "control", effects: { mood: 1, reputation: 1, money: -1 }, setFlags: ["boundary_mode"] },
         ],
       },
     ],
@@ -1062,8 +1107,8 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage4_heat_a",
         chapter: "第五章：风口与体面",
-        title: "同城号突然带火你",
-        text: "你分享的中年职场吐槽被同城号搬运，评论区两极分化。",
+        title: "分手感悟帖意外上热门",
+        text: "你深夜写的分手后职场自救帖被搬运，评论区一半共情一半开嘲。",
         causeText: "由高热度或内容路线触发。",
         options: [
           { id: "wang_s4_heat_follow", label: "顺势连更", tag: "content", effects: { heat: 2, money: 1, reputation: -1 }, setFlags: ["viral_path"] },
@@ -1100,13 +1145,13 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage4_cash_b",
         chapter: "第五章：现金保卫",
-        title: "孩子兴趣班续费提醒",
-        text: "缴费页面停在你面前，王骚猪不得不在现金和家庭期待之间做选择。",
-        causeText: "由家庭责任与现金压力叠加触发。",
+        title: "单人生活成本重算",
+        text: "你开始重算每月固定支出，发现以前两人摊掉的成本如今都压在自己身上。",
+        causeText: "由分手后独居成本与现金压力叠加触发。",
         options: [
-          { id: "wang_s4_course_pay", label: "咬牙续费", tag: "money", effects: { money: -2, reputation: 1, mood: -1 }, setFlags: ["survival_focus"] },
-          { id: "wang_s4_course_pause", label: "先暂停一期", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
-          { id: "wang_s4_course_alt", label: "找平替课程", tag: "network", effects: { money: 0, reputation: 1, mood: 1 }, setFlags: ["resource_swap"] },
+          { id: "wang_s4_course_pay", label: "维持原生活标准", tag: "money", effects: { money: -2, reputation: 1, mood: -1 }, setFlags: ["survival_focus"] },
+          { id: "wang_s4_course_pause", label: "立刻降本瘦身", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
+          { id: "wang_s4_course_alt", label: "找朋友共享资源", tag: "network", effects: { money: 0, reputation: 1, mood: 1 }, setFlags: ["resource_swap"] },
         ],
       },
     ],
@@ -1116,8 +1161,8 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage5_debt_a",
         chapter: "第六章：摊牌时刻",
-        title: "家庭账本公开审判",
-        text: "你终于坐下来和家里一起摊开账本，过去的选择都变成了具体数字。",
+        title: "情绪账本与现金账本",
+        text: "你把这段时间的收入、支出和情绪波动都列出来，终于看清自己在透支什么。",
         causeText: "由债务和低现金路径触发。",
         options: [
           { id: "wang_s5_debt_rebuild", label: "重排预算先活下去", tag: "control", effects: { money: 1, reputation: 1, mood: -1 }, setFlags: ["budget_rebuild"] },
@@ -1154,8 +1199,8 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage5_pivot_b",
         chapter: "第六章：再就业分岔",
-        title: "中年转型训练营",
-        text: "一个“中年再就业”训练营给你发来录取通知，学费和时间都很吃紧。",
+        title: "30+转型训练营",
+        text: "一个“30+再加速”训练营给你发来录取通知，学费和时间都很吃紧。",
         causeText: "由长线生存后期触发的转型机会。",
         options: [
           { id: "wang_s5_camp_join", label: "报名冲一把", tag: "work", effects: { reputation: 2, money: -2, energy: -1 }, setFlags: ["upgrade_route"] },
@@ -1665,9 +1710,14 @@ function drawTempSkills(random, count = 2, sourcePool = TEMP_SKILL_POOL) {
   return picks;
 }
 
-function drawTempSkillsWithCooldown(random, count = 2, cooldownIds = []) {
+function getTempSkillPool(archetypeId) {
+  if (archetypeId === "wang_saozhu") return WANG_SAOZHU_SKILL_POOL;
+  return TEMP_SKILL_POOL;
+}
+
+function drawTempSkillsWithCooldown(random, count = 2, cooldownIds = [], sourcePool = TEMP_SKILL_POOL) {
   const cooldown = new Set(cooldownIds || []);
-  const preferred = TEMP_SKILL_POOL.filter((item) => !cooldown.has(item.id));
+  const preferred = sourcePool.filter((item) => !cooldown.has(item.id));
   if (preferred.length >= count) {
     return drawTempSkills(
       random,
@@ -1675,7 +1725,7 @@ function drawTempSkillsWithCooldown(random, count = 2, cooldownIds = []) {
       preferred,
     );
   }
-  const mixed = [...preferred, ...TEMP_SKILL_POOL.filter((item) => cooldown.has(item.id))];
+  const mixed = [...preferred, ...sourcePool.filter((item) => cooldown.has(item.id))];
   return drawTempSkills(random, count, mixed);
 }
 
@@ -2256,10 +2306,11 @@ function createSession(seed = Date.now()) {
   const archetype = randomPick(STARTER_ARCHETYPES, random);
   const openingEvent = chooseOpening(archetype, random);
   const avatar = buildAvatarConfig(random, seed, archetype.id);
+  const skillPool = getTempSkillPool(archetype.id);
   const base = archetype.baseStats;
 
   const jitter = () => (random() < 0.5 ? -1 : 1);
-  const skillOffers = drawTempSkills(random, 2);
+  const skillOffers = drawTempSkillsWithCooldown(random, 2, [], skillPool);
   return {
     seed,
     random,
@@ -2486,7 +2537,8 @@ function applyChoice(optionId) {
   session.dayIndex += 1;
   session.cachedEvent = null;
   session.cachedEventDayIndex = -1;
-  session.skillOffers = drawTempSkillsWithCooldown(session.random, 2, session.skillCooldownIds);
+  const skillPool = getTempSkillPool(session.archetypeId);
+  session.skillOffers = drawTempSkillsWithCooldown(session.random, 2, session.skillCooldownIds, skillPool);
   pushSkillCooldown(session, session.skillOffers);
   session.skillUsedDay = false;
   session.foodUsedDay = false;
