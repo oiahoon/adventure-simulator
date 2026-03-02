@@ -223,9 +223,9 @@ export function createGameUI(root, actions) {
       .map((item) => `<li>${item.name}：${item.label}（分值 ${item.score >= 0 ? "+" : ""}${item.score}｜置信 ${item.confidence}%）</li>`)
       .join("");
     const radarSvg = persona?.traits?.length >= 5 ? buildPentagonRadarSvg(persona.traits.slice(0, 5)) : "";
-    const avatarHtml = view.avatar?.baseUrl
-      ? `<img class="persona-avatar-img" src="${view.avatar.baseUrl}" alt="角色头像" loading="eager" decoding="async" />`
-      : `<div class="persona-avatar-fallback">?</div>`;
+    const radarBg = view.avatar?.baseUrl
+      ? `<img class="persona-radar-bg" src="${view.avatar.baseUrl}" alt="" loading="eager" decoding="async" />`
+      : "";
 
     panel.innerHTML = `
       <article class="card hero end">
@@ -240,31 +240,6 @@ export function createGameUI(root, actions) {
           </ul>
         </article>
         <article class="reason-block">
-          <h3>Top3 关键因果节点</h3>
-          <ul class="history">${simpleList(view.result.reason?.review?.topNodes || [])}</ul>
-          <h3>Top3 关键决策</h3>
-          <ul class="history">${simpleList(view.result.reason?.review?.topDecisions || [])}</ul>
-          <p class="opt-impact">链路摘要：${view.result.reason?.review?.chainSummary || "暂无"}</p>
-        </article>
-        <article class="reason-block">
-          <h3>下局三条建议</h3>
-          <ul class="history">${simpleList(view.result.reason?.nextRunTips || [])}</ul>
-        </article>
-        <article class="reason-block">
-          <h3>行为人格画像</h3>
-          <div class="persona-head">
-            <div class="persona-avatar">${avatarHtml}</div>
-            <div class="persona-radar-wrap">${radarSvg}</div>
-          </div>
-          <p class="opt-impact">画像：${persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
-          <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
-          <p class="opt-impact">${persona?.note || ""}</p>
-          <h3>画像证据</h3>
-          <ul class="history">${simpleList(persona?.evidence || [])}</ul>
-          <h3>画像建议</h3>
-          <ul class="history">${simpleList(persona?.tips || [])}</ul>
-        </article>
-        <article class="reason-block">
           <h3>整局故事</h3>
           ${
             view.result.storyLoading
@@ -274,16 +249,32 @@ export function createGameUI(root, actions) {
                 : `<p>暂未生成（${view.result.storyError || "unknown"}）</p>`
           }
         </article>
+        <article class="reason-block">
+          <h3>Top3 关键因果节点</h3>
+          <ul class="history">${simpleList(view.result.reason?.review?.topNodes || [])}</ul>
+          <h3>Top3 关键决策</h3>
+          <ul class="history">${simpleList(view.result.reason?.review?.topDecisions || [])}</ul>
+          <p class="opt-impact">链路摘要：${view.result.reason?.review?.chainSummary || "暂无"}</p>
+        </article>
+        <article class="reason-block">
+          <h3>行为人格画像</h3>
+          <div class="persona-head">
+            <div class="persona-radar-wrap">${radarBg}${radarSvg}</div>
+          </div>
+          <p class="opt-impact">画像：${persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
+          <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
+          <p class="opt-impact">${persona?.note || ""}</p>
+          <h3>画像证据</h3>
+          <ul class="history">${simpleList(persona?.evidence || [])}</ul>
+          <h3>画像建议</h3>
+          <ul class="history">${simpleList(persona?.tips || [])}</ul>
+        </article>
         <p class="opt-impact">${restartLocked ? "结局刚生成，按钮短暂保护中，避免误触。" : restartConfirm ? "再次点击将立即重开新局。" : "点击“再来一局”后需二次确认，防止误触。"}</p>
         <div class="action-grid end-actions">
           <button class="primary" id="start-btn" ${restartLocked ? "disabled" : ""}>${restartText}</button>
           <button class="ghost" id="wechat-share-btn">微信分享</button>
           <button class="ghost" id="copy-share-btn">复制分享文案</button>
         </div>
-      </article>
-      <article class="card">
-        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-history.svg" alt="" />最近决策</h3>
-        <ul class="history">${view.history.map(historyItem).join("")}</ul>
       </article>
     `;
 
