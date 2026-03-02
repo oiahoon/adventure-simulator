@@ -262,6 +262,7 @@ export function createGameUI(root, actions) {
             <div class="persona-radar-wrap">${radarBg}${radarSvg}</div>
           </div>
           <p class="opt-impact">画像：${persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
+          ${persona?.lowConfidence ? `<p class="opt-impact">样本不足：本局证据密度偏低，先看趋势，不建议下定型结论。</p>` : ""}
           <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
           <p class="opt-impact">${persona?.note || ""}</p>
           <h3>画像证据</h3>

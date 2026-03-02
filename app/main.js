@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_39";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_40";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -2064,6 +2064,87 @@ function endingByScore(score, alive) {
   };
 }
 
+const SIGNAL_VECTOR = {
+  risk_seek: { riskCalibration: 1.5, horizonFocus: -0.7, executionDrive: 0.8 },
+  risk_averse: { riskCalibration: -1.4, horizonFocus: 0.9, executionDrive: -0.3 },
+  social_leverage: { socialDrive: 1.3, executionDrive: 0.3 },
+  solo_drive: { socialDrive: -1.1, executionDrive: 0.7 },
+  recovery_focus: { stressRecovery: 1.4, horizonFocus: 0.3 },
+  overdrive: { stressRecovery: -1.3, executionDrive: 1.1 },
+  long_term_plan: { horizonFocus: 1.4, riskCalibration: -0.3 },
+  short_term_relief: { horizonFocus: -1.2, riskCalibration: 0.6 },
+  boundary_setting: { stressRecovery: 1.0, socialDrive: -0.2, horizonFocus: 0.6 },
+  execution_push: { executionDrive: 1.4, stressRecovery: -0.3 },
+  execution_hold: { executionDrive: -1.0, stressRecovery: 0.4 },
+};
+
+const EVENT_OPTION_SIGNAL_MAP = new Map();
+
+function inferOptionSignals(option, event = null) {
+  const label = `${option?.label || ""} ${option?.id || ""} ${event?.title || ""} ${event?.chapter || ""}`;
+  const tag = option?.tag || "";
+  const effects = option?.effects || {};
+  const signals = new Set();
+
+  if (tag === "risk") signals.add("risk_seek");
+  if (tag === "control") signals.add("risk_averse");
+  if (tag === "network" || tag === "social") signals.add("social_leverage");
+  if (tag === "work" || tag === "money") signals.add("execution_push");
+  if (tag === "rest") {
+    signals.add("recovery_focus");
+    signals.add("execution_hold");
+  }
+  if ((effects.energy || 0) <= -2 || (effects.mood || 0) <= -2) signals.add("overdrive");
+  if ((effects.energy || 0) >= 2 || (effects.mood || 0) >= 2) signals.add("recovery_focus");
+  if ((effects.money || 0) >= 2 && (effects.reputation || 0) < 0) signals.add("short_term_relief");
+  if ((effects.money || 0) < 0 && (effects.reputation || 0) > 0) signals.add("long_term_plan");
+  if (/(延|稳|预算|复查|观察|降温|止损|砍范围|边界|保质量|重排|复盘|节奏)/.test(label)) {
+    signals.add("long_term_plan");
+    signals.add("boundary_setting");
+  }
+  if (/(梭哈|直接|硬顶|硬扛|冲|跟投|对线|连更|蹭|爆|立刻)/.test(label)) {
+    signals.add("risk_seek");
+    signals.add("execution_push");
+  }
+  if (/(先拖|拖一拖|躲|隐瞒|应付|模板|认栽)/.test(label)) signals.add("short_term_relief");
+  if (/(私聊|找朋友|合伙|协作|资源|人情|求助)/.test(label)) signals.add("social_leverage");
+  if (/(离线|休整|早睡|断网|散步|补眠|看病|门诊|躺平)/.test(label)) signals.add("recovery_focus");
+  if (/(拒绝|中立|低调|停更|暂停|观望)/.test(label)) signals.add("execution_hold");
+  if (/(自己|独自|硬做|亲自)/.test(label)) signals.add("solo_drive");
+
+  return [...signals];
+}
+
+function indexEventOptionSignals() {
+  EVENT_OPTION_SIGNAL_MAP.clear();
+  const registerFromEvent = (event) => {
+    if (!event || !Array.isArray(event.options)) return;
+    event.options.forEach((option) => {
+      if (!option?.id) return;
+      const inferred = inferOptionSignals(option, event);
+      option.signals = Array.isArray(option.signals) && option.signals.length
+        ? Array.from(new Set([...option.signals, ...inferred]))
+        : inferred;
+      EVENT_OPTION_SIGNAL_MAP.set(option.id, option.signals);
+    });
+  };
+
+  Object.values(OPENING_EVENTS).forEach(registerFromEvent);
+  Object.values(FORCED_EVENTS).forEach(registerFromEvent);
+  Object.values(MILESTONE_EVENTS).forEach(registerFromEvent);
+  GROWTH_EVENT_POOL.forEach(registerFromEvent);
+  Object.values(STATE_INCIDENT_POOLS).forEach((arr) => arr.forEach(registerFromEvent));
+
+  Object.values(CHAPTER_POOLS).forEach((stage) => {
+    Object.values(stage).forEach((arr) => arr.forEach(registerFromEvent));
+  });
+  Object.values(WANG_CHAPTER_POOLS).forEach((stage) => {
+    Object.values(stage).forEach((arr) => arr.forEach(registerFromEvent));
+  });
+}
+
+indexEventOptionSignals();
+
 const PERSONALITY_DIMENSIONS = [
   {
     id: "riskCalibration",
@@ -2165,10 +2246,13 @@ function computeEntryTraitImpact(entry, traitId) {
     (delta.reputation || 0) * (ew.reputation || 0) +
     (delta.heat || 0) * (ew.heat || 0)
   ) * 0.38 * factor;
-  return tagImpact + effectImpact;
+  const signalImpact = (entry.signals || [])
+    .map((signal) => (SIGNAL_VECTOR[signal] || {})[traitId] || 0)
+    .reduce((sum, value) => sum + value, 0) * 0.55 * factor;
+  return tagImpact + effectImpact + signalImpact;
 }
 
-function buildPersonalityProfile(session) {
+function buildPersonalityProfile(session, calibration = null) {
   const rawScores = Object.fromEntries(PERSONALITY_DIMENSIONS.map((item) => [item.id, 0]));
   const evidenceCount = Object.fromEntries(PERSONALITY_DIMENSIONS.map((item) => [item.id, 0]));
 
@@ -2192,7 +2276,8 @@ function buildPersonalityProfile(session) {
   });
 
   const traitProfiles = PERSONALITY_DIMENSIONS.map((trait) => {
-    const score = normalizeTraitScore(rawScores[trait.id]);
+    const calibratedRaw = rawScores[trait.id] - ((calibration?.biasByArchetype?.[session.archetypeId]?.[trait.id] || 0) * 0.55);
+    const score = normalizeTraitScore(calibratedRaw);
     const label = score >= 0 ? trait.highLabel : trait.lowLabel;
     const coverage = Math.min(1, evidenceCount[trait.id] / 10);
     const intensity = Math.min(1, Math.abs(score) / 68);
@@ -2213,6 +2298,8 @@ function buildPersonalityProfile(session) {
     .slice(0, 2);
   const profileTitle = dominant.length >= 2 ? `${dominant[0].label} · ${dominant[1].label}` : (dominant[0]?.label || "观察中");
   const avgConfidence = Math.round(traitProfiles.reduce((sum, item) => sum + item.confidence, 0) / Math.max(1, traitProfiles.length));
+  const totalEvidence = traitProfiles.reduce((sum, item) => sum + item.evidenceCount, 0);
+  const lowConfidence = avgConfidence < 52 || totalEvidence < 16 || session.history.length < 14;
 
   const evidenceLines = [];
   const used = new Set();
@@ -2250,11 +2337,161 @@ function buildPersonalityProfile(session) {
     framework: "behavioral-traits",
     title: profileTitle,
     confidence: avgConfidence,
-    note: "基于本局行为证据生成，不等同临床或正式心理测评。",
+    lowConfidence,
+    note: lowConfidence
+      ? "样本不足或波动过高，本次仅展示倾向观察，不建议做定型判断。"
+      : "基于本局行为证据生成，不等同临床或正式心理测评。",
     traits: traitProfiles,
     evidence: evidenceLines.slice(0, 3),
     tips: tips.slice(0, 2),
   };
+}
+
+let personaCalibrationCache = null;
+
+function pickOptionForCalibration(session, options) {
+  const sorted = [...options].sort((a, b) => {
+    const effectA = (a.effects?.money || 0) + (a.effects?.energy || 0) + (a.effects?.mood || 0) + (a.effects?.reputation || 0);
+    const effectB = (b.effects?.money || 0) + (b.effects?.energy || 0) + (b.effects?.mood || 0) + (b.effects?.reputation || 0);
+    return effectB - effectA;
+  });
+  if (session.random() < 0.55) return sorted[0];
+  return sorted[Math.floor(session.random() * sorted.length)];
+}
+
+function simulateChoiceOnSession(session, option) {
+  const event = getCurrentEvent(session);
+  if (!event || !option) return false;
+  const resolved = resolveOptionOutcome(session, option);
+  const finalEffects = resolved.effects;
+  const before = cloneStats(session.stats);
+  applyEffects(session.stats, finalEffects);
+  applyOptionMeta(session, option);
+  if (session.lastTag === option.tag) {
+    session.sameTagCount += 1;
+  } else {
+    session.sameTagCount = 1;
+    session.lastTag = option.tag;
+  }
+  if (session.sameTagCount >= 3) {
+    session.stats.mood = clamp(session.stats.mood - 1);
+    session.stats.reputation = clamp(session.stats.reputation - 1);
+  }
+  const after = cloneStats(session.stats);
+  session.history.push({
+    day: session.dayIndex + 1,
+    eventId: event.id,
+    eventTitle: event.title,
+    optionId: option.id,
+    optionLabel: `${option.label}${resolved.note}`,
+    tag: option.tag,
+    signals: option.signals || EVENT_OPTION_SIGNAL_MAP.get(option.id) || [],
+    impactText: effectToText(statsDelta(before, after)),
+    delta: statsDelta(before, after),
+  });
+  session.usedEventIds.add(event.id);
+  session.eventSeenCount[event.id] = (session.eventSeenCount[event.id] || 0) + 1;
+  if (event.id.startsWith("milestone_")) session.milestoneDone[event.id] = true;
+  updatePressureFromAction(session, option, finalEffects);
+  scheduleDelayedConsequence(session, event, option);
+  if (event.id.startsWith("forced_")) session.activeForcedEventId = "";
+  const chainEntries = applyEndOfDayConsequences(session);
+  chainEntries.forEach((item) => {
+    session.history.push({
+      day: item.day,
+      eventId: "chain_effect",
+      eventTitle: "因果链回收",
+      optionId: "chain_auto",
+      optionLabel: item.optionLabel,
+      tag: "chain",
+      signals: [],
+      impactText: item.impactText,
+      delta: item.delta,
+    });
+  });
+  const upkeepEntries = applyDailyUpkeep(session);
+  upkeepEntries.forEach((item) => {
+    session.history.push({
+      day: item.day,
+      eventId: "daily_upkeep",
+      eventTitle: "日常消耗",
+      optionId: "daily_upkeep",
+      optionLabel: item.optionLabel,
+      tag: "chain",
+      signals: [],
+      impactText: item.impactText,
+      delta: item.delta,
+    });
+  });
+  const dead = [session.stats.money, session.stats.energy, session.stats.mood, session.stats.reputation].some((v) => v <= 0);
+  if (!dead) {
+    session.dayIndex += 1;
+    session.cachedEvent = null;
+    session.cachedEventDayIndex = -1;
+  }
+  return !dead;
+}
+
+function runPersonaCalibration() {
+  const archetypes = STARTER_ARCHETYPES.map((item) => item.id);
+  const traitIds = PERSONALITY_DIMENSIONS.map((item) => item.id);
+  const sums = Object.fromEntries(archetypes.map((id) => [id, Object.fromEntries(traitIds.map((tid) => [tid, 0]))]));
+  const counts = Object.fromEntries(archetypes.map((id) => [id, 0]));
+
+  archetypes.forEach((archetypeId, i) => {
+    for (let k = 0; k < 6; k += 1) {
+      const seed = 700000 + i * 1000 + k;
+      const session = createSession(seed, { forceArchetypeId: archetypeId });
+      session.mode = "playing";
+      let safety = 0;
+      while (safety < 45) {
+        safety += 1;
+        const event = getCurrentEvent(session);
+        if (!event?.options?.length) break;
+        const option = pickOptionForCalibration(session, event.options);
+        const alive = simulateChoiceOnSession(session, option);
+        if (!alive) break;
+      }
+      const profile = buildPersonalityProfile(session, null);
+      profile.traits.forEach((trait) => {
+        sums[archetypeId][trait.id] += trait.score;
+      });
+      counts[archetypeId] += 1;
+    }
+  });
+
+  const avgByArchetype = {};
+  const globalAvg = Object.fromEntries(traitIds.map((tid) => [tid, 0]));
+  let archetypeN = 0;
+  archetypes.forEach((id) => {
+    const c = Math.max(1, counts[id]);
+    avgByArchetype[id] = {};
+    traitIds.forEach((tid) => {
+      avgByArchetype[id][tid] = sums[id][tid] / c;
+      globalAvg[tid] += avgByArchetype[id][tid];
+    });
+    archetypeN += 1;
+  });
+  traitIds.forEach((tid) => {
+    globalAvg[tid] /= Math.max(1, archetypeN);
+  });
+
+  const biasByArchetype = {};
+  archetypes.forEach((id) => {
+    biasByArchetype[id] = {};
+    traitIds.forEach((tid) => {
+      biasByArchetype[id][tid] = avgByArchetype[id][tid] - globalAvg[tid];
+    });
+  });
+
+  return { samplesPerArchetype: 6, biasByArchetype };
+}
+
+function getPersonaCalibration() {
+  if (!personaCalibrationCache) {
+    personaCalibrationCache = runPersonaCalibration();
+  }
+  return personaCalibrationCache;
 }
 
 function buildEndingReason(session, alive) {
@@ -2494,9 +2731,10 @@ function applyDailyUpkeep(session) {
   return logs;
 }
 
-function createSession(seed = Date.now()) {
+function createSession(seed = Date.now(), options = {}) {
   const random = seededRandom(seed);
-  const archetype = randomPick(STARTER_ARCHETYPES, random);
+  const forcedArchetype = STARTER_ARCHETYPES.find((item) => item.id === options.forceArchetypeId);
+  const archetype = forcedArchetype || randomPick(STARTER_ARCHETYPES, random);
   const openingEvent = chooseOpening(archetype, random);
   const avatar = buildAvatarConfig(random, seed, archetype.id);
   const skillPool = getTempSkillPool(archetype.id);
@@ -2614,7 +2852,7 @@ function finishSession(alive) {
   const score = computeScore(state.session);
   const ending = endingByScore(score, alive);
   const reason = buildEndingReason(state.session, alive);
-  const personality = buildPersonalityProfile(state.session);
+  const personality = buildPersonalityProfile(state.session, getPersonaCalibration());
   const daysSurvived = state.session.dayIndex + 1;
 
   state.session.mode = "ended";
@@ -2682,6 +2920,7 @@ function applyChoice(optionId) {
     optionId: option.id,
     optionLabel: `${option.label}${resolved.note}`,
     tag: option.tag,
+    signals: option.signals || EVENT_OPTION_SIGNAL_MAP.get(option.id) || [],
     impactText: effectToText(statsDelta(before, after)),
     delta: statsDelta(before, after),
   });
@@ -2758,6 +2997,7 @@ function useSkill(skillId) {
     optionId: skill.id,
     optionLabel: skill.name,
     tag: "skill",
+    signals: inferOptionSignals({ id: skill.id, label: skill.name, tag: "work", effects: skill.effects }, { title: "技能使用", chapter: "技能" }),
     impactText: effectToText(statsDelta(before, after)),
     delta: statsDelta(before, after),
   });
@@ -2793,6 +3033,7 @@ function buyFood(foodId) {
     optionId: food.id,
     optionLabel: food.name,
     tag: "food",
+    signals: inferOptionSignals({ id: food.id, label: food.name, tag: "rest", effects: food.effects }, { title: "补给购买", chapter: "补给" }),
     impactText: effectToText(statsDelta(before, after)),
     delta: statsDelta(before, after),
   });
