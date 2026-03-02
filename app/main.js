@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_41";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_42";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -2299,7 +2299,7 @@ function buildPersonalityProfile(session, calibration = null) {
   const profileTitle = dominant.length >= 2 ? `${dominant[0].label} · ${dominant[1].label}` : (dominant[0]?.label || "观察中");
   const avgConfidence = Math.round(traitProfiles.reduce((sum, item) => sum + item.confidence, 0) / Math.max(1, traitProfiles.length));
   const totalEvidence = traitProfiles.reduce((sum, item) => sum + item.evidenceCount, 0);
-  const lowConfidence = avgConfidence < 52 || totalEvidence < 16 || session.history.length < 14;
+  const lowConfidence = avgConfidence < 58 || totalEvidence < 22 || entries.length < 18;
 
   const evidenceLines = [];
   const used = new Set();
@@ -2338,6 +2338,13 @@ function buildPersonalityProfile(session, calibration = null) {
     title: profileTitle,
     confidence: avgConfidence,
     lowConfidence,
+    sample: {
+      behaviorEntries: entries.length,
+      totalEvidence,
+      totalHistory: session.history.length,
+      calibrated: Boolean(calibration?.biasByArchetype),
+      calibrationSamples: Number(calibration?.samplesPerArchetype) || 0,
+    },
     note: lowConfidence
       ? "样本不足或波动过高，本次仅展示倾向观察，不建议做定型判断。"
       : "基于本局行为证据生成，不等同临床或正式心理测评。",
@@ -2347,6 +2354,8 @@ function buildPersonalityProfile(session, calibration = null) {
   };
 }
 
+const PERSONA_CALIBRATION_VERSION = "persona-cal-v2";
+const PERSONA_CALIBRATION_STORAGE_KEY = "persona-calibration-cache-v2";
 let personaCalibrationCache = null;
 
 function pickOptionForCalibration(session, options) {
@@ -2437,14 +2446,16 @@ function runPersonaCalibration() {
   const traitIds = PERSONALITY_DIMENSIONS.map((item) => item.id);
   const sums = Object.fromEntries(archetypes.map((id) => [id, Object.fromEntries(traitIds.map((tid) => [tid, 0]))]));
   const counts = Object.fromEntries(archetypes.map((id) => [id, 0]));
+  const samplesPerArchetype = 18;
+  const maxCalibrationDays = 55;
 
   archetypes.forEach((archetypeId, i) => {
-    for (let k = 0; k < 6; k += 1) {
+    for (let k = 0; k < samplesPerArchetype; k += 1) {
       const seed = 700000 + i * 1000 + k;
       const session = createSession(seed, { forceArchetypeId: archetypeId });
       session.mode = "playing";
       let safety = 0;
-      while (safety < 45) {
+      while (safety < maxCalibrationDays) {
         safety += 1;
         const event = getCurrentEvent(session);
         if (!event?.options?.length) break;
@@ -2484,13 +2495,32 @@ function runPersonaCalibration() {
     });
   });
 
-  return { samplesPerArchetype: 6, biasByArchetype };
+  return {
+    version: PERSONA_CALIBRATION_VERSION,
+    samplesPerArchetype,
+    maxCalibrationDays,
+    generatedAt: new Date().toISOString(),
+    biasByArchetype,
+  };
 }
 
 function getPersonaCalibration() {
-  if (!personaCalibrationCache) {
-    personaCalibrationCache = runPersonaCalibration();
-  }
+  if (personaCalibrationCache) return personaCalibrationCache;
+  try {
+    const saved = localStorage.getItem(PERSONA_CALIBRATION_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed?.version === PERSONA_CALIBRATION_VERSION && parsed?.biasByArchetype) {
+        personaCalibrationCache = parsed;
+        return personaCalibrationCache;
+      }
+    }
+  } catch {}
+
+  personaCalibrationCache = runPersonaCalibration();
+  try {
+    localStorage.setItem(PERSONA_CALIBRATION_STORAGE_KEY, JSON.stringify(personaCalibrationCache));
+  } catch {}
   return personaCalibrationCache;
 }
 
@@ -2808,6 +2838,22 @@ async function generateStoryNarrative() {
     targetDay: TARGET_DAY,
     reasonBullets: result.reason?.bullets || [],
     review: result.reason?.review || {},
+    personality: {
+      title: result.personality?.title || "",
+      confidence: result.personality?.confidence || 0,
+      lowConfidence: Boolean(result.personality?.lowConfidence),
+      note: result.personality?.note || "",
+      sample: result.personality?.sample || {},
+      traits: (result.personality?.traits || []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        score: item.score,
+        label: item.label,
+        confidence: item.confidence,
+      })),
+      evidence: result.personality?.evidence || [],
+      tips: result.personality?.tips || [],
+    },
   };
 
   try {
@@ -2837,6 +2883,18 @@ async function generateStoryNarrative() {
       result.storyNarrative = okData.story;
       result.storyLoading = false;
       result.storyError = "";
+      if (okData.persona && typeof okData.persona === "object") {
+        result.personality = {
+          ...result.personality,
+          llm: {
+            title: String(okData.persona.title || ""),
+            summary: String(okData.persona.summary || ""),
+            lowConfidenceNote: String(okData.persona.lowConfidenceNote || ""),
+            traitComments: Array.isArray(okData.persona.traitComments) ? okData.persona.traitComments : [],
+            tips: Array.isArray(okData.persona.tips) ? okData.persona.tips : [],
+          },
+        };
+      }
     } else {
       result.storyLoading = false;
       result.storyError = lastError;
@@ -3054,7 +3112,7 @@ function shareText() {
   const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "这一局主要是被连续连锁后果反噬。", 90);
   const nextTip = sanitizeShareLine((result.reason?.nextRunTips || [])[0] || "下局先稳住现金和体力，再考虑热度。", 90);
   const keyDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 90);
-  const personaTitle = sanitizeShareLine(result.personality?.title || "", 70);
+  const personaTitle = sanitizeShareLine(result.personality?.llm?.title || result.personality?.title || "", 70);
   const poem = extractPoemLine(result.storyNarrative || "");
   return [
     `我在《是男人就坚持100天》硬扛了 ${result.daysSurvived} 天，结局：${result.ending.title}`,

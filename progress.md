@@ -728,3 +728,40 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 批量 seed 回测校准：新增轻量回测器（每角色 6 seeds，最长 45 天）计算 archetype 偏移，并在结算时进行偏置修正。
 - 低置信度保护：当证据密度不足或样本偏短时，自动显示“倾向观察”文案，避免强定型。
 - 版本缓存提升：`main.js?v=20260302_40`。
+
+## UI Asset Pass: Corner Transparency + Image-first Panels (2026-03-02)
+- 修复 `public/assets/pixel/decor/corners/*.png`：由 SVG 重新导出四向角标，统一为透明通道 PNG（移除白底）。
+- 检查图片资产通道：角标与卡片底图均可正常加载，角标已从 `srgb` 异常图转为 `srgba`。
+- UI 样式改造（`public/index.html`）：
+  - 主卡片、事件卡、技能/补给模块增加图片纹理底。
+  - `primary/ghost` 操作按钮改为“图片纹理 + 角标”皮肤，减少纯色按钮。
+  - `skill/supply` 模块背景改为局部元素点缀，避免大图遮挡内容。
+  - `skill/supply` 按钮贴图由 `cover` 改为 `100% 100%`，使图片边框与按钮结构一致。
+- 验证：
+  - `node --check app/main.js && node --check ui/game-ui.js` 通过。
+  - Playwright 冒烟截图：`output/web-game-ui-corners-fix/shot-0.png`、`output/web-game-ui-corners-fix-2/shot-0.png`。
+
+## Persona v2: 规则引擎算分 + 单次 LLM 结局联动（2026-03-02）
+- 人格雷达改为“规则引擎定量 + LLM 定性解释”混合模式：
+  - 分值、置信度、lowConfidence 判定完全由本地规则引擎计算（可解释、可回放）。
+  - 低置信度阈值收紧：`avgConfidence < 58 || totalEvidence < 22 || behaviorEntries < 18`。
+  - 输出新增 `sample` 字段：行为样本数、证据命中数、历史总长度、是否使用校准等。
+- 校准逻辑升级（批量 seed 回测）：
+  - `runPersonaCalibration` 每角色采样从 6 提升到 18，最大天数从 45 提升到 55。
+  - 校准结果加入版本号与生成时间，并持久化到 `localStorage`，避免重复计算。
+- 单次 DeepSeek 请求同时生成：
+  - `story`（整局故事+诗词总结）
+  - `persona`（画像标题、总评、低置信度提示、五维解释、建议）
+  - 避免多次调用 LLM。
+- `api/story/summary.js` 重写：
+  - 严格 JSON schema 提示词。
+  - 解析 JSON 失败时降级为纯故事模式。
+  - 画像字段缺失时使用本地规则结果兜底。
+- 前端接入：
+  - `generateStoryNarrative()` payload 增加 `personality` 完整结构。
+  - 结局页“行为人格画像”优先展示 LLM 文案（标题/总评/维度解释/建议），数值雷达仍用本地分数。
+  - `lowConfidence` 时展示 LLM 返回或本地兜底提示“样本不足仅供参考”。
+- 缓存刷新：`main.js?v=20260302_42`。
+- 验证：
+  - `node --check app/main.js && node --check ui/game-ui.js && node --check api/story/summary.js` 通过。
+  - `npm test` 20/20 通过。

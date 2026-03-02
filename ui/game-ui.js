@@ -219,8 +219,14 @@ export function createGameUI(root, actions) {
     const restartConfirm = Boolean(view.endingUi?.restartConfirm);
     const restartText = restartLocked ? "结算中..." : restartConfirm ? "确认再来一局" : "再来一局";
     const persona = view.result.personality;
+    const llmTraitMap = Object.fromEntries(
+      ((persona?.llm?.traitComments || []).filter((item) => item && item.id)).map((item) => [item.id, item.line || ""])
+    );
     const traitLines = (persona?.traits || [])
-      .map((item) => `<li>${item.name}：${item.label}（分值 ${item.score >= 0 ? "+" : ""}${item.score}｜置信 ${item.confidence}%）</li>`)
+      .map((item) => {
+        const llmLine = llmTraitMap[item.id] ? `；${llmTraitMap[item.id]}` : "";
+        return `<li>${item.name}：${item.label}（分值 ${item.score >= 0 ? "+" : ""}${item.score}｜置信 ${item.confidence}%）${llmLine}</li>`;
+      })
       .join("");
     const radarSvg = persona?.traits?.length >= 5 ? buildPentagonRadarSvg(persona.traits.slice(0, 5)) : "";
     const radarBg = view.avatar?.baseUrl
@@ -261,14 +267,14 @@ export function createGameUI(root, actions) {
           <div class="persona-head">
             <div class="persona-radar-wrap">${radarBg}${radarSvg}</div>
           </div>
-          <p class="opt-impact">画像：${persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
-          ${persona?.lowConfidence ? `<p class="opt-impact">样本不足：本局证据密度偏低，先看趋势，不建议下定型结论。</p>` : ""}
+          <p class="opt-impact">画像：${persona?.llm?.title || persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
+          ${persona?.lowConfidence ? `<p class="opt-impact">${persona?.llm?.lowConfidenceNote || "样本不足：本局证据密度偏低，先看趋势，不建议下定型结论。"}</p>` : ""}
+          <p class="opt-impact">${persona?.llm?.summary || persona?.note || ""}</p>
           <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
-          <p class="opt-impact">${persona?.note || ""}</p>
           <h3>画像证据</h3>
           <ul class="history">${simpleList(persona?.evidence || [])}</ul>
           <h3>画像建议</h3>
-          <ul class="history">${simpleList(persona?.tips || [])}</ul>
+          <ul class="history">${simpleList((persona?.llm?.tips?.length ? persona?.llm?.tips : persona?.tips) || [])}</ul>
         </article>
         <p class="opt-impact">${restartLocked ? "结局刚生成，按钮短暂保护中，避免误触。" : restartConfirm ? "再次点击将立即重开新局。" : "点击“再来一局”后需二次确认，防止误触。"}</p>
         <div class="action-grid end-actions">

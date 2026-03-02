@@ -22,6 +22,9 @@
         --heat: #bf8a3d;
         --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
         --avatar-size: 124px;
+        --tex-event: url("./assets/pixel/cards/event-option-card-v2.png");
+        --tex-skill: url("./assets/pixel/cards/skill-card.png");
+        --tex-supply: url("./assets/pixel/cards/supply-card.png");
       }
       * {
         box-sizing: border-box;
@@ -114,7 +117,9 @@
         --corner-bl: url("./assets/pixel/decor/corners/corner-gold-bl.png");
         --corner-br: url("./assets/pixel/decor/corners/corner-gold-br.png");
         border-radius: 16px;
-        background: var(--card);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 241, 228, 0.9)),
+          var(--tex-event) center/cover no-repeat;
         padding: 14px;
         box-shadow:
           0 2px 10px rgba(39, 45, 40, 0.04),
@@ -373,10 +378,32 @@
       .supply-module {
         background-image:
           url("./assets/pixel/decor/divider-runic.svg"),
-          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
-        background-repeat: no-repeat, no-repeat;
-        background-size: calc(100% - 28px) 8px, 100% 100%;
-        background-position: center 44px, 0 0;
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)),
+          var(--tex-event);
+        background-repeat: no-repeat, no-repeat, no-repeat;
+        background-size: calc(100% - 28px) 8px, 100% 100%, 168px 168px;
+        background-position: center 44px, 0 0, right -14px top 62px;
+      }
+      .event-card {
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 246, 236, 0.88)),
+          var(--tex-event) center/cover no-repeat;
+      }
+      .skill-module {
+        background-image:
+          url("./assets/pixel/decor/divider-runic.svg"),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
+          var(--tex-skill);
+        background-size: calc(100% - 28px) 8px, 100% 100%, 154px 154px;
+        background-position: center 44px, 0 0, right -12px top 66px;
+      }
+      .supply-module {
+        background-image:
+          url("./assets/pixel/decor/divider-runic.svg"),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
+          var(--tex-supply);
+        background-size: calc(100% - 28px) 8px, 100% 100%, 160px 160px;
+        background-position: center 44px, 0 0, right -10px top 66px;
       }
       .option-list {
         display: grid;
@@ -572,14 +599,39 @@
           box-shadow 180ms ease;
       }
       .primary {
-        background: var(--primary);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #ca9d6b;
         color: var(--primary-ink);
-        box-shadow: 0 8px 20px rgba(170, 100, 48, 0.2);
+        background:
+          linear-gradient(180deg, rgba(217, 118, 67, 0.92), rgba(184, 92, 49, 0.95)),
+          var(--tex-event) center/cover no-repeat;
+        box-shadow:
+          0 8px 20px rgba(170, 100, 48, 0.2),
+          inset 0 0 0 1px rgba(255, 232, 198, 0.32);
       }
       .ghost {
-        border: 1px solid #cdc2ad;
-        background: #f8f3e8;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #c7baa2;
+        background:
+          linear-gradient(180deg, rgba(248, 243, 232, 0.9), rgba(241, 233, 219, 0.92)),
+          var(--tex-event) center/cover no-repeat;
         color: var(--ink);
+        box-shadow: inset 0 0 0 1px rgba(255, 251, 240, 0.35);
+      }
+      .primary::after,
+      .ghost::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          url("./assets/pixel/decor/corners/corner-gold-tl.png") left 4px top 4px/10px 10px no-repeat,
+          url("./assets/pixel/decor/corners/corner-gold-tr.png") right 4px top 4px/10px 10px no-repeat,
+          url("./assets/pixel/decor/corners/corner-gold-bl.png") left 4px bottom 4px/10px 10px no-repeat,
+          url("./assets/pixel/decor/corners/corner-gold-br.png") right 4px bottom 4px/10px 10px no-repeat;
+        opacity: 0.85;
       }
       .topbar #restart-btn {
         padding: 9px 12px;
@@ -633,8 +685,8 @@
       .module-btn.skill-btn {
         border-color: #b9c8dc;
         background:
-          linear-gradient(180deg, rgba(239, 245, 252, 0.86) 0%, rgba(231, 240, 250, 0.84) 100%),
-          url("./assets/pixel/cards/skill-card.png") center/cover no-repeat;
+          linear-gradient(180deg, rgba(244, 248, 255, 0.94) 0%, rgba(236, 244, 254, 0.92) 100%),
+          url("./assets/pixel/cards/skill-card.png") center/100% 100% no-repeat;
         --btn-corner-tl: url("./assets/pixel/decor/corners/corner-blue-tl.png");
         --btn-corner-tr: url("./assets/pixel/decor/corners/corner-blue-tr.png");
         --btn-corner-bl: url("./assets/pixel/decor/corners/corner-blue-bl.png");
@@ -643,8 +695,8 @@
       .module-btn.supply-btn {
         border-color: #bfd1bd;
         background:
-          linear-gradient(180deg, rgba(240, 248, 236, 0.86) 0%, rgba(236, 245, 227, 0.84) 100%),
-          url("./assets/pixel/cards/supply-card.png") center/cover no-repeat;
+          linear-gradient(180deg, rgba(245, 251, 240, 0.94) 0%, rgba(238, 247, 230, 0.92) 100%),
+          url("./assets/pixel/cards/supply-card.png") center/100% 100% no-repeat;
         --btn-corner-tl: url("./assets/pixel/decor/corners/corner-green-tl.png");
         --btn-corner-tr: url("./assets/pixel/decor/corners/corner-green-tr.png");
         --btn-corner-bl: url("./assets/pixel/decor/corners/corner-green-bl.png");
@@ -879,6 +931,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260302_41"></script>
+    <script type="module" src="./app/main.js?v=20260302_42"></script>
   </body>
 </html>
