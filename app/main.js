@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_40";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_41";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -206,34 +206,34 @@ const WANG_SAOZHU_SKILL_POOL = [
 
 const PIXEL_AVATAR_STAGE_POOLS = {
   office_worker: {
-    early: ["./assets/pixel/avatars/stages/office-early.png", "./assets/pixel/avatars/coder.png"],
-    mid: ["./assets/pixel/avatars/stages/office-mid.png", "./assets/pixel/avatars/coder-2.png"],
-    late: ["./assets/pixel/avatars/stages/office-late.png", "./assets/pixel/avatars/coder-3.png"],
-    crisis: ["./assets/pixel/avatars/stages/office-crisis.png", "./assets/pixel/avatars/coder.png"],
+    early: ["./assets/pixel/avatars/jojo/office-early.png"],
+    mid: ["./assets/pixel/avatars/jojo/office-mid.png"],
+    late: ["./assets/pixel/avatars/jojo/office-late.png"],
+    crisis: ["./assets/pixel/avatars/jojo/office-crisis.png"],
   },
   content_hustler: {
-    early: ["./assets/pixel/avatars/stages/content-early.png", "./assets/pixel/avatars/streamer.png"],
-    mid: ["./assets/pixel/avatars/stages/content-mid.png", "./assets/pixel/avatars/streamer-2.png"],
-    late: ["./assets/pixel/avatars/stages/content-late.png", "./assets/pixel/avatars/streamer-3.png"],
-    crisis: ["./assets/pixel/avatars/stages/content-crisis.png", "./assets/pixel/avatars/streamer.png"],
+    early: ["./assets/pixel/avatars/jojo/content-early.png"],
+    mid: ["./assets/pixel/avatars/jojo/content-mid.png"],
+    late: ["./assets/pixel/avatars/jojo/content-late.png"],
+    crisis: ["./assets/pixel/avatars/jojo/content-crisis.png"],
   },
   debt_runner: {
-    early: ["./assets/pixel/avatars/stages/debt-early.png", "./assets/pixel/avatars/runner.png"],
-    mid: ["./assets/pixel/avatars/stages/debt-mid.png", "./assets/pixel/avatars/runner-2.png"],
-    late: ["./assets/pixel/avatars/stages/debt-late.png", "./assets/pixel/avatars/runner-3.png"],
-    crisis: ["./assets/pixel/avatars/stages/debt-crisis.png", "./assets/pixel/avatars/runner.png"],
+    early: ["./assets/pixel/avatars/jojo/debt-early.png"],
+    mid: ["./assets/pixel/avatars/jojo/debt-mid.png"],
+    late: ["./assets/pixel/avatars/jojo/debt-late.png"],
+    crisis: ["./assets/pixel/avatars/jojo/debt-crisis.png"],
   },
   network_player: {
-    early: ["./assets/pixel/avatars/stages/network-early.png", "./assets/pixel/avatars/broker.png"],
-    mid: ["./assets/pixel/avatars/stages/network-mid.png", "./assets/pixel/avatars/broker-2.png"],
-    late: ["./assets/pixel/avatars/stages/network-late.png", "./assets/pixel/avatars/broker-3.png"],
-    crisis: ["./assets/pixel/avatars/stages/network-crisis.png", "./assets/pixel/avatars/broker.png"],
+    early: ["./assets/pixel/avatars/jojo/network-early.png"],
+    mid: ["./assets/pixel/avatars/jojo/network-mid.png"],
+    late: ["./assets/pixel/avatars/jojo/network-late.png"],
+    crisis: ["./assets/pixel/avatars/jojo/network-crisis.png"],
   },
   wang_saozhu: {
-    early: ["./assets/pixel/avatars/wang-saozhu/wang-early.png"],
-    mid: ["./assets/pixel/avatars/wang-saozhu/wang-mid.png"],
-    late: ["./assets/pixel/avatars/wang-saozhu/wang-late.png"],
-    crisis: ["./assets/pixel/avatars/wang-saozhu/wang-crisis.png"],
+    early: ["./assets/pixel/avatars/jojo/wang-early.png"],
+    mid: ["./assets/pixel/avatars/jojo/wang-mid.png"],
+    late: ["./assets/pixel/avatars/jojo/wang-late.png"],
+    crisis: ["./assets/pixel/avatars/jojo/wang-crisis.png"],
   },
 };
 
