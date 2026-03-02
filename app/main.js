@@ -168,8 +168,8 @@ const TEMP_SKILL_POOL = [
 const WANG_SAOZHU_SKILL_POOL = [
   {
     id: "wang_ex_buffer",
-    name: "前任已读缓冲术",
-    text: "先把情绪摁住再回消息，心态回血但面子和热度会波动。",
+    name: "消息已读缓冲术",
+    text: "先把节奏摁住再回消息，心态回血但面子和热度会波动。",
     effects: { mood: 2, heat: -1, reputation: -1, money: -1 },
   },
   {
@@ -1035,11 +1035,11 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage2_pressure_b",
         chapter: "第三章：家庭与账单",
-        title: "私生活波动传到同事圈",
-        text: "午休时你被同事关心“还好吗”，明明想装没事，情绪还是被拽出来。",
+        title: "状态波动传到同事圈",
+        text: "午休时你被同事关心“还好吗”，明明想装没事，状态还是被看出来了。",
         causeText: "由家庭压力与职业不确定性触发。",
         options: [
-          { id: "wang_s2_job_search", label: "把情绪转成行动", tag: "work", effects: { reputation: 1, energy: -1, mood: 1 }, setFlags: ["upgrade_route"] },
+          { id: "wang_s2_job_search", label: "把波动转成行动", tag: "work", effects: { reputation: 1, energy: -1, mood: 1 }, setFlags: ["upgrade_route"] },
           { id: "wang_s2_hold_position", label: "保持体面低调", tag: "control", effects: { mood: 1, reputation: 1, money: 0 }, setFlags: ["work_focus"] },
           { id: "wang_s2_start_sidebiz", label: "深夜副业转移注意", tag: "money", effects: { money: 1, energy: -1, heat: 1 }, setFlags: ["grind_path"] },
         ],
@@ -1091,11 +1091,11 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage3_relation_a",
         chapter: "第四章：关系拉扯",
-        title: "前任来拿剩下的东西",
+        title: "旧关系待办找上门",
         text: "你下班回到家，门口放着待取的纸箱，消息框里是“今晚方便吗”。",
         causeText: "由关系线和高压节奏叠加触发。",
         options: [
-          { id: "wang_s3_relation_apology", label: "平和交接好聚好散", tag: "social", effects: { reputation: 2, mood: 1, energy: -1 }, setFlags: ["reputation_stable"] },
+          { id: "wang_s3_relation_apology", label: "平和交接避免拉扯", tag: "social", effects: { reputation: 2, mood: 1, energy: -1 }, setFlags: ["reputation_stable"] },
           { id: "wang_s3_relation_ignore", label: "拖着不回消息", tag: "risk", effects: { mood: -1, reputation: -2, heat: 1 }, setFlags: ["trust_break"] },
           { id: "wang_s3_relation_schedule", label: "找朋友代为处理", tag: "control", effects: { mood: 1, reputation: 1, money: -1 }, setFlags: ["boundary_mode"] },
         ],
@@ -1107,7 +1107,7 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage4_heat_a",
         chapter: "第五章：风口与体面",
-        title: "深夜感悟帖意外上热门",
+        title: "深夜自救帖意外上热门",
         text: "你深夜写的职场自救帖被搬运，评论区一半共情一半开嘲。",
         causeText: "由高热度或内容路线触发。",
         options: [
@@ -1161,8 +1161,8 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage5_debt_a",
         chapter: "第六章：摊牌时刻",
-        title: "情绪账本与现金账本",
-        text: "你把这段时间的收入、支出和情绪波动都列出来，终于看清自己在透支什么。",
+        title: "状态账本与现金账本",
+        text: "你把这段时间的收入、支出和状态波动都列出来，终于看清自己在透支什么。",
         causeText: "由债务和低现金路径触发。",
         options: [
           { id: "wang_s5_debt_rebuild", label: "重排预算先活下去", tag: "control", effects: { money: 1, reputation: 1, mood: -1 }, setFlags: ["budget_rebuild"] },
