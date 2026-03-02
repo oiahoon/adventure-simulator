@@ -765,3 +765,21 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 验证：
   - `node --check app/main.js && node --check ui/game-ui.js && node --check api/story/summary.js` 通过。
   - `npm test` 20/20 通过。
+
+## Persona/Event Bank Audit + Enrichment (2026-03-02)
+- 对“人物性格分析题库”做了覆盖体检（运行时信号推断后统计）：
+  - 事件数：81（原 77）
+  - 选项数：243（原 231）
+  - 信号覆盖率：100%（原 95.2%，无信号选项从 11 降到 0）
+- 新增两类状态触发事件并接入主流程：
+  - `reputationLow`（口碑走低）
+  - `heatHigh`（热度过高）
+  - 由 `resolveStateIncidentEvent` 在对局中实时触发，已与因果链同流程集成。
+- 强化 `inferOptionSignals`：
+  - `content` 标签默认补充行为信号。
+  - 新增“控频/冷处理/讨赏/回击/热搜”等热梗表达的信号词命中。
+  - 提升 `solo_drive` 识别（单干/闷头/硬上等），避免维度长期稀疏。
+- 新增回归测试：`tests/persona-signals.test.js`
+  - 断言题库规模、信号覆盖率、每个信号至少被触发一次。
+- 缓存更新：`public/index.html` -> `main.js?v=20260302_43`。
+- 验证：`npm test` 21/21 通过。

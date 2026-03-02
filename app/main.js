@@ -518,6 +518,58 @@ const STATE_INCIDENT_POOLS = {
       ],
     },
   ],
+  reputationLow: [
+    {
+      id: "incident_reputation_comment_overturn",
+      chapter: "临时插曲：口碑走低",
+      title: "评论区风向翻车",
+      text: "你最近几次处理都被吐槽“只会甩锅”，评论区开始追旧账。",
+      causeText: "由低口碑面子状态触发。",
+      options: [
+        { id: "rep_open_apology", label: "公开认错并补方案", tag: "control", effects: { reputation: 2, mood: -1, heat: -1 }, setFlags: ["scope_control"] },
+        { id: "rep_find_mediator", label: "找熟人中间调停", tag: "network", effects: { reputation: 1, heat: -1, money: -1 }, setFlags: ["network_mode"] },
+        { id: "rep_hard_reply", label: "正面回怼", tag: "risk", effects: { reputation: -2, heat: 2, mood: -1 }, setFlags: ["public_fight"] },
+      ],
+    },
+    {
+      id: "incident_reputation_credit_split",
+      chapter: "临时插曲：口碑走低",
+      title: "功劳归属争议",
+      text: "一个项目成果发布后，你被说“只拿名头不干活”，群里开始内涵。",
+      causeText: "由低口碑和社交压力触发。",
+      options: [
+        { id: "rep_share_credit", label: "主动分功劳", tag: "social", effects: { reputation: 2, mood: 1, money: -1 } },
+        { id: "rep_show_evidence", label: "晒过程证据", tag: "work", effects: { reputation: 1, energy: -1, heat: 1 } },
+        { id: "rep_ignore_noise", label: "不回应先干活", tag: "control", effects: { energy: 1, mood: 1, reputation: -1 }, setFlags: ["boundary_mode"] },
+      ],
+    },
+  ],
+  heatHigh: [
+    {
+      id: "incident_heat_trending",
+      chapter: "临时插曲：热度过高",
+      title: "突然冲上同城热榜",
+      text: "你的一条动态被转疯了，私信和评论瞬间爆仓。",
+      causeText: "由高围观热度触发。",
+      options: [
+        { id: "heat_schedule_response", label: "定时统一回应", tag: "control", effects: { heat: -1, reputation: 1, energy: -1 }, setFlags: ["boundary_mode"] },
+        { id: "heat_keep_stream", label: "趁热继续连发", tag: "content", effects: { heat: 2, money: 1, mood: -1 }, setFlags: ["viral_path"] },
+        { id: "heat_delegate_to_friend", label: "交给朋友代管", tag: "network", effects: { heat: -1, reputation: 1, money: -1 } },
+      ],
+    },
+    {
+      id: "incident_heat_offline_day",
+      chapter: "临时插曲：热度过高",
+      title: "线下被认出来",
+      text: "你去便利店都被人喊昵称，拍照请求一波接一波。",
+      causeText: "由高围观热度与舆论压力触发。",
+      options: [
+        { id: "heat_socialize_politely", label: "礼貌合影走流程", tag: "social", effects: { reputation: 1, heat: 1, energy: -1 } },
+        { id: "heat_take_break", label: "先躲开冷处理", tag: "rest", effects: { heat: -2, mood: 1, reputation: -1 }, setFlags: ["rest_recovery"] },
+        { id: "heat_live_react", label: "现场开播做节目", tag: "content", effects: { heat: 2, money: 1, reputation: -1, energy: -1 }, setFlags: ["content_line"] },
+      ],
+    },
+  ],
 };
 
 const CHAPTER_POOLS = {
@@ -1932,6 +1984,14 @@ function resolveStateIncidentEvent(session, dayIndex) {
     pool.push(...STATE_INCIDENT_POOLS.energyLow);
     riskCount += 1;
   }
+  if (s.reputation <= 3) {
+    pool.push(...STATE_INCIDENT_POOLS.reputationLow);
+    riskCount += 1;
+  }
+  if (s.heat >= 7) {
+    pool.push(...STATE_INCIDENT_POOLS.heatHigh);
+    riskCount += 1;
+  }
 
   if (!pool.length) return null;
 
@@ -2090,6 +2150,13 @@ function inferOptionSignals(option, event = null) {
   if (tag === "control") signals.add("risk_averse");
   if (tag === "network" || tag === "social") signals.add("social_leverage");
   if (tag === "work" || tag === "money") signals.add("execution_push");
+  if ((tag === "work" || tag === "money") && !/(找|朋友|同事|合伙|协作|资源|代管|调停|私聊|求助)/.test(label)) {
+    signals.add("solo_drive");
+  }
+  if (tag === "content") {
+    signals.add("execution_push");
+    signals.add("social_leverage");
+  }
   if (tag === "rest") {
     signals.add("recovery_focus");
     signals.add("execution_hold");
@@ -2106,11 +2173,15 @@ function inferOptionSignals(option, event = null) {
     signals.add("risk_seek");
     signals.add("execution_push");
   }
-  if (/(先拖|拖一拖|躲|隐瞒|应付|模板|认栽)/.test(label)) signals.add("short_term_relief");
+  if (/(先拖|拖一拖|躲|隐瞒|应付|模板|认栽|讨赏|乞讨|卖艺|借新还旧)/.test(label)) signals.add("short_term_relief");
   if (/(私聊|找朋友|合伙|协作|资源|人情|求助)/.test(label)) signals.add("social_leverage");
-  if (/(离线|休整|早睡|断网|散步|补眠|看病|门诊|躺平)/.test(label)) signals.add("recovery_focus");
-  if (/(拒绝|中立|低调|停更|暂停|观望)/.test(label)) signals.add("execution_hold");
-  if (/(自己|独自|硬做|亲自)/.test(label)) signals.add("solo_drive");
+  if (/(离线|休整|早睡|断网|散步|补眠|看病|门诊|躺平|冷处理|控频|降温|缓和)/.test(label)) {
+    signals.add("recovery_focus");
+    signals.add("execution_hold");
+  }
+  if (/(拒绝|中立|低调|停更|暂停|观望|慢一点|先回去)/.test(label)) signals.add("execution_hold");
+  if (/(自己|独自|硬做|亲自|单干|单刷|solo|闷头|硬上|自扛)/.test(label)) signals.add("solo_drive");
+  if (/(发帖|发梗|开播|吐槽|梗图|深夜长文|回击|热搜|挂平台|同城|整活)/.test(label)) signals.add("execution_push");
 
   return [...signals];
 }
