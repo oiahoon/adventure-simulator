@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_34";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_35";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -72,7 +72,7 @@ const STARTER_ARCHETYPES = [
   },
   {
     id: "wang_saozhu",
-    name: "王骚猪（30岁小有成就打工人）",
+    name: "王骚猪",
     baseStats: { money: 6, energy: 5, mood: 4, reputation: 7, heat: 2 },
     openingIds: ["opening_wang_midlife_alarm"],
   },
@@ -428,9 +428,9 @@ const OPENING_EVENTS = {
   opening_wang_midlife_alarm: {
     id: "opening_wang_midlife_alarm",
     chapter: "第一章：开局压力",
-    title: "王骚猪的分手后周一",
-    text: "分手后的第一个周一，王骚猪刚到工位就收到项目压缩通知，合租续租和搬家开销也同时弹窗。",
-    causeText: "由30岁小有成就打工人、刚分手的开局触发。",
+    title: "王骚猪的周一暴击",
+    text: "周一早高峰刚到工位，王骚猪就收到项目压缩通知，合租续租和搬家开销也同时弹窗。",
+    causeText: "由开局角色压力线触发。",
     options: [
       { id: "wang_hold_job", label: "先稳住主业节奏", tag: "work", effects: { reputation: 1, mood: -1, energy: -1 }, setFlags: ["wang_line", "work_focus"] },
       { id: "wang_find_side", label: "晚上开副业补现金", tag: "money", effects: { money: 1, energy: -2, mood: -1 }, setFlags: ["wang_line", "grind_path"] },
@@ -957,7 +957,7 @@ const WANG_CHAPTER_POOLS = {
         chapter: "第二章：工位保卫",
         title: "季度述职临时加码",
         text: "王骚猪刚坐下就被通知：述职要补一页“AI提效成果”，下午就要交。",
-        causeText: "由30岁职场转折主线触发。",
+        causeText: "由职场转折主线触发。",
         options: [
           { id: "wang_s1_job_hard", label: "硬做一版先交", tag: "work", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
           { id: "wang_s1_job_scope", label: "砍范围保质量", tag: "control", effects: { reputation: 1, mood: 1 }, setFlags: ["scope_control"] },
@@ -1023,9 +1023,9 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage2_pressure_a",
         chapter: "第三章：家庭与账单",
-        title: "分手后单人账单爆发",
+        title: "单人账单爆发",
         text: "少了两个人分摊后，房租、通勤、外卖和搬家尾款一起压上来，现金流突然变窄。",
-        causeText: "由分手后单人现金流压力触发。",
+        causeText: "由单人现金流压力触发。",
         options: [
           { id: "wang_s2_pay_mortgage", label: "先保房租与通勤", tag: "money", effects: { money: -2, mood: -1, reputation: 1 }, setFlags: ["rent_secured"] },
           { id: "wang_s2_cut_course", label: "全面降本生活", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
@@ -1035,7 +1035,7 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage2_pressure_b",
         chapter: "第三章：家庭与账单",
-        title: "分手消息传到同事圈",
+        title: "私生活波动传到同事圈",
         text: "午休时你被同事关心“还好吗”，明明想装没事，情绪还是被拽出来。",
         causeText: "由家庭压力与职业不确定性触发。",
         options: [
@@ -1107,12 +1107,12 @@ const WANG_CHAPTER_POOLS = {
       {
         id: "wang_stage4_heat_a",
         chapter: "第五章：风口与体面",
-        title: "分手感悟帖意外上热门",
-        text: "你深夜写的分手后职场自救帖被搬运，评论区一半共情一半开嘲。",
+        title: "深夜感悟帖意外上热门",
+        text: "你深夜写的职场自救帖被搬运，评论区一半共情一半开嘲。",
         causeText: "由高热度或内容路线触发。",
         options: [
           { id: "wang_s4_heat_follow", label: "顺势连更", tag: "content", effects: { heat: 2, money: 1, reputation: -1 }, setFlags: ["viral_path"] },
-          { id: "wang_s4_heat_clarify", label: "补充完整背景", tag: "control", effects: { reputation: 1, heat: -1, mood: -1 }, setFlags: ["stabilized"] },
+          { id: "wang_s4_heat_clarify", label: "补充完整情况", tag: "control", effects: { reputation: 1, heat: -1, mood: -1 }, setFlags: ["stabilized"] },
           { id: "wang_s4_heat_offline", label: "离线一天", tag: "rest", effects: { mood: 2, heat: -1, money: -1 }, setFlags: ["offline_day"] },
         ],
       },
@@ -1147,7 +1147,7 @@ const WANG_CHAPTER_POOLS = {
         chapter: "第五章：现金保卫",
         title: "单人生活成本重算",
         text: "你开始重算每月固定支出，发现以前两人摊掉的成本如今都压在自己身上。",
-        causeText: "由分手后独居成本与现金压力叠加触发。",
+        causeText: "由独居成本与现金压力叠加触发。",
         options: [
           { id: "wang_s4_course_pay", label: "维持原生活标准", tag: "money", effects: { money: -2, reputation: 1, mood: -1 }, setFlags: ["survival_focus"] },
           { id: "wang_s4_course_pause", label: "立刻降本瘦身", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },

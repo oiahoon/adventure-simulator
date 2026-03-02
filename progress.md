@@ -674,3 +674,13 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
 - 资源缓存版本更新：`main.js?v=20260302_34`。
 - 验证：`npm test` 20/20 通过，`node --check app/main.js` 通过。
 - 备注：Playwright 冒烟未执行成功（本机缺少 `playwright` 依赖）；图片 API 在线生成受网络/额度波动影响，本次先使用本地像素素材重制方案确保可上线。
+
+## 2026-03-02 Image Regen Recovery
+- 验证新 OpenAI token 可用：
+  - 在受限沙箱内 `api.openai.com` DNS 解析失败；
+  - 在外部网络权限下，`curl https://api.openai.com/v1/models` 成功返回模型列表。
+- 已重新生成并覆盖此前占位/跳过素材：
+  - `public/assets/pixel/cards/event-option-card-v2.png`（历史上因 `billing_hard_limit_reached` 跳过）
+  - 王骚猪专属头像 4 张（early/mid/late/crisis）
+  - 王骚猪专属技能图标 4 张
+- 已将事件选项按钮背景切换到 `event-option-card-v2.png`。
