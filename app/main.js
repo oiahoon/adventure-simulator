@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_31";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_33";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -69,6 +69,12 @@ const STARTER_ARCHETYPES = [
     name: "关系局操盘手",
     baseStats: { money: 6, energy: 6, mood: 5, reputation: 7, heat: 3 },
     openingIds: ["opening_friend_request", "opening_group_invite"],
+  },
+  {
+    id: "wang_saozhu",
+    name: "王骚猪（中年危机打工人）",
+    baseStats: { money: 5, energy: 4, mood: 5, reputation: 6, heat: 2 },
+    openingIds: ["opening_wang_midlife_alarm"],
   },
 ];
 
@@ -183,6 +189,12 @@ const PIXEL_AVATAR_STAGE_POOLS = {
     mid: ["./assets/pixel/avatars/stages/network-mid.png", "./assets/pixel/avatars/broker-2.png"],
     late: ["./assets/pixel/avatars/stages/network-late.png", "./assets/pixel/avatars/broker-3.png"],
     crisis: ["./assets/pixel/avatars/stages/network-crisis.png", "./assets/pixel/avatars/broker.png"],
+  },
+  wang_saozhu: {
+    early: ["./assets/pixel/avatars/stages/office-early.png", "./assets/pixel/avatars/coder.png"],
+    mid: ["./assets/pixel/avatars/stages/debt-mid.png", "./assets/pixel/avatars/runner-2.png"],
+    late: ["./assets/pixel/avatars/stages/network-late.png", "./assets/pixel/avatars/broker-3.png"],
+    crisis: ["./assets/pixel/avatars/stages/debt-crisis.png", "./assets/pixel/avatars/runner.png"],
   },
 };
 
@@ -366,6 +378,18 @@ const OPENING_EVENTS = {
       { id: "observe_group", label: "先潜水观察", tag: "control", effects: { mood: 1, money: 0 }, setFlags: ["scope_control"] },
       { id: "active_group", label: "主动发言混脸熟", tag: "network", effects: { reputation: 2, heat: 1 }, setFlags: ["network_mode"] },
       { id: "join_invest", label: "直接跟投", tag: "risk", effects: { money: 2, reputation: -2, heat: 2 }, setFlags: ["debt_line"] },
+    ],
+  },
+  opening_wang_midlife_alarm: {
+    id: "opening_wang_midlife_alarm",
+    chapter: "第一章：开局压力",
+    title: "王骚猪的周一暴击",
+    text: "王骚猪一早就收到“组织优化”通知，孩子补习费和房贷提醒同屏弹出。",
+    causeText: "由中年危机打工人开局触发。",
+    options: [
+      { id: "wang_hold_job", label: "先稳住工位", tag: "work", effects: { reputation: 1, mood: -1, energy: -1 }, setFlags: ["wang_line", "work_focus"] },
+      { id: "wang_find_side", label: "晚上找副业补坑", tag: "money", effects: { money: 1, energy: -2, mood: -1 }, setFlags: ["wang_line", "grind_path"] },
+      { id: "wang_call_old_friend", label: "联系老同事找后路", tag: "network", effects: { reputation: 1, money: 1, mood: -1 }, setFlags: ["wang_line", "network_mode"] },
     ],
   },
 };
@@ -874,6 +898,269 @@ const CHAPTER_POOLS = {
           { id: "pivot_ai_upgrade", label: "氪金上AI工具", tag: "money", effects: { money: -2, reputation: 2, energy: -1 }, setFlags: ["upgrade_route"] },
           { id: "pivot_ai_collab", label: "找人组队共用", tag: "network", effects: { reputation: 1, money: -1, mood: 1 }, setFlags: ["network_route"] },
           { id: "pivot_ai_wait", label: "先观察不跟风", tag: "control", effects: { mood: 1, money: 0, heat: -1 }, setFlags: ["survival_route"] },
+        ],
+      },
+    ],
+  },
+};
+
+const WANG_CHAPTER_POOLS = {
+  1: {
+    job: [
+      {
+        id: "wang_stage1_job_a",
+        chapter: "第二章：工位保卫",
+        title: "季度述职临时加码",
+        text: "王骚猪刚坐下就被通知：述职要补一页“AI提效成果”，下午就要交。",
+        causeText: "由中年危机打工人主线触发。",
+        options: [
+          { id: "wang_s1_job_hard", label: "硬做一版先交", tag: "work", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
+          { id: "wang_s1_job_scope", label: "砍范围保质量", tag: "control", effects: { reputation: 1, mood: 1 }, setFlags: ["scope_control"] },
+          { id: "wang_s1_job_template", label: "模板先顶住", tag: "risk", effects: { money: 1, reputation: -2, heat: 1 }, setFlags: ["quality_risk"] },
+        ],
+      },
+      {
+        id: "wang_stage1_job_b",
+        chapter: "第二章：工位保卫",
+        title: "年轻同事卷到凌晨",
+        text: "组里新人连续通宵冲榜，王骚猪感觉自己被比成了“旧版本”。",
+        causeText: "由工位压力和年龄焦虑触发。",
+        options: [
+          { id: "wang_s1_compete", label: "跟着一起卷", tag: "work", effects: { reputation: 1, money: 1, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
+          { id: "wang_s1_collab", label: "主动结对协作", tag: "network", effects: { reputation: 2, mood: 1, money: 0 }, setFlags: ["network_mode"] },
+          { id: "wang_s1_boundary", label: "守住节奏不硬卷", tag: "control", effects: { mood: 1, energy: 1, reputation: -1 }, setFlags: ["boundary_mode"] },
+        ],
+      },
+    ],
+    side: [
+      {
+        id: "wang_stage1_side_a",
+        chapter: "第二章：副业补坑",
+        title: "下班后代运营邀约",
+        text: "老同学问你要不要接短期代运营，钱不多但来得快。",
+        causeText: "由开局副业补坑路线触发。",
+        options: [
+          { id: "wang_s1_side_take", label: "接单补现金", tag: "money", effects: { money: 2, energy: -2, mood: -1 }, setFlags: ["grind_path"] },
+          { id: "wang_s1_side_negotiate", label: "先谈清边界", tag: "control", effects: { money: 1, reputation: 1 }, setFlags: ["scope_control"] },
+          { id: "wang_s1_side_decline", label: "拒绝保状态", tag: "rest", effects: { energy: 1, mood: 1, money: -1 }, setFlags: ["rest_recovery"] },
+        ],
+      },
+      {
+        id: "wang_stage1_side_b",
+        chapter: "第二章：副业补坑",
+        title: "周末摆摊计划",
+        text: "小区夜市摊位空出来，你可以试试卖点熟悉的二手数码。",
+        causeText: "由现金压力与副业线叠加触发。",
+        options: [
+          { id: "wang_s1_stall_try", label: "试摆两晚", tag: "money", effects: { money: 2, heat: 1, energy: -1 }, setFlags: ["grind_path"] },
+          { id: "wang_s1_stall_partner", label: "拉朋友合伙", tag: "network", effects: { money: 1, reputation: 1, mood: 1 }, setFlags: ["network_route"] },
+          { id: "wang_s1_stall_cancel", label: "先不折腾", tag: "control", effects: { mood: 1, heat: -1, money: 0 }, setFlags: ["survival_focus"] },
+        ],
+      },
+    ],
+    network: [
+      {
+        id: "wang_stage1_network_a",
+        chapter: "第二章：老友资源局",
+        title: "前同事内推消息",
+        text: "前同事发来内推窗口，但要求你这周补齐一套作品证明。",
+        causeText: "由开局联系老同事路线触发。",
+        options: [
+          { id: "wang_s1_referral_push", label: "连夜补作品", tag: "work", effects: { reputation: 2, energy: -2, mood: -1 }, setFlags: ["upgrade_route"] },
+          { id: "wang_s1_referral_trade", label: "资源互换求协助", tag: "network", effects: { reputation: 1, money: -1, mood: 1 }, setFlags: ["resource_swap"] },
+          { id: "wang_s1_referral_skip", label: "暂缓这次机会", tag: "control", effects: { mood: 1, energy: 1, reputation: -1 }, setFlags: ["boundary_mode"] },
+        ],
+      },
+    ],
+  },
+  2: {
+    pressure: [
+      {
+        id: "wang_stage2_pressure_a",
+        chapter: "第三章：家庭与账单",
+        title: "补习费和房贷同天到期",
+        text: "手机提醒一排红点，王骚猪发现本月现金流直接打结。",
+        causeText: "由中年角色家庭账单压力触发。",
+        options: [
+          { id: "wang_s2_pay_mortgage", label: "先保房贷", tag: "money", effects: { money: -2, mood: -1, reputation: 1 }, setFlags: ["rent_secured"] },
+          { id: "wang_s2_cut_course", label: "压缩补习支出", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
+          { id: "wang_s2_credit_roll", label: "信用卡先周转", tag: "risk", effects: { money: 2, mood: -1, reputation: -1, heat: 1 }, setFlags: ["debt_spiral"] },
+        ],
+      },
+      {
+        id: "wang_stage2_pressure_b",
+        chapter: "第三章：家庭与账单",
+        title: "家里问你要不要换工作",
+        text: "晚饭桌上大家都在问“要不要趁早跳槽”，你却拿不定主意。",
+        causeText: "由家庭压力与职业不确定性触发。",
+        options: [
+          { id: "wang_s2_job_search", label: "立刻投简历", tag: "work", effects: { reputation: 1, energy: -1, mood: 1 }, setFlags: ["upgrade_route"] },
+          { id: "wang_s2_hold_position", label: "先稳住当前工作", tag: "control", effects: { mood: 1, reputation: 1, money: 0 }, setFlags: ["work_focus"] },
+          { id: "wang_s2_start_sidebiz", label: "副业先跑起来", tag: "money", effects: { money: 1, energy: -1, heat: 1 }, setFlags: ["grind_path"] },
+        ],
+      },
+    ],
+    backlash: [
+      {
+        id: "wang_stage2_backlash_a",
+        chapter: "第三章：舆论和职场反噬",
+        title: "中年优化传言扩散",
+        text: "公司内部群开始流传“下一轮优化名单”，你的名字被多次提到。",
+        causeText: "由高风险选择或高压状态反噬触发。",
+        options: [
+          { id: "wang_s2_backlash_pr", label: "主动找领导对齐", tag: "social", effects: { reputation: 1, mood: -1, heat: -1 }, setFlags: ["stabilized"] },
+          { id: "wang_s2_backlash_quiet", label: "保持低调观察", tag: "control", effects: { mood: 1, heat: -1, money: 0 }, setFlags: ["silent_line"] },
+          { id: "wang_s2_backlash_post", label: "发帖吐槽发泄", tag: "content", effects: { mood: 1, heat: 2, reputation: -2 }, setFlags: ["public_fight"] },
+        ],
+      },
+    ],
+  },
+  3: {
+    health: [
+      {
+        id: "wang_stage3_health_a",
+        chapter: "第四章：身体报警",
+        title: "体检单三项预警",
+        text: "体检报告刚出来，医生建议你立刻调整作息，不然问题会连锁放大。",
+        causeText: "由持续透支触发。",
+        options: [
+          { id: "wang_s3_health_rest", label: "请假休整两天", tag: "rest", effects: { energy: 3, mood: 2, money: -1 }, setFlags: ["rest_recovery"] },
+          { id: "wang_s3_health_medicine", label: "吃药继续扛", tag: "risk", effects: { energy: 1, mood: -2, reputation: 1 }, setFlags: ["burnout_risk"] },
+          { id: "wang_s3_health_delegate", label: "把非核心活分出去", tag: "network", effects: { energy: 1, reputation: -1, mood: 1 }, setFlags: ["delegation_path"] },
+        ],
+      },
+      {
+        id: "wang_stage3_health_b",
+        chapter: "第四章：身体报警",
+        title: "凌晨胃痛到醒",
+        text: "连续熬夜后你半夜被胃痛叫醒，第二天会议还排满。",
+        causeText: "由过劳和不规律饮食触发。",
+        options: [
+          { id: "wang_s3_hospital", label: "早上先去门诊", tag: "rest", effects: { money: -1, energy: 2, mood: 1 }, setFlags: ["rest_recovery"] },
+          { id: "wang_s3_keep_meeting", label: "顶着开会", tag: "work", effects: { reputation: 1, energy: -2, mood: -1 }, setFlags: ["overwork_line"] },
+          { id: "wang_s3_move_remote", label: "申请线上参会", tag: "control", effects: { energy: 1, mood: 1, reputation: 0 }, setFlags: ["scope_control"] },
+        ],
+      },
+    ],
+    relation: [
+      {
+        id: "wang_stage3_relation_a",
+        chapter: "第四章：关系拉扯",
+        title: "家人埋怨你总在加班",
+        text: "家里聚餐你又迟到，气氛一下变成了“谁都不开心”。",
+        causeText: "由关系线和高压节奏叠加触发。",
+        options: [
+          { id: "wang_s3_relation_apology", label: "认真沟通道歉", tag: "social", effects: { reputation: 2, mood: 1, energy: -1 }, setFlags: ["reputation_stable"] },
+          { id: "wang_s3_relation_ignore", label: "先不解释", tag: "risk", effects: { mood: -1, reputation: -2, heat: 1 }, setFlags: ["trust_break"] },
+          { id: "wang_s3_relation_schedule", label: "固定家庭时间", tag: "control", effects: { mood: 1, reputation: 1, money: -1 }, setFlags: ["boundary_mode"] },
+        ],
+      },
+    ],
+  },
+  4: {
+    heat: [
+      {
+        id: "wang_stage4_heat_a",
+        chapter: "第五章：风口与体面",
+        title: "同城号突然带火你",
+        text: "你分享的中年职场吐槽被同城号搬运，评论区两极分化。",
+        causeText: "由高热度或内容路线触发。",
+        options: [
+          { id: "wang_s4_heat_follow", label: "顺势连更", tag: "content", effects: { heat: 2, money: 1, reputation: -1 }, setFlags: ["viral_path"] },
+          { id: "wang_s4_heat_clarify", label: "补充完整背景", tag: "control", effects: { reputation: 1, heat: -1, mood: -1 }, setFlags: ["stabilized"] },
+          { id: "wang_s4_heat_offline", label: "离线一天", tag: "rest", effects: { mood: 2, heat: -1, money: -1 }, setFlags: ["offline_day"] },
+        ],
+      },
+      {
+        id: "wang_stage4_heat_b",
+        chapter: "第五章：风口与体面",
+        title: "老同事在评论区认出你",
+        text: "本来匿名吐槽的内容被熟人认出，私聊窗口瞬间爆满。",
+        causeText: "由热度外溢与关系链交叉触发。",
+        options: [
+          { id: "wang_s4_dm_explain", label: "逐个私聊解释", tag: "network", effects: { reputation: 1, mood: -1, energy: -1 }, setFlags: ["network_mode"] },
+          { id: "wang_s4_public_reply", label: "公开回应一次", tag: "social", effects: { heat: 1, reputation: 0, mood: -1 }, setFlags: ["public_fight"] },
+          { id: "wang_s4_keep_silent", label: "暂不回应", tag: "control", effects: { mood: 1, heat: -1, reputation: -1 }, setFlags: ["silent_line"] },
+        ],
+      },
+    ],
+    cash: [
+      {
+        id: "wang_stage4_cash_a",
+        chapter: "第五章：现金保卫",
+        title: "车险与年费双重扣款",
+        text: "两笔自动扣款同天发生，王骚猪的余额瞬间掉到底线。",
+        causeText: "由现金压力线触发。",
+        options: [
+          { id: "wang_s4_cash_cut", label: "砍掉非必要开销", tag: "control", effects: { money: 1, mood: -1, heat: -1 }, setFlags: ["budget_mode"] },
+          { id: "wang_s4_cash_sidejob", label: "周末加一份零工", tag: "work", effects: { money: 2, energy: -2, mood: -1 }, setFlags: ["grind_path"] },
+          { id: "wang_s4_cash_rotate", label: "继续周转", tag: "risk", effects: { money: 2, reputation: -2, heat: 1 }, setFlags: ["debt_spiral"] },
+        ],
+      },
+      {
+        id: "wang_stage4_cash_b",
+        chapter: "第五章：现金保卫",
+        title: "孩子兴趣班续费提醒",
+        text: "缴费页面停在你面前，王骚猪不得不在现金和家庭期待之间做选择。",
+        causeText: "由家庭责任与现金压力叠加触发。",
+        options: [
+          { id: "wang_s4_course_pay", label: "咬牙续费", tag: "money", effects: { money: -2, reputation: 1, mood: -1 }, setFlags: ["survival_focus"] },
+          { id: "wang_s4_course_pause", label: "先暂停一期", tag: "control", effects: { money: 1, mood: -1, reputation: -1 }, setFlags: ["budget_mode"] },
+          { id: "wang_s4_course_alt", label: "找平替课程", tag: "network", effects: { money: 0, reputation: 1, mood: 1 }, setFlags: ["resource_swap"] },
+        ],
+      },
+    ],
+  },
+  5: {
+    debt: [
+      {
+        id: "wang_stage5_debt_a",
+        chapter: "第六章：摊牌时刻",
+        title: "家庭账本公开审判",
+        text: "你终于坐下来和家里一起摊开账本，过去的选择都变成了具体数字。",
+        causeText: "由债务和低现金路径触发。",
+        options: [
+          { id: "wang_s5_debt_rebuild", label: "重排预算先活下去", tag: "control", effects: { money: 1, reputation: 1, mood: -1 }, setFlags: ["budget_rebuild"] },
+          { id: "wang_s5_debt_hide", label: "先瞒一部分", tag: "risk", effects: { money: 1, reputation: -2, mood: -1, heat: 1 }, setFlags: ["trust_break"] },
+          { id: "wang_s5_debt_assets", label: "卖闲置止血", tag: "money", effects: { money: 2, mood: -1 }, setFlags: ["asset_liquidation"] },
+        ],
+      },
+      {
+        id: "wang_stage5_debt_b",
+        chapter: "第六章：摊牌时刻",
+        title: "催款电话打到单位",
+        text: "催收电话开始打到工位附近，王骚猪的体面被现实硬拽出来。",
+        causeText: "由债务螺旋和声誉压力触发。",
+        options: [
+          { id: "wang_s5_debt_plan", label: "给出明确还款计划", tag: "control", effects: { reputation: 1, money: 1, mood: -1 }, setFlags: ["budget_rebuild"] },
+          { id: "wang_s5_debt_family", label: "向家里求援", tag: "network", effects: { money: 2, reputation: -1, mood: 1 }, setFlags: ["family_help"] },
+          { id: "wang_s5_debt_escape", label: "先躲几天", tag: "risk", effects: { mood: -1, reputation: -2, heat: 1 }, setFlags: ["trust_break"] },
+        ],
+      },
+    ],
+    pivot: [
+      {
+        id: "wang_stage5_pivot_a",
+        chapter: "第六章：再就业分岔",
+        title: "外包转岗窗口出现",
+        text: "你拿到一次转岗外包管理的机会，薪资更稳但成长更慢。",
+        causeText: "由稳定求生路径触发。",
+        options: [
+          { id: "wang_s5_pivot_take", label: "先保稳定收入", tag: "control", effects: { money: 1, mood: 1, heat: -1 }, setFlags: ["survival_route"] },
+          { id: "wang_s5_pivot_upgrade", label: "继续冲技能升级", tag: "work", effects: { reputation: 2, energy: -1, money: -1 }, setFlags: ["upgrade_route"] },
+          { id: "wang_s5_pivot_partner", label: "找老友合伙试项目", tag: "network", effects: { reputation: 1, money: 1, mood: 1 }, setFlags: ["network_route"] },
+        ],
+      },
+      {
+        id: "wang_stage5_pivot_b",
+        chapter: "第六章：再就业分岔",
+        title: "中年转型训练营",
+        text: "一个“中年再就业”训练营给你发来录取通知，学费和时间都很吃紧。",
+        causeText: "由长线生存后期触发的转型机会。",
+        options: [
+          { id: "wang_s5_camp_join", label: "报名冲一把", tag: "work", effects: { reputation: 2, money: -2, energy: -1 }, setFlags: ["upgrade_route"] },
+          { id: "wang_s5_camp_wait", label: "先观望一季", tag: "control", effects: { mood: 1, money: 1 }, setFlags: ["survival_route"] },
+          { id: "wang_s5_camp_smallbiz", label: "边打工边试小买卖", tag: "risk", effects: { money: 1, heat: 1, mood: -1 }, setFlags: ["grind_path"] },
         ],
       },
     ],
@@ -1481,6 +1768,47 @@ function resolveCausalStageEvent(session, stageIndex) {
   const flags = session.flags;
   const s = session.stats;
   const pressure = session.pressure;
+
+  if (flags.wang_line) {
+    const wangPools = WANG_CHAPTER_POOLS[stageIndex];
+    if (wangPools) {
+      if (stageIndex === 1) {
+        if (flags.grind_path || pressure.debt >= 2 || s.money <= 4) {
+          return pickFromPool(session, wangPools.side, wangPools.side[0]);
+        }
+        if (flags.network_mode || flags.resource_swap) {
+          return pickFromPool(session, wangPools.network, wangPools.network[0]);
+        }
+        return pickFromPool(session, wangPools.job, wangPools.job[0]);
+      }
+
+      if (stageIndex === 2) {
+        if (flags.quality_risk || flags.debt_spiral || s.heat >= 6 || pressure.scrutiny >= 3) {
+          return pickFromPool(session, wangPools.backlash, wangPools.backlash[0]);
+        }
+        return pickFromPool(session, wangPools.pressure, wangPools.pressure[0]);
+      }
+
+      if (stageIndex === 3) {
+        if (s.energy <= 3 || flags.overwork_line || flags.burnout_risk || pressure.burnout >= 3) {
+          return pickFromPool(session, wangPools.health, wangPools.health[0]);
+        }
+        return pickFromPool(session, wangPools.relation, wangPools.relation[0]);
+      }
+
+      if (stageIndex === 4) {
+        if (s.heat >= 7 || flags.content_line || flags.public_fight || flags.viral_path) {
+          return pickFromPool(session, wangPools.heat, wangPools.heat[0]);
+        }
+        return pickFromPool(session, wangPools.cash, wangPools.cash[0]);
+      }
+
+      if (flags.debt_spiral || s.money <= 2 || flags.trust_break || pressure.debt >= 3) {
+        return pickFromPool(session, wangPools.debt, wangPools.debt[0]);
+      }
+      return pickFromPool(session, wangPools.pivot, wangPools.pivot[0]);
+    }
+  }
 
   if (stageIndex === 1) {
     if (flags.debt_line || pressure.debt >= 3) {
