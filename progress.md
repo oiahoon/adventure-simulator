@@ -684,3 +684,15 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   - 王骚猪专属头像 4 张（early/mid/late/crisis）
   - 王骚猪专属技能图标 4 张
 - 已将事件选项按钮背景切换到 `event-option-card-v2.png`。
+
+## 2026-03-02 UIUX Iteration: Directional Corners + Readability Cleanup
+- 问题复盘（基于最新截图）：
+  - 四角装饰使用同一朝向，视觉上不符合“组件框角”逻辑。
+  - 顶栏仅剩小图标，品牌识别弱且上方留白感偏重。
+  - 事件/按钮纹理层偏重，文字信息优先级被稀释。
+- 本轮改进计划与落地：
+  1. 角标方向化：新增 gold/blue/green 三套四方向角标（tl/tr/bl/br），并接入 card/option/module/reason 所有角标渲染。
+  2. 顶栏重排：logo 改为小徽章 + 可见主标题同排展示，减少空白感并提升识别。
+  3. 纹理降噪：降低卡片与事件按钮扫描纹理强度，保留像素感但提升阅读性。
+- 资源缓存版本提升：`main.js?v=20260302_36`。
+- 验证：`npm test` 20/20 通过，语法检查通过。

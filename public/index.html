@@ -45,24 +45,35 @@
       .topbar {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
+        padding-top: 2px;
       }
       .brand-wrap {
         display: grid;
-        gap: 0;
+        gap: 2px;
       }
       .brand-line {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
       }
       .logo-main {
-        width: min(58vw, 220px);
-        max-height: 86px;
+        width: 44px;
+        height: 44px;
         object-fit: contain;
+        object-position: center;
+        display: block;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
+      }
+      .brand-title {
+        margin: 0;
+        font-size: 34px;
+        letter-spacing: 0.4px;
+        font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", serif;
+        font-weight: 700;
+        line-height: 1;
       }
       .sr-only {
         position: absolute;
@@ -98,7 +109,10 @@
         margin-top: 10px;
       }
       .card {
-        --corner-icon: url("./assets/pixel/decor/corner-gold.svg");
+        --corner-tl: url("./assets/pixel/decor/corners/corner-gold-tl.png");
+        --corner-tr: url("./assets/pixel/decor/corners/corner-gold-tr.png");
+        --corner-bl: url("./assets/pixel/decor/corners/corner-gold-bl.png");
+        --corner-br: url("./assets/pixel/decor/corners/corner-gold-br.png");
         border-radius: 16px;
         background: var(--card);
         padding: 14px;
@@ -117,19 +131,19 @@
       }
       .card::before {
         background:
-          var(--corner-icon) left 5px top 5px/16px 16px no-repeat,
-          var(--corner-icon) right 5px top 5px/16px 16px no-repeat,
-          var(--corner-icon) left 5px bottom 5px/16px 16px no-repeat,
-          var(--corner-icon) right 5px bottom 5px/16px 16px no-repeat;
+          var(--corner-tl) left 5px top 5px/14px 14px no-repeat,
+          var(--corner-tr) right 5px top 5px/14px 14px no-repeat,
+          var(--corner-bl) left 5px bottom 5px/14px 14px no-repeat,
+          var(--corner-br) right 5px bottom 5px/14px 14px no-repeat;
         opacity: 0.9;
       }
       .card::after {
         background:
-          linear-gradient(120deg, rgba(255, 255, 255, 0.2) 0%, transparent 28%),
+          linear-gradient(120deg, rgba(255, 255, 255, 0.15) 0%, transparent 30%),
           repeating-linear-gradient(
             0deg,
-            rgba(202, 193, 175, 0.05) 0px,
-            rgba(202, 193, 175, 0.05) 1px,
+            rgba(202, 193, 175, 0.03) 0px,
+            rgba(202, 193, 175, 0.03) 1px,
             transparent 1px,
             transparent 7px
           );
@@ -137,9 +151,24 @@
       .status-card,
       .hero,
       .reason-block,
-      .event-card { --corner-icon: url("./assets/pixel/decor/corner-gold.svg"); }
-      .skill-module { --corner-icon: url("./assets/pixel/decor/corner-blue.svg"); }
-      .supply-module { --corner-icon: url("./assets/pixel/decor/corner-green.svg"); }
+      .event-card {
+        --corner-tl: url("./assets/pixel/decor/corners/corner-gold-tl.png");
+        --corner-tr: url("./assets/pixel/decor/corners/corner-gold-tr.png");
+        --corner-bl: url("./assets/pixel/decor/corners/corner-gold-bl.png");
+        --corner-br: url("./assets/pixel/decor/corners/corner-gold-br.png");
+      }
+      .skill-module {
+        --corner-tl: url("./assets/pixel/decor/corners/corner-blue-tl.png");
+        --corner-tr: url("./assets/pixel/decor/corners/corner-blue-tr.png");
+        --corner-bl: url("./assets/pixel/decor/corners/corner-blue-bl.png");
+        --corner-br: url("./assets/pixel/decor/corners/corner-blue-br.png");
+      }
+      .supply-module {
+        --corner-tl: url("./assets/pixel/decor/corners/corner-green-tl.png");
+        --corner-tr: url("./assets/pixel/decor/corners/corner-green-tr.png");
+        --corner-bl: url("./assets/pixel/decor/corners/corner-green-bl.png");
+        --corner-br: url("./assets/pixel/decor/corners/corner-green-br.png");
+      }
       .hero {
         padding: 20px 18px;
       }
@@ -354,7 +383,10 @@
         gap: 8px;
       }
       .option-btn {
-        --btn-corner: url("./assets/pixel/decor/corner-gold.svg");
+        --btn-corner-tl: url("./assets/pixel/decor/corners/corner-gold-tl.png");
+        --btn-corner-tr: url("./assets/pixel/decor/corners/corner-gold-tr.png");
+        --btn-corner-bl: url("./assets/pixel/decor/corners/corner-gold-bl.png");
+        --btn-corner-br: url("./assets/pixel/decor/corners/corner-gold-br.png");
         position: relative;
         border: 0;
         border-radius: 12px;
@@ -386,22 +418,22 @@
       .option-btn::before {
         inset: 0;
         background:
-          linear-gradient(90deg, rgba(255, 255, 255, 0.52) 0px, rgba(255, 255, 255, 0) 18px) left center/76px 100% no-repeat,
+          linear-gradient(90deg, rgba(255, 255, 255, 0.4) 0px, rgba(255, 255, 255, 0) 18px) left center/72px 100% no-repeat,
           repeating-linear-gradient(
             0deg,
-            rgba(202, 191, 167, 0.13) 0px,
-            rgba(202, 191, 167, 0.13) 1px,
+            rgba(202, 191, 167, 0.09) 0px,
+            rgba(202, 191, 167, 0.09) 1px,
             transparent 1px,
             transparent 6px
           );
-        opacity: 0.65;
+        opacity: 0.52;
       }
       .option-btn::after {
         background:
-          var(--btn-corner) left 4px top 4px/12px 12px no-repeat,
-          var(--btn-corner) right 4px top 4px/12px 12px no-repeat,
-          var(--btn-corner) left 4px bottom 4px/12px 12px no-repeat,
-          var(--btn-corner) right 4px bottom 4px/12px 12px no-repeat;
+          var(--btn-corner-tl) left 4px top 4px/10px 10px no-repeat,
+          var(--btn-corner-tr) right 4px top 4px/10px 10px no-repeat,
+          var(--btn-corner-bl) left 4px bottom 4px/10px 10px no-repeat,
+          var(--btn-corner-br) right 4px bottom 4px/10px 10px no-repeat;
         opacity: 0.9;
       }
       .opt-mark {
@@ -453,12 +485,22 @@
       }
       .tag-work .opt-tag { color: #315783; border-color: #b3c8df; background: #eaf2fc; }
       .tag-work .opt-mark { border-color: #b3c8df; background: #eaf2fc; }
-      .tag-work.option-btn { --btn-corner: url("./assets/pixel/decor/corner-blue.svg"); }
+      .tag-work.option-btn {
+        --btn-corner-tl: url("./assets/pixel/decor/corners/corner-blue-tl.png");
+        --btn-corner-tr: url("./assets/pixel/decor/corners/corner-blue-tr.png");
+        --btn-corner-bl: url("./assets/pixel/decor/corners/corner-blue-bl.png");
+        --btn-corner-br: url("./assets/pixel/decor/corners/corner-blue-br.png");
+      }
       .tag-risk .opt-tag { color: #924747; border-color: #dfb8b8; background: #fceeee; }
       .tag-risk .opt-mark { border-color: #dfb8b8; background: #fceeee; }
       .tag-control .opt-tag { color: #556446; border-color: #bfd0ae; background: #edf7e5; }
       .tag-control .opt-mark { border-color: #bfd0ae; background: #edf7e5; }
-      .tag-control.option-btn { --btn-corner: url("./assets/pixel/decor/corner-green.svg"); }
+      .tag-control.option-btn {
+        --btn-corner-tl: url("./assets/pixel/decor/corners/corner-green-tl.png");
+        --btn-corner-tr: url("./assets/pixel/decor/corners/corner-green-tr.png");
+        --btn-corner-bl: url("./assets/pixel/decor/corners/corner-green-bl.png");
+        --btn-corner-br: url("./assets/pixel/decor/corners/corner-green-br.png");
+      }
       .tag-network .opt-tag { color: #5a4b7a; border-color: #ccbfe2; background: #f4edfb; }
       .tag-network .opt-mark { border-color: #ccbfe2; background: #f4edfb; }
       .tag-social .opt-tag { color: #7f4c60; border-color: #dfc1cc; background: #fbedf3; }
@@ -545,7 +587,10 @@
         font-size: 13px;
       }
       .module-btn {
-        --btn-corner: url("./assets/pixel/decor/corner-gold.svg");
+        --btn-corner-tl: url("./assets/pixel/decor/corners/corner-gold-tl.png");
+        --btn-corner-tr: url("./assets/pixel/decor/corners/corner-gold-tr.png");
+        --btn-corner-bl: url("./assets/pixel/decor/corners/corner-gold-bl.png");
+        --btn-corner-br: url("./assets/pixel/decor/corners/corner-gold-br.png");
         position: relative;
         text-align: left;
         display: grid;
@@ -579,10 +624,10 @@
       .module-btn::after {
         inset: 0;
         background:
-          var(--btn-corner) left 4px top 4px/12px 12px no-repeat,
-          var(--btn-corner) right 4px top 4px/12px 12px no-repeat,
-          var(--btn-corner) left 4px bottom 4px/12px 12px no-repeat,
-          var(--btn-corner) right 4px bottom 4px/12px 12px no-repeat;
+          var(--btn-corner-tl) left 4px top 4px/10px 10px no-repeat,
+          var(--btn-corner-tr) right 4px top 4px/10px 10px no-repeat,
+          var(--btn-corner-bl) left 4px bottom 4px/10px 10px no-repeat,
+          var(--btn-corner-br) right 4px bottom 4px/10px 10px no-repeat;
         opacity: 0.9;
       }
       .module-btn.skill-btn {
@@ -590,14 +635,20 @@
         background:
           linear-gradient(180deg, rgba(239, 245, 252, 0.86) 0%, rgba(231, 240, 250, 0.84) 100%),
           url("./assets/pixel/cards/skill-card.png") center/cover no-repeat;
-        --btn-corner: url("./assets/pixel/decor/corner-blue.svg");
+        --btn-corner-tl: url("./assets/pixel/decor/corners/corner-blue-tl.png");
+        --btn-corner-tr: url("./assets/pixel/decor/corners/corner-blue-tr.png");
+        --btn-corner-bl: url("./assets/pixel/decor/corners/corner-blue-bl.png");
+        --btn-corner-br: url("./assets/pixel/decor/corners/corner-blue-br.png");
       }
       .module-btn.supply-btn {
         border-color: #bfd1bd;
         background:
           linear-gradient(180deg, rgba(240, 248, 236, 0.86) 0%, rgba(236, 245, 227, 0.84) 100%),
           url("./assets/pixel/cards/supply-card.png") center/cover no-repeat;
-        --btn-corner: url("./assets/pixel/decor/corner-green.svg");
+        --btn-corner-tl: url("./assets/pixel/decor/corners/corner-green-tl.png");
+        --btn-corner-tr: url("./assets/pixel/decor/corners/corner-green-tr.png");
+        --btn-corner-bl: url("./assets/pixel/decor/corners/corner-green-bl.png");
+        --btn-corner-br: url("./assets/pixel/decor/corners/corner-green-br.png");
       }
       .icon-line {
         display: inline-flex;
@@ -652,10 +703,10 @@
         inset: 0;
         pointer-events: none;
         background:
-          var(--corner-icon) left 4px top 4px/12px 12px no-repeat,
-          var(--corner-icon) right 4px top 4px/12px 12px no-repeat,
-          var(--corner-icon) left 4px bottom 4px/12px 12px no-repeat,
-          var(--corner-icon) right 4px bottom 4px/12px 12px no-repeat;
+          var(--corner-tl) left 4px top 4px/10px 10px no-repeat,
+          var(--corner-tr) right 4px top 4px/10px 10px no-repeat,
+          var(--corner-bl) left 4px bottom 4px/10px 10px no-repeat,
+          var(--corner-br) right 4px bottom 4px/10px 10px no-repeat;
         opacity: 0.82;
       }
       .reason-block h3 {
@@ -742,10 +793,13 @@
         h1 {
           font-size: 18px;
         }
+        .brand-title {
+          font-size: 18px;
+        }
         #subtitle {
           font-size: 10px;
         }
-        .logo-main { width: min(68vw, 194px); }
+        .logo-main { width: 32px; height: 32px; }
         .option-btn {
           padding: 10px 10px 10px 38px;
         }
@@ -759,6 +813,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260302_35"></script>
+    <script type="module" src="./app/main.js?v=20260302_36"></script>
   </body>
 </html>

@@ -88,7 +88,7 @@ export function createGameUI(root, actions) {
         <div class="brand-wrap">
           <div class="brand-line">
             <img class="logo-main" src="./assets/pixel/brand/logo-main-v2.png" alt="是男人就坚持100天" decoding="async" loading="eager" />
-            <h1 class="sr-only">是男人就坚持100天</h1>
+            <h1 class="brand-title">是男人就坚持100天</h1>
           </div>
           <p id="subtitle">都市生存挑战</p>
         </div>
