@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_36";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_37";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -2064,6 +2064,188 @@ function endingByScore(score, alive) {
   };
 }
 
+const PERSONALITY_DIMENSIONS = [
+  {
+    id: "riskCalibration",
+    name: "风险校准",
+    lowLabel: "稳健控盘型",
+    highLabel: "高波动冲锋型",
+    insight: "你在“稳住当下”和“放大波动”之间的取向。",
+  },
+  {
+    id: "socialDrive",
+    name: "社交驱动",
+    lowLabel: "独立推进型",
+    highLabel: "关系协同型",
+    insight: "你更依赖个人硬扛，还是借助关系与公共场域推进。",
+  },
+  {
+    id: "stressRecovery",
+    name: "压力恢复",
+    lowLabel: "透支硬顶型",
+    highLabel: "弹性恢复型",
+    insight: "高压下你是继续透支，还是主动修复节奏。",
+  },
+  {
+    id: "horizonFocus",
+    name: "规划视角",
+    lowLabel: "短线止血型",
+    highLabel: "长线经营型",
+    insight: "你更偏向即时收益，还是愿意为后续稳定布局。",
+  },
+];
+
+const TAG_DIMENSION_WEIGHTS = {
+  risk: { riskCalibration: 2.0, horizonFocus: -1.0, stressRecovery: -0.5 },
+  control: { riskCalibration: -1.8, horizonFocus: 1.6, stressRecovery: 0.6 },
+  rest: { riskCalibration: -0.8, stressRecovery: 1.7, horizonFocus: 0.5 },
+  work: { stressRecovery: -0.6, horizonFocus: 0.8, socialDrive: -0.4 },
+  network: { socialDrive: 1.8, horizonFocus: 0.4 },
+  social: { socialDrive: 1.6, riskCalibration: 0.5 },
+  content: { socialDrive: 0.9, riskCalibration: 1.2, stressRecovery: -0.7 },
+  money: { horizonFocus: -0.8, riskCalibration: 0.7 },
+};
+
+const EFFECT_DIMENSION_WEIGHTS = {
+  riskCalibration: { heat: 0.36, mood: -0.2, money: 0.12 },
+  socialDrive: { reputation: 0.5, heat: 0.2, mood: 0.1 },
+  stressRecovery: { mood: 0.58, energy: 0.52, heat: -0.12 },
+  horizonFocus: { money: 0.55, energy: 0.24, mood: 0.16, heat: -0.1 },
+};
+
+const FLAG_DIMENSION_WEIGHTS = {
+  debt_spiral: { riskCalibration: 1.2, horizonFocus: -0.9 },
+  budget_mode: { horizonFocus: 1.0, riskCalibration: -0.5 },
+  scope_control: { horizonFocus: 0.8, riskCalibration: -0.6 },
+  overwork_line: { stressRecovery: -1.2, horizonFocus: -0.2 },
+  rest_recovery: { stressRecovery: 1.1 },
+  public_fight: { riskCalibration: 1.1, socialDrive: 0.6 },
+  network_mode: { socialDrive: 1.0 },
+  boundary_mode: { stressRecovery: 0.8, horizonFocus: 0.6 },
+  viral_path: { riskCalibration: 1.0, socialDrive: 0.5, stressRecovery: -0.4 },
+  survival_route: { horizonFocus: 0.6, riskCalibration: -0.3 },
+  grind_path: { stressRecovery: -0.8, horizonFocus: -0.5 },
+  upgrade_route: { horizonFocus: 1.0, stressRecovery: -0.2 },
+  trust_break: { riskCalibration: 0.7, socialDrive: -0.9 },
+};
+
+function normalizeTraitScore(raw) {
+  const scaled = Math.tanh(raw / 18) * 100;
+  return Math.round(Math.max(-100, Math.min(100, scaled)));
+}
+
+function behaviorFactorByTag(tag) {
+  if (tag === "skill") return 0.72;
+  if (tag === "food") return 0.48;
+  if (tag === "chain") return 0;
+  return 1;
+}
+
+function computeEntryTraitImpact(entry, traitId) {
+  if (!entry) return 0;
+  const factor = behaviorFactorByTag(entry.tag);
+  if (factor <= 0) return 0;
+
+  const tagWeights = TAG_DIMENSION_WEIGHTS[entry.tag] || {};
+  const tagImpact = (tagWeights[traitId] || 0) * factor;
+  const ew = EFFECT_DIMENSION_WEIGHTS[traitId] || {};
+  const delta = entry.delta || {};
+  const effectImpact = (
+    (delta.money || 0) * (ew.money || 0) +
+    (delta.energy || 0) * (ew.energy || 0) +
+    (delta.mood || 0) * (ew.mood || 0) +
+    (delta.reputation || 0) * (ew.reputation || 0) +
+    (delta.heat || 0) * (ew.heat || 0)
+  ) * 0.38 * factor;
+  return tagImpact + effectImpact;
+}
+
+function buildPersonalityProfile(session) {
+  const rawScores = Object.fromEntries(PERSONALITY_DIMENSIONS.map((item) => [item.id, 0]));
+  const evidenceCount = Object.fromEntries(PERSONALITY_DIMENSIONS.map((item) => [item.id, 0]));
+
+  const entries = session.history.filter((entry) => behaviorFactorByTag(entry.tag) > 0);
+  entries.forEach((entry) => {
+    PERSONALITY_DIMENSIONS.forEach((trait) => {
+      const impact = computeEntryTraitImpact(entry, trait.id);
+      rawScores[trait.id] += impact;
+      if (Math.abs(impact) >= 0.55) evidenceCount[trait.id] += 1;
+    });
+  });
+
+  Object.entries(session.flags || {}).forEach(([flag, enabled]) => {
+    if (!enabled) return;
+    const fw = FLAG_DIMENSION_WEIGHTS[flag];
+    if (!fw) return;
+    Object.entries(fw).forEach(([traitId, value]) => {
+      rawScores[traitId] += value;
+      if (Math.abs(value) >= 0.5) evidenceCount[traitId] += 1;
+    });
+  });
+
+  const traitProfiles = PERSONALITY_DIMENSIONS.map((trait) => {
+    const score = normalizeTraitScore(rawScores[trait.id]);
+    const label = score >= 0 ? trait.highLabel : trait.lowLabel;
+    const coverage = Math.min(1, evidenceCount[trait.id] / 10);
+    const intensity = Math.min(1, Math.abs(score) / 68);
+    const confidence = Math.round((coverage * 0.58 + intensity * 0.42) * 100);
+    return {
+      id: trait.id,
+      name: trait.name,
+      score,
+      label,
+      confidence,
+      insight: trait.insight,
+      evidenceCount: evidenceCount[trait.id],
+    };
+  });
+
+  const dominant = [...traitProfiles]
+    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+    .slice(0, 2);
+  const profileTitle = dominant.length >= 2 ? `${dominant[0].label} · ${dominant[1].label}` : (dominant[0]?.label || "观察中");
+  const avgConfidence = Math.round(traitProfiles.reduce((sum, item) => sum + item.confidence, 0) / Math.max(1, traitProfiles.length));
+
+  const evidenceLines = [];
+  const used = new Set();
+  dominant.forEach((trait) => {
+    const top = [...entries]
+      .map((entry) => ({ entry, impact: computeEntryTraitImpact(entry, trait.id) }))
+      .filter((item) => Math.abs(item.impact) >= 0.7)
+      .sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact))
+      .find((item) => {
+        const key = `${item.entry.day}-${item.entry.optionId}`;
+        if (used.has(key)) return false;
+        used.add(key);
+        return true;
+      });
+    if (top) {
+      const direction = top.impact >= 0 ? "推高" : "拉低";
+      evidenceLines.push(`Day ${top.entry.day}「${top.entry.optionLabel}」${direction}了「${trait.name}」。`);
+    }
+  });
+
+  const tips = [];
+  const risk = traitProfiles.find((t) => t.id === "riskCalibration")?.score || 0;
+  const stress = traitProfiles.find((t) => t.id === "stressRecovery")?.score || 0;
+  const horizon = traitProfiles.find((t) => t.id === "horizonFocus")?.score || 0;
+  if (risk >= 35 && stress <= -10) tips.push("你偏高波动但恢复偏弱，建议在连续两次高风险后强制插入恢复日。");
+  if (horizon <= -20) tips.push("你更偏短线止血，建议在每个里程碑前至少做一次长线投入选择。");
+  if (risk <= -25 && horizon >= 25) tips.push("你策略很稳，偶尔可在优势局试一次可控风险，提升上限。");
+  if (!tips.length) tips.push("你的策略较均衡，下局重点观察最弱属性触发前 3 天的决策节奏。");
+
+  return {
+    version: "persona-v1",
+    framework: "behavioral-traits",
+    title: profileTitle,
+    confidence: avgConfidence,
+    note: "基于本局行为证据生成，不等同临床或正式心理测评。",
+    traits: traitProfiles,
+    evidence: evidenceLines.slice(0, 3),
+    tips: tips.slice(0, 2),
+  };
+}
+
 function buildEndingReason(session, alive) {
   const totals = { money: 0, energy: 0, mood: 0, reputation: 0, heat: 0 };
   let worstDay = null;
@@ -2421,6 +2603,7 @@ function finishSession(alive) {
   const score = computeScore(state.session);
   const ending = endingByScore(score, alive);
   const reason = buildEndingReason(state.session, alive);
+  const personality = buildPersonalityProfile(state.session);
   const daysSurvived = state.session.dayIndex + 1;
 
   state.session.mode = "ended";
@@ -2430,6 +2613,7 @@ function finishSession(alive) {
     score,
     ending,
     reason,
+    personality,
     storyNarrative: "",
     storyLoading: true,
     storyError: "",
@@ -2618,10 +2802,12 @@ function shareText() {
   const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "这一局主要是被连续连锁后果反噬。", 90);
   const nextTip = sanitizeShareLine((result.reason?.nextRunTips || [])[0] || "下局先稳住现金和体力，再考虑热度。", 90);
   const keyDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 90);
+  const personaTitle = sanitizeShareLine(result.personality?.title || "", 70);
   const poem = extractPoemLine(result.storyNarrative || "");
   return [
     `我在《是男人就坚持100天》硬扛了 ${result.daysSurvived} 天，结局：${result.ending.title}`,
     `本局画像：${state.session.archetypeName}｜当前分 ${result.score}`,
+    personaTitle ? `行为画像：${personaTitle}` : "行为画像：样本不足，继续再跑一局。",
     `翻车主因：${reason}`,
     `下局建议：${nextTip}`,
     keyDecision ? `关键一手：${keyDecision}` : "关键一手：这局每一步都在给后续埋雷。",

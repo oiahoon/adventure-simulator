@@ -20,6 +20,7 @@
 - [贴吧内容引入策略](./product/tieba-content-integration.md)
 - [微信传播导向重设计](./product/wechat-mobile-redesign.md)
 - [剧情结构梳理与 us-killline 差异对比](./product/storyline-map-and-us-killline-diff.md)
+- [人格画像系统开发计划（行为证据版）](./product/personality-profiling-plan.md)
 - [系统架构总览](./architecture/system-overview.md)
 - [发布与部署手册](./release/release-playbook.md)
 

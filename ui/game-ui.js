@@ -153,6 +153,10 @@ export function createGameUI(root, actions) {
     const restartLocked = Boolean(view.endingUi?.restartLocked);
     const restartConfirm = Boolean(view.endingUi?.restartConfirm);
     const restartText = restartLocked ? "结算中..." : restartConfirm ? "确认再来一局" : "再来一局";
+    const persona = view.result.personality;
+    const traitLines = (persona?.traits || [])
+      .map((item) => `<li>${item.name}：${item.label}（分值 ${item.score >= 0 ? "+" : ""}${item.score}｜置信 ${item.confidence}%）</li>`)
+      .join("");
 
     panel.innerHTML = `
       <article class="card hero end">
@@ -176,6 +180,16 @@ export function createGameUI(root, actions) {
         <article class="reason-block">
           <h3>下局三条建议</h3>
           <ul class="history">${simpleList(view.result.reason?.nextRunTips || [])}</ul>
+        </article>
+        <article class="reason-block">
+          <h3>行为人格画像</h3>
+          <p class="opt-impact">画像：${persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
+          <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
+          <p class="opt-impact">${persona?.note || ""}</p>
+          <h3>画像证据</h3>
+          <ul class="history">${simpleList(persona?.evidence || [])}</ul>
+          <h3>画像建议</h3>
+          <ul class="history">${simpleList(persona?.tips || [])}</ul>
         </article>
         <article class="reason-block">
           <h3>整局故事</h3>
