@@ -152,10 +152,10 @@ export function createGameUI(root, actions) {
       <header class="topbar">
         <div class="brand-wrap">
           <div class="brand-line">
-            <img class="logo-main" src="./assets/pixel/brand/logo-main-v2.png" alt="是男人就坚持100天" decoding="async" loading="eager" />
-            <h1 class="brand-title">是男人就坚持100天</h1>
+            <img class="logo-main" src="./assets/pixel/brand/logo-main-v2.png" alt="都市生活挑战" decoding="async" loading="eager" />
+            <h1 class="brand-title">都市生活挑战</h1>
           </div>
-          <p id="subtitle">都市生存挑战</p>
+          <p id="subtitle">JOJO风都市生存卡牌</p>
         </div>
         <button class="ghost" id="restart-btn">重开</button>
       </header>
@@ -205,7 +205,7 @@ export function createGameUI(root, actions) {
   function renderIntro() {
     panel.innerHTML = `
       <article class="card hero">
-        <p class="badge">100天目标挑战</p>
+        <p class="badge">都市生活挑战</p>
         <h2>这局只看一件事：你能不能坚持 100 天。</h2>
         <p>每天一个高压事件，三选一，直到属性崩盘才会结算并生成分享文案。</p>
         <button id="start-btn" class="primary">开始新挑战</button>
@@ -303,6 +303,22 @@ export function createGameUI(root, actions) {
           </div>
           <div class="hud-panel" id="stats-panel"></div>
         </div>
+        <div class="quick-tools">
+          <div class="quick-tools-section quick-tools-food">
+            <div class="quick-tools-head">
+              <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-supply.svg" alt="" />补给商店</h3>
+              <p class="opt-impact" id="food-tip"></p>
+            </div>
+            <div class="action-grid utility-grid" id="food-list"></div>
+          </div>
+          <div class="quick-tools-section quick-tools-skill">
+            <div class="quick-tools-head">
+              <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-skill.svg" alt="" />临时技能</h3>
+              <p class="opt-impact" id="skills-tip"></p>
+            </div>
+            <div class="action-grid utility-grid" id="skills-list"></div>
+          </div>
+        </div>
       </article>
 
       <article class="card event-card">
@@ -313,18 +329,6 @@ export function createGameUI(root, actions) {
         <p id="event-text"></p>
         <p class="opt-impact" id="event-cause"></p>
         <div class="option-list" id="event-options"></div>
-      </article>
-
-      <article class="card tools-card supply-module">
-        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-supply.svg" alt="" />补给商店（每日限购一次）</h3>
-        <p class="opt-impact" id="food-tip"></p>
-        <div class="action-grid" id="food-list"></div>
-      </article>
-
-      <article class="card tools-card skill-module">
-        <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-skill.svg" alt="" />临时技能（每日刷新，限用一次）</h3>
-        <p class="opt-impact" id="skills-tip"></p>
-        <div class="action-grid" id="skills-list"></div>
       </article>
 
       <article class="card">
@@ -399,13 +403,13 @@ export function createGameUI(root, actions) {
     refs.eventOptions.innerHTML = view.event.options.map((item, index) => optionCard(item, index)).join("");
 
     refs.foodTip.textContent = view.foodShop.usedToday
-      ? "今天已补给，明天可再次购买。"
-      : "补给会立即生效，但一天只能买一次。";
+      ? "今日已购买"
+      : "每日限购 1 次";
     refs.foodList.innerHTML = view.foodShop.options.map((item) => foodCard(item, view.foodShop.usedToday || !item.affordable)).join("");
 
     refs.skillsTip.textContent = view.skills.usedToday
-      ? "本回合已使用，明天刷新新技能。"
-      : "本回合可用 1 次，技能同时包含收益与代价。";
+      ? "今日已使用"
+      : "每日可用 1 次";
     refs.skillsList.innerHTML = view.skills.offers.map((item) => tempSkillCard(item, view.skills.usedToday)).join("");
 
     refs.historyList.innerHTML = view.history.length ? view.history.map(historyItem).join("") : "<li>暂无</li>";
@@ -417,7 +421,7 @@ export function createGameUI(root, actions) {
     render(view) {
       const subtitle = root.querySelector("#subtitle");
       if (subtitle) {
-        subtitle.textContent = view.notice || "都市生存挑战";
+        subtitle.textContent = view.notice || "JOJO风都市生存卡牌";
         subtitle.classList.toggle("flash", Boolean(view.notice));
       }
 
