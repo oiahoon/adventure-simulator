@@ -14,6 +14,7 @@
 - [基线决议（单一真相）](./architecture/baseline-decisions.md)
 - [游戏设计基线（V4）](./product/game-design-baseline.md)
 - [当前玩法机制基线（实现对齐）](./product/current-gameplay-mechanics.md)
+- [100天分段式长线设计（V1）](./product/segmented-longline-100day-design.md)
 - [事件因果链设计](./product/event-causal-chain-design.md)
 - [贴吧内容引入策略](./product/tieba-content-integration.md)
 - [微信传播导向重设计](./product/wechat-mobile-redesign.md)

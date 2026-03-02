@@ -1412,6 +1412,23 @@ function resolveCausalStageEvent(session, stageIndex) {
   return pickFromPool(session, CHAPTER_POOLS[5].pivot, CHAPTER_POOLS[5].pivot[0]);
 }
 
+function resolveLonglineStage(session, dayIndex) {
+  const day = dayIndex + 1;
+
+  if (day <= 1) return 0;
+  if (day <= 15) return 1;
+  if (day <= 32) return 2;
+  if (day <= 52) return 3;
+  if (day <= 76) return 4;
+  if (day <= TARGET_DAY) return 5;
+
+  const pressure = session.pressure;
+  if (pressure.debt >= pressure.burnout && pressure.debt >= pressure.scrutiny) return 5;
+  if (pressure.burnout >= pressure.scrutiny) return 3;
+  if (session.stats.heat >= 6 || pressure.scrutiny >= 3) return 4;
+  return randomPick([3, 4, 5], session.random);
+}
+
 function resolveStateIncidentEvent(session, dayIndex) {
   if (dayIndex <= 0) return null;
   if (dayIndex - session.lastIncidentDay < 2) return null;
@@ -1474,8 +1491,8 @@ function resolveEvent(session, dayIndex) {
   if (growth) return growth;
   const incident = resolveStateIncidentEvent(session, dayIndex);
   if (incident) return incident;
-  const loopStage = ((dayIndex - 1) % 5) + 1;
-  return resolveCausalStageEvent(session, loopStage);
+  const longlineStage = resolveLonglineStage(session, dayIndex);
+  return resolveCausalStageEvent(session, longlineStage);
 }
 
 function getCurrentEvent(session) {
