@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_37";
+import { createGameUI } from "../ui/game-ui.js?v=20260302_38";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -2093,17 +2093,24 @@ const PERSONALITY_DIMENSIONS = [
     highLabel: "长线经营型",
     insight: "你更偏向即时收益，还是愿意为后续稳定布局。",
   },
+  {
+    id: "executionDrive",
+    name: "执行推进",
+    lowLabel: "观望蓄力型",
+    highLabel: "快推落地型",
+    insight: "面对压力时你是先观察，还是先推进动作拿结果。",
+  },
 ];
 
 const TAG_DIMENSION_WEIGHTS = {
-  risk: { riskCalibration: 2.0, horizonFocus: -1.0, stressRecovery: -0.5 },
-  control: { riskCalibration: -1.8, horizonFocus: 1.6, stressRecovery: 0.6 },
+  risk: { riskCalibration: 2.0, horizonFocus: -1.0, stressRecovery: -0.5, executionDrive: 0.9 },
+  control: { riskCalibration: -1.8, horizonFocus: 1.6, stressRecovery: 0.6, executionDrive: -0.8 },
   rest: { riskCalibration: -0.8, stressRecovery: 1.7, horizonFocus: 0.5 },
-  work: { stressRecovery: -0.6, horizonFocus: 0.8, socialDrive: -0.4 },
-  network: { socialDrive: 1.8, horizonFocus: 0.4 },
-  social: { socialDrive: 1.6, riskCalibration: 0.5 },
-  content: { socialDrive: 0.9, riskCalibration: 1.2, stressRecovery: -0.7 },
-  money: { horizonFocus: -0.8, riskCalibration: 0.7 },
+  work: { stressRecovery: -0.6, horizonFocus: 0.8, socialDrive: -0.4, executionDrive: 1.6 },
+  network: { socialDrive: 1.8, horizonFocus: 0.4, executionDrive: 0.6 },
+  social: { socialDrive: 1.6, riskCalibration: 0.5, executionDrive: 0.7 },
+  content: { socialDrive: 0.9, riskCalibration: 1.2, stressRecovery: -0.7, executionDrive: 1.1 },
+  money: { horizonFocus: -0.8, riskCalibration: 0.7, executionDrive: 0.8 },
 };
 
 const EFFECT_DIMENSION_WEIGHTS = {
@@ -2111,21 +2118,22 @@ const EFFECT_DIMENSION_WEIGHTS = {
   socialDrive: { reputation: 0.5, heat: 0.2, mood: 0.1 },
   stressRecovery: { mood: 0.58, energy: 0.52, heat: -0.12 },
   horizonFocus: { money: 0.55, energy: 0.24, mood: 0.16, heat: -0.1 },
+  executionDrive: { money: 0.24, reputation: 0.24, energy: -0.18, mood: -0.08, heat: 0.08 },
 };
 
 const FLAG_DIMENSION_WEIGHTS = {
   debt_spiral: { riskCalibration: 1.2, horizonFocus: -0.9 },
   budget_mode: { horizonFocus: 1.0, riskCalibration: -0.5 },
   scope_control: { horizonFocus: 0.8, riskCalibration: -0.6 },
-  overwork_line: { stressRecovery: -1.2, horizonFocus: -0.2 },
+  overwork_line: { stressRecovery: -1.2, horizonFocus: -0.2, executionDrive: 1.0 },
   rest_recovery: { stressRecovery: 1.1 },
   public_fight: { riskCalibration: 1.1, socialDrive: 0.6 },
-  network_mode: { socialDrive: 1.0 },
+  network_mode: { socialDrive: 1.0, executionDrive: 0.4 },
   boundary_mode: { stressRecovery: 0.8, horizonFocus: 0.6 },
-  viral_path: { riskCalibration: 1.0, socialDrive: 0.5, stressRecovery: -0.4 },
-  survival_route: { horizonFocus: 0.6, riskCalibration: -0.3 },
-  grind_path: { stressRecovery: -0.8, horizonFocus: -0.5 },
-  upgrade_route: { horizonFocus: 1.0, stressRecovery: -0.2 },
+  viral_path: { riskCalibration: 1.0, socialDrive: 0.5, stressRecovery: -0.4, executionDrive: 0.8 },
+  survival_route: { horizonFocus: 0.6, riskCalibration: -0.3, executionDrive: -0.5 },
+  grind_path: { stressRecovery: -0.8, horizonFocus: -0.5, executionDrive: 0.9 },
+  upgrade_route: { horizonFocus: 1.0, stressRecovery: -0.2, executionDrive: 0.8 },
   trust_break: { riskCalibration: 0.7, socialDrive: -0.9 },
 };
 
@@ -2229,9 +2237,12 @@ function buildPersonalityProfile(session) {
   const risk = traitProfiles.find((t) => t.id === "riskCalibration")?.score || 0;
   const stress = traitProfiles.find((t) => t.id === "stressRecovery")?.score || 0;
   const horizon = traitProfiles.find((t) => t.id === "horizonFocus")?.score || 0;
+  const execution = traitProfiles.find((t) => t.id === "executionDrive")?.score || 0;
   if (risk >= 35 && stress <= -10) tips.push("你偏高波动但恢复偏弱，建议在连续两次高风险后强制插入恢复日。");
   if (horizon <= -20) tips.push("你更偏短线止血，建议在每个里程碑前至少做一次长线投入选择。");
   if (risk <= -25 && horizon >= 25) tips.push("你策略很稳，偶尔可在优势局试一次可控风险，提升上限。");
+  if (execution >= 35 && stress <= 0) tips.push("你的推进欲强于恢复速度，建议每 3 天安排 1 天低负载回收。");
+  if (execution <= -25 && horizon >= 10) tips.push("你规划很清晰但动作偏慢，可以设置“当日最小行动”避免机会滑走。");
   if (!tips.length) tips.push("你的策略较均衡，下局重点观察最弱属性触发前 3 天的决策节奏。");
 
   return {

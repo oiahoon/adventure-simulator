@@ -81,6 +81,71 @@ function statBar(key, value, tone) {
   </div>`;
 }
 
+function radarMetricValue(score) {
+  return Math.round((Math.max(-100, Math.min(100, score)) + 100) / 2);
+}
+
+function buildPentagonRadarSvg(traits = []) {
+  const size = 210;
+  const center = size / 2;
+  const radius = 78;
+  const levels = [0.2, 0.4, 0.6, 0.8, 1];
+  const pointsForScale = (scale) =>
+    traits
+      .map((_, idx) => {
+        const a = (-Math.PI / 2) + (idx * Math.PI * 2) / traits.length;
+        const r = radius * scale;
+        const x = center + Math.cos(a) * r;
+        const y = center + Math.sin(a) * r;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+
+  const dataPoints = traits
+    .map((item, idx) => {
+      const a = (-Math.PI / 2) + (idx * Math.PI * 2) / traits.length;
+      const metric = radarMetricValue(item.score);
+      const r = radius * (metric / 100);
+      const x = center + Math.cos(a) * r;
+      const y = center + Math.sin(a) * r;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  const axisLines = traits
+    .map((_, idx) => {
+      const a = (-Math.PI / 2) + (idx * Math.PI * 2) / traits.length;
+      const x = center + Math.cos(a) * radius;
+      const y = center + Math.sin(a) * radius;
+      return `<line x1="${center}" y1="${center}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" />`;
+    })
+    .join("");
+
+  const labels = traits
+    .map((item, idx) => {
+      const a = (-Math.PI / 2) + (idx * Math.PI * 2) / traits.length;
+      const x = center + Math.cos(a) * (radius + 20);
+      const y = center + Math.sin(a) * (radius + 20);
+      const value = radarMetricValue(item.score);
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${item.name} ${value}</text>`;
+    })
+    .join("");
+
+  const rings = levels
+    .map((level) => `<polygon points="${pointsForScale(level)}" />`)
+    .join("");
+
+  return `
+    <svg class="persona-radar-svg" viewBox="0 0 ${size} ${size}" role="img" aria-label="人格五维雷达图">
+      <g class="radar-rings">${rings}</g>
+      <g class="radar-axis">${axisLines}</g>
+      <polygon class="radar-area" points="${dataPoints}" />
+      <polyline class="radar-line" points="${dataPoints} ${dataPoints.split(" ")[0]}" />
+      <g class="radar-labels">${labels}</g>
+    </svg>
+  `;
+}
+
 export function createGameUI(root, actions) {
   root.innerHTML = `
     <section class="shell">
@@ -157,6 +222,10 @@ export function createGameUI(root, actions) {
     const traitLines = (persona?.traits || [])
       .map((item) => `<li>${item.name}：${item.label}（分值 ${item.score >= 0 ? "+" : ""}${item.score}｜置信 ${item.confidence}%）</li>`)
       .join("");
+    const radarSvg = persona?.traits?.length >= 5 ? buildPentagonRadarSvg(persona.traits.slice(0, 5)) : "";
+    const avatarHtml = view.avatar?.baseUrl
+      ? `<img class="persona-avatar-img" src="${view.avatar.baseUrl}" alt="角色头像" loading="eager" decoding="async" />`
+      : `<div class="persona-avatar-fallback">?</div>`;
 
     panel.innerHTML = `
       <article class="card hero end">
@@ -183,6 +252,10 @@ export function createGameUI(root, actions) {
         </article>
         <article class="reason-block">
           <h3>行为人格画像</h3>
+          <div class="persona-head">
+            <div class="persona-avatar">${avatarHtml}</div>
+            <div class="persona-radar-wrap">${radarSvg}</div>
+          </div>
           <p class="opt-impact">画像：${persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
           <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
           <p class="opt-impact">${persona?.note || ""}</p>
