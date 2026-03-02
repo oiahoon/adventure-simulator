@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260228_29";
+import { createGameUI } from "../ui/game-ui.js?v=20260228_31";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -945,6 +945,57 @@ const GROWTH_EVENT_POOL = [
   },
 ];
 
+const MILESTONE_EVENTS = {
+  25: {
+    id: "milestone_25",
+    chapter: "里程碑：第25天账单",
+    title: "第一轮生存账单",
+    text: "你已经扛到第 25 天，过去的选择开始集中结算。",
+    causeText: "由里程碑触发，必须完成一次阶段结算。",
+    options: [
+      { id: "milestone_25_cash", label: "现金优先止血", tag: "money", effects: { money: 2, mood: -1, reputation: -1 }, setFlags: ["survival_focus"] },
+      { id: "milestone_25_energy", label: "体力优先恢复", tag: "rest", effects: { energy: 2, money: -1, heat: -1 }, setFlags: ["rest_recovery"] },
+      { id: "milestone_25_rep", label: "口碑优先修复", tag: "network", effects: { reputation: 2, money: -1, mood: -1 }, setFlags: ["reputation_stable"] },
+    ],
+  },
+  50: {
+    id: "milestone_50",
+    chapter: "里程碑：第50天拐点",
+    title: "半程压测",
+    text: "50 天到了，接下来不能再靠同一套惯性硬撑。",
+    causeText: "由中盘里程碑触发，要求明确下一阶段策略。",
+    options: [
+      { id: "milestone_50_grind", label: "继续硬扛冲产出", tag: "work", effects: { money: 2, energy: -2, mood: -1 }, setFlags: ["grind_path"] },
+      { id: "milestone_50_control", label: "收缩战线保稳定", tag: "control", effects: { mood: 1, energy: 1, heat: -1 }, setFlags: ["scope_control"] },
+      { id: "milestone_50_social", label: "走关系换资源", tag: "network", effects: { reputation: 2, money: 1, mood: -1 }, setFlags: ["network_route"] },
+    ],
+  },
+  75: {
+    id: "milestone_75",
+    chapter: "里程碑：第75天冲刺",
+    title: "后程冲刺窗口",
+    text: "你来到第 75 天，后 25 天每一步都可能是放大器。",
+    causeText: "由后程里程碑触发，选择将放大最终结局走势。",
+    options: [
+      { id: "milestone_75_heat", label: "押注热度放大", tag: "content", effects: { heat: 2, money: 1, reputation: -2 }, setFlags: ["viral_path"] },
+      { id: "milestone_75_stable", label: "稳态优先", tag: "control", effects: { mood: 1, reputation: 1, heat: -1 }, setFlags: ["stabilized"] },
+      { id: "milestone_75_upgrade", label: "技能升级冲线", tag: "work", effects: { reputation: 2, energy: -1, money: -1 }, setFlags: ["upgrade_route"] },
+    ],
+  },
+  100: {
+    id: "milestone_100",
+    chapter: "里程碑：第100天",
+    title: "100天节点",
+    text: "你扛到第 100 天，城市给你递上了新的账本。",
+    causeText: "由目标里程碑触发，决定是继续扩张还是稳住人生盘。",
+    options: [
+      { id: "milestone_100_expand", label: "扩大投入继续冲", tag: "risk", effects: { money: 1, reputation: 1, energy: -2, heat: 1 }, setFlags: ["grind_path"] },
+      { id: "milestone_100_balance", label: "维持平衡慢走", tag: "control", effects: { mood: 2, energy: 1, heat: -1 }, setFlags: ["survival_route"] },
+      { id: "milestone_100_cashout", label: "落袋为安", tag: "money", effects: { money: 2, mood: 1, reputation: -1 }, setFlags: ["budget_rebuild"] },
+    ],
+  },
+};
+
 function seededRandom(seed = 1) {
   let x = seed >>> 0;
   return () => {
@@ -1110,7 +1161,60 @@ function applyEndOfDayConsequences(session) {
       });
     }
   }
+  const segmentPenalty = applySegmentRuleEffects(session, day);
+  if (effectToText(segmentPenalty.effects)) {
+    const before = cloneStats(session.stats);
+    applyEffects(session.stats, segmentPenalty.effects);
+    const delta = statsDelta(before, session.stats);
+    if (effectToText(delta)) {
+      applied.push({
+        day,
+        optionLabel: segmentPenalty.text || "阶段规则生效。",
+        impactText: effectToText(delta),
+        delta,
+      });
+    }
+  }
   return applied;
+}
+
+function applySegmentRuleEffects(session, day) {
+  const stage = resolveLonglineStage(session, Math.max(0, day - 1));
+  const effects = { money: 0, energy: 0, mood: 0, reputation: 0, heat: 0 };
+  let text = "";
+
+  if (stage === 1) {
+    if (session.stats.money <= 3) effects.money -= 1;
+    if (session.stats.energy <= 4) effects.mood -= 1;
+    text = "阶段规则：扩散期生活成本上浮，低现金/低体力额外吃损。";
+  } else if (stage === 2) {
+    if (session.stats.heat >= 6) {
+      effects.reputation -= 1;
+      effects.mood -= 1;
+    }
+    text = "阶段规则：舆论惯性生效，高热度会持续啃口碑和心态。";
+  } else if (stage === 3) {
+    if (session.stats.energy <= 4) {
+      effects.energy -= 1;
+      effects.mood -= 1;
+    }
+    text = "阶段规则：身体债务期，低体力会追加透支。";
+  } else if (stage === 4) {
+    if (session.stats.heat >= 7) {
+      effects.reputation -= 1;
+      effects.money += 1;
+    }
+    text = "阶段规则：热度现金共振，高曝光会带来收益也会磨损口碑。";
+  } else if (stage === 5) {
+    const load = session.pressure.debt + session.pressure.burnout + session.pressure.scrutiny;
+    if (load >= 8) {
+      const [weakStat] = weakestStat(session.stats);
+      effects[weakStat] -= 1;
+    }
+    text = "阶段规则：摊牌期放大短板，综合压力过高将直接打击最弱属性。";
+  }
+
+  return { effects, text };
 }
 
 function resolveOptionOutcome(session, option) {
@@ -1486,6 +1590,8 @@ function resolveEvent(session, dayIndex) {
   if (dayIndex === 0) return session.openingEvent;
   const forced = resolveForcedEvent(session);
   if (forced) return forced;
+  const milestone = resolveMilestoneEvent(session, dayIndex);
+  if (milestone) return milestone;
   updateMilestones(session);
   const growth = resolveGrowthEvent(session, dayIndex);
   if (growth) return growth;
@@ -1493,6 +1599,14 @@ function resolveEvent(session, dayIndex) {
   if (incident) return incident;
   const longlineStage = resolveLonglineStage(session, dayIndex);
   return resolveCausalStageEvent(session, longlineStage);
+}
+
+function resolveMilestoneEvent(session, dayIndex) {
+  const day = dayIndex + 1;
+  const event = MILESTONE_EVENTS[day];
+  if (!event) return null;
+  if (session.milestoneDone[event.id]) return null;
+  return event;
 }
 
 function getCurrentEvent(session) {
@@ -1670,12 +1784,44 @@ function buildEndingReason(session, alive) {
     weakest: { name: weakName, value: weakValue },
     keyDay: worstDay ? worstDay.day : null,
     bullets,
+    nextRunTips: buildNextRunTips(session, weakStatKey),
     review: {
       topNodes,
       topDecisions,
       chainSummary,
     },
   };
+}
+
+function buildNextRunTips(session, weakStatKey) {
+  const tips = [];
+  const riskChoices = session.history.filter((entry) => entry.tag === "risk").length;
+  const chainHits = session.history.filter((entry) => entry.tag === "chain").length;
+  const moneyLoss = session.history.reduce((sum, entry) => sum + Math.min(0, entry.delta?.money || 0), 0);
+  const energyLoss = session.history.reduce((sum, entry) => sum + Math.min(0, entry.delta?.energy || 0), 0);
+
+  if (weakStatKey === "money" || moneyLoss <= -8) {
+    tips.push("前 20 天优先保现金流，少选“短期爽快但后续补票”的路线。");
+  }
+  if (weakStatKey === "energy" || energyLoss <= -8) {
+    tips.push("体力低于 4 时优先恢复，不要连续两天硬扛输出。");
+  }
+  if (weakStatKey === "mood") {
+    tips.push("心态线掉到 4 以下就插入稳态选项，别让舆论线连环触发。");
+  }
+  if (weakStatKey === "reputation") {
+    tips.push("人设低时少做高热度对线，优先用控场流和关系流修复口碑。");
+  }
+  if (riskChoices >= 3) {
+    tips.push("高风险决策每两天最多一次，给延迟后果留缓冲窗口。");
+  }
+  if (chainHits >= 4) {
+    tips.push("当延迟后果频繁出现时，立刻切到保守节奏至少 2 天。");
+  }
+
+  tips.push("25/50/75 天里程碑优先补短板，不要继续放大当前最弱属性。");
+
+  return tips.slice(0, 3);
 }
 
 function buildShareLink() {
@@ -1707,6 +1853,7 @@ function buildSharePayload() {
   if (!result) return null;
   const avatarPaperDoll = buildAvatarPaperDoll(state.session);
   const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "", 80);
+  const nextTip = sanitizeShareLine((result.reason?.nextRunTips || [])[0] || "", 80);
   const poem = extractPoemLine(result.storyNarrative || "");
   const topDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 72);
   return {
@@ -1718,6 +1865,7 @@ function buildSharePayload() {
     avatarUrl: avatarPaperDoll.baseUrl || state.session.avatar?.baseUrl || state.session.avatar?.url || "",
     role: state.session.archetypeName || "都市求生者",
     reason,
+    nextTip,
     topDecision,
     poem,
   };
@@ -1803,6 +1951,7 @@ function createSession(seed = Date.now()) {
     flags: {},
     pressure: { debt: 0, burnout: 0, scrutiny: 0 },
     milestones: {},
+    milestoneDone: {},
     eventSeenCount: {},
     tagUsage: {},
     pendingConsequences: [],
@@ -1964,6 +2113,10 @@ function applyChoice(optionId) {
   });
   session.usedEventIds.add(event.id);
   session.eventSeenCount[event.id] = (session.eventSeenCount[event.id] || 0) + 1;
+  if (event.id.startsWith("milestone_")) {
+    session.milestoneDone[event.id] = true;
+    setNotice("里程碑已结算：后续阶段节奏已更新");
+  }
   updatePressureFromAction(session, option, finalEffects);
   scheduleDelayedConsequence(session, event, option);
   if (event.id.startsWith("forced_")) {
@@ -2083,12 +2236,14 @@ function shareText() {
   if (!result) return "";
   const shareLink = buildSharePreviewLink();
   const reason = sanitizeShareLine(result.reason?.bullets?.[0] || "这一局主要是被连续连锁后果反噬。", 90);
+  const nextTip = sanitizeShareLine((result.reason?.nextRunTips || [])[0] || "下局先稳住现金和体力，再考虑热度。", 90);
   const keyDecision = sanitizeShareLine((result.reason?.review?.topDecisions || [])[0] || "", 90);
   const poem = extractPoemLine(result.storyNarrative || "");
   return [
     `我在《是男人就坚持100天》硬扛了 ${result.daysSurvived} 天，结局：${result.ending.title}`,
     `本局画像：${state.session.archetypeName}｜当前分 ${result.score}`,
     `翻车主因：${reason}`,
+    `下局建议：${nextTip}`,
     keyDecision ? `关键一手：${keyDecision}` : "关键一手：这局每一步都在给后续埋雷。",
     poem || "正所谓：山重水复疑无路，柳暗花明又一村。",
     shareLink ? `分享链接：${shareLink}` : "分享链接生成失败",
@@ -2116,6 +2271,7 @@ function buildView() {
       session.mode === "playing"
         ? {
             id: event.id,
+            isMilestone: event.id.startsWith("milestone_"),
             chapter: event.chapter,
             title: event.title,
             text: event.text,

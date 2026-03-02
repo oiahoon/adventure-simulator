@@ -174,6 +174,10 @@ export function createGameUI(root, actions) {
           <p class="opt-impact">链路摘要：${view.result.reason?.review?.chainSummary || "暂无"}</p>
         </article>
         <article class="reason-block">
+          <h3>下局三条建议</h3>
+          <ul class="history">${simpleList(view.result.reason?.nextRunTips || [])}</ul>
+        </article>
+        <article class="reason-block">
           <h3>整局故事</h3>
           ${
             view.result.storyLoading
@@ -219,6 +223,7 @@ export function createGameUI(root, actions) {
       <article class="card event-card">
         <p class="badge badge-event"><img class="badge-icon" src="./assets/pixel/decor/icon-event.svg" alt="" />今日事件</p>
         <p class="opt-impact" id="event-chapter"></p>
+        <p class="milestone-tip" id="event-milestone-tip"></p>
         <h3 id="event-title"></h3>
         <p id="event-text"></p>
         <p class="opt-impact" id="event-cause"></p>
@@ -254,6 +259,7 @@ export function createGameUI(root, actions) {
       eventTitle: panel.querySelector("#event-title"),
       eventText: panel.querySelector("#event-text"),
       eventCause: panel.querySelector("#event-cause"),
+      eventMilestoneTip: panel.querySelector("#event-milestone-tip"),
       eventOptions: panel.querySelector("#event-options"),
       foodTip: panel.querySelector("#food-tip"),
       foodList: panel.querySelector("#food-list"),
@@ -296,6 +302,12 @@ export function createGameUI(root, actions) {
 
     refs.eventChapter.textContent = view.event.chapter;
     refs.eventChapter.className = `opt-impact chapter-chip ${chapterTone(view.event.chapter)}`;
+    const eventCard = panel.querySelector(".event-card");
+    eventCard?.classList.toggle("milestone-event", Boolean(view.event.isMilestone));
+    refs.eventMilestoneTip.textContent = view.event.isMilestone
+      ? "里程碑节点：本次选择会重塑后续阶段节奏。"
+      : "";
+    refs.eventMilestoneTip.style.display = view.event.isMilestone ? "block" : "none";
     refs.eventTitle.textContent = view.event.title;
     refs.eventText.textContent = view.event.text;
     refs.eventCause.textContent = `因果线：${view.event.causeText}`;

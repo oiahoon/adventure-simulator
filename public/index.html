@@ -321,6 +321,25 @@
         margin: 0 0 6px;
         line-height: 1.45;
       }
+      .milestone-tip {
+        display: none;
+        margin: 0 0 8px;
+        font-size: 11px;
+        color: #7b5f36;
+        background: rgba(243, 223, 183, 0.72);
+        border-radius: 999px;
+        padding: 4px 10px;
+        width: fit-content;
+      }
+      .event-card.milestone-event {
+        box-shadow:
+          0 2px 10px rgba(39, 45, 40, 0.04),
+          inset 0 0 0 1px rgba(192, 180, 158, 0.45),
+          0 0 0 2px rgba(243, 223, 183, 0.32);
+      }
+      .event-card.milestone-event .badge-event {
+        animation: milestonePulse 1.4s ease-in-out infinite;
+      }
       .skill-module,
       .supply-module {
         background-image:
@@ -679,6 +698,20 @@
           transform: translateY(0);
         }
       }
+      @keyframes milestonePulse {
+        0% {
+          transform: translateY(0);
+          filter: saturate(1);
+        }
+        50% {
+          transform: translateY(-1px);
+          filter: saturate(1.15);
+        }
+        100% {
+          transform: translateY(0);
+          filter: saturate(1);
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
         * {
           animation: none !important;
@@ -726,6 +759,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_29"></script>
+    <script type="module" src="./app/main.js?v=20260228_31"></script>
   </body>
 </html>
