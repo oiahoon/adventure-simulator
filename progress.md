@@ -639,3 +639,8 @@ Original prompt: 按照这份计划文档，创建开发的计划，根绝计划
   - `docs/product/current-gameplay-mechanics.md` 新增 100 天分段主线说明。
   - 新增 `docs/product/segmented-longline-100day-design.md`。
   - `docs/README.md` 增加入口。
+
+## 对比 us-killline 的劣势与改进
+- 新增文档：`docs/product/us-killline-gap-improvement-plan.md`。
+- 输出内容：当前劣势识别（中后期爬坡、反制深度、里程碑反馈、复盘闭环、视觉统一性）+ P0/P1/P2 改进路线。
+- 同步更新 `docs/README.md` 文档入口。
