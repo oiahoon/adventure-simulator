@@ -1,12 +1,12 @@
 const TAG_META = {
-  work: { label: "硬扛流", cls: "tag-work" },
-  risk: { label: "梭哈流", cls: "tag-risk" },
-  control: { label: "控场流", cls: "tag-control" },
-  network: { label: "关系流", cls: "tag-network" },
-  social: { label: "社交流", cls: "tag-social" },
-  content: { label: "内容流", cls: "tag-content" },
-  rest: { label: "续命流", cls: "tag-rest" },
-  money: { label: "现金流", cls: "tag-money" },
+  work: { label: "硬扛流", cls: "tag-work", icon: "./assets/pixel/decor/icon-history.svg" },
+  risk: { label: "梭哈流", cls: "tag-risk", icon: "./assets/pixel/decor/corner-gold.svg" },
+  control: { label: "控场流", cls: "tag-control", icon: "./assets/pixel/decor/icon-event.svg" },
+  network: { label: "关系流", cls: "tag-network", icon: "./assets/pixel/decor/icon-skill.svg" },
+  social: { label: "社交流", cls: "tag-social", icon: "./assets/pixel/decor/icon-event.svg" },
+  content: { label: "内容流", cls: "tag-content", icon: "./assets/pixel/decor/icon-history.svg" },
+  rest: { label: "续命流", cls: "tag-rest", icon: "./assets/pixel/decor/icon-supply.svg" },
+  money: { label: "现金流", cls: "tag-money", icon: "./assets/pixel/decor/icon-supply.svg" },
 };
 
 const STAT_META = {
@@ -30,12 +30,12 @@ function chapterTone(chapter = "") {
 }
 
 function optionCard(option, index) {
-  const tag = TAG_META[option.tag] || { label: "行动流", cls: "tag-generic" };
+  const tag = TAG_META[option.tag] || { label: "行动流", cls: "tag-generic", icon: "./assets/pixel/decor/icon-event.svg" };
   return `<button class="option-btn ${tag.cls}" data-option-id="${option.id}" style="--stagger:${index}">
-    <span class="opt-emblem" aria-hidden="true"></span>
+    <span class="opt-mark" aria-hidden="true"><img src="${tag.icon}" alt="" loading="lazy" decoding="async" /></span>
     <span class="opt-head">
       <span class="opt-title">${option.label}</span>
-      <span class="opt-tag">${tag.label}</span>
+      <span class="opt-tag"><img class="opt-tag-icon" src="${tag.icon}" alt="" loading="lazy" decoding="async" />${tag.label}</span>
     </span>
     <span class="opt-impact">${option.impactText}</span>
   </button>`;
@@ -87,8 +87,8 @@ export function createGameUI(root, actions) {
       <header class="topbar">
         <div class="brand-wrap">
           <div class="brand-line">
-            <img class="logo-mark" src="./assets/pixel/brand/logo-mark.png" alt="" decoding="async" loading="eager" />
-            <h1>是男人就坚持100天</h1>
+            <img class="logo-main" src="./assets/pixel/brand/logo-main-v2.png" alt="是男人就坚持100天" decoding="async" loading="eager" />
+            <h1 class="sr-only">是男人就坚持100天</h1>
           </div>
           <p id="subtitle">都市生存挑战</p>
         </div>

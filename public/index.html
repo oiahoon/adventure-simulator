@@ -55,11 +55,12 @@
       .brand-line {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
       }
-      .logo-mark {
-        width: 20px;
-        height: 20px;
+      .logo-main {
+        width: min(58vw, 220px);
+        max-height: 86px;
+        object-fit: contain;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
       }
@@ -75,7 +76,7 @@
       }
       h1 {
         margin: 0;
-        font-size: 18px;
+        font-size: 20px;
         letter-spacing: 0.1px;
         font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", serif;
         font-weight: 700;
@@ -97,19 +98,32 @@
         margin-top: 10px;
       }
       .card {
-        border: 1px solid var(--line);
+        --corner-icon: url("./assets/pixel/decor/corner-gold.svg");
         border-radius: 16px;
         background: var(--card);
         padding: 14px;
-        box-shadow: 0 2px 10px rgba(39, 45, 40, 0.04);
+        box-shadow:
+          0 2px 10px rgba(39, 45, 40, 0.04),
+          inset 0 0 0 1px rgba(192, 180, 158, 0.45);
         position: relative;
         overflow: hidden;
       }
+      .card::before,
       .card::after {
         content: "";
         position: absolute;
         inset: 0;
         pointer-events: none;
+      }
+      .card::before {
+        background:
+          var(--corner-icon) left 5px top 5px/16px 16px no-repeat,
+          var(--corner-icon) right 5px top 5px/16px 16px no-repeat,
+          var(--corner-icon) left 5px bottom 5px/16px 16px no-repeat,
+          var(--corner-icon) right 5px bottom 5px/16px 16px no-repeat;
+        opacity: 0.9;
+      }
+      .card::after {
         background:
           linear-gradient(120deg, rgba(255, 255, 255, 0.2) 0%, transparent 28%),
           repeating-linear-gradient(
@@ -120,24 +134,12 @@
             transparent 7px
           );
       }
-      .event-card::before,
-      .skill-module::before,
-      .supply-module::before {
-        content: "";
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        width: 24px;
-        height: 24px;
-        background-size: cover;
-        image-rendering: pixelated;
-        image-rendering: crisp-edges;
-        opacity: 0.9;
-        pointer-events: none;
-      }
-      .event-card::before { background-image: url("./assets/pixel/decor/corner-gold.svg"); }
-      .skill-module::before { background-image: url("./assets/pixel/decor/corner-blue.svg"); }
-      .supply-module::before { background-image: url("./assets/pixel/decor/corner-green.svg"); }
+      .status-card,
+      .hero,
+      .reason-block,
+      .event-card { --corner-icon: url("./assets/pixel/decor/corner-gold.svg"); }
+      .skill-module { --corner-icon: url("./assets/pixel/decor/corner-blue.svg"); }
+      .supply-module { --corner-icon: url("./assets/pixel/decor/corner-green.svg"); }
       .hero {
         padding: 20px 18px;
       }
@@ -333,13 +335,18 @@
         gap: 8px;
       }
       .option-btn {
+        --btn-corner: url("./assets/pixel/decor/corner-gold.svg");
         position: relative;
-        border: 1px solid #d3c8b3;
+        border: 0;
         border-radius: 12px;
-        padding: 10px 11px 10px 42px;
+        padding: 10px 12px 10px 44px;
         text-align: left;
         background:
-          linear-gradient(180deg, rgba(252, 251, 247, 0.94) 0%, rgba(247, 242, 230, 0.92) 100%);
+          linear-gradient(180deg, rgba(252, 251, 247, 0.86) 0%, rgba(247, 242, 230, 0.84) 100%),
+          url("./assets/pixel/cards/event-option-card.png") center/cover no-repeat;
+        box-shadow:
+          0 2px 8px rgba(57, 49, 36, 0.1),
+          inset 0 0 0 1px rgba(190, 176, 150, 0.65);
         cursor: pointer;
         display: grid;
         gap: 4px;
@@ -355,12 +362,11 @@
       .option-btn::after {
         content: "";
         position: absolute;
-        inset: 0;
         pointer-events: none;
       }
       .option-btn::before {
+        inset: 0;
         background:
-          url("./assets/pixel/cards/event-option-card.png") right 8px center/84px auto no-repeat,
           linear-gradient(90deg, rgba(255, 255, 255, 0.52) 0px, rgba(255, 255, 255, 0) 18px) left center/76px 100% no-repeat,
           repeating-linear-gradient(
             0deg,
@@ -373,37 +379,32 @@
       }
       .option-btn::after {
         background:
-          linear-gradient(90deg, #c0b39a 0 6px, transparent 6px) left 6px top 6px/14px 1px no-repeat,
-          linear-gradient(0deg, #c0b39a 0 6px, transparent 6px) left 6px top 6px/1px 14px no-repeat,
-          linear-gradient(90deg, #c0b39a 0 6px, transparent 6px) right 6px top 6px/14px 1px no-repeat,
-          linear-gradient(0deg, #c0b39a 0 6px, transparent 6px) right 6px top 6px/1px 14px no-repeat,
-          linear-gradient(90deg, #c0b39a 0 6px, transparent 6px) left 6px bottom 6px/14px 1px no-repeat,
-          linear-gradient(0deg, #c0b39a 0 6px, transparent 6px) left 6px bottom 6px/1px 14px no-repeat,
-          linear-gradient(90deg, #c0b39a 0 6px, transparent 6px) right 6px bottom 6px/14px 1px no-repeat,
-          linear-gradient(0deg, #c0b39a 0 6px, transparent 6px) right 6px bottom 6px/1px 14px no-repeat;
-        opacity: 0.85;
+          var(--btn-corner) left 4px top 4px/12px 12px no-repeat,
+          var(--btn-corner) right 4px top 4px/12px 12px no-repeat,
+          var(--btn-corner) left 4px bottom 4px/12px 12px no-repeat,
+          var(--btn-corner) right 4px bottom 4px/12px 12px no-repeat;
+        opacity: 0.9;
       }
-      .opt-emblem {
+      .opt-mark {
         position: absolute;
         left: 12px;
         top: 50%;
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         border: 1px solid #cebfa3;
         border-radius: 4px;
         transform: translateY(-50%);
-        background:
-          linear-gradient(45deg, rgba(0, 0, 0, 0.06) 25%, transparent 25%) 0 0/4px 4px,
-          linear-gradient(-45deg, rgba(0, 0, 0, 0.06) 25%, transparent 25%) 0 0/4px 4px,
-          #f8f0e0;
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+        background: #f8f0e0;
+        display: grid;
+        place-items: center;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
       }
-      .opt-emblem::before {
-        content: "";
-        position: absolute;
-        inset: 3px;
-        border-radius: 2px;
-        background: #8a7f68;
+      .opt-mark img {
+        width: 14px;
+        height: 14px;
+        object-fit: contain;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
       }
       .opt-head {
         display: flex;
@@ -412,7 +413,9 @@
         gap: 8px;
       }
       .opt-tag {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         font-size: 10px;
         line-height: 1;
         padding: 4px 7px;
@@ -421,27 +424,38 @@
         color: #6b624f;
         background: #f9f2e6;
       }
+      .opt-tag-icon {
+        width: 10px;
+        height: 10px;
+        object-fit: contain;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        opacity: 0.8;
+      }
       .tag-work .opt-tag { color: #315783; border-color: #b3c8df; background: #eaf2fc; }
-      .tag-work .opt-emblem::before { background: #3d6eb5; }
+      .tag-work .opt-mark { border-color: #b3c8df; background: #eaf2fc; }
+      .tag-work.option-btn { --btn-corner: url("./assets/pixel/decor/corner-blue.svg"); }
       .tag-risk .opt-tag { color: #924747; border-color: #dfb8b8; background: #fceeee; }
-      .tag-risk .opt-emblem::before { background: #bc5757; }
+      .tag-risk .opt-mark { border-color: #dfb8b8; background: #fceeee; }
       .tag-control .opt-tag { color: #556446; border-color: #bfd0ae; background: #edf7e5; }
-      .tag-control .opt-emblem::before { background: #5f8749; }
+      .tag-control .opt-mark { border-color: #bfd0ae; background: #edf7e5; }
+      .tag-control.option-btn { --btn-corner: url("./assets/pixel/decor/corner-green.svg"); }
       .tag-network .opt-tag { color: #5a4b7a; border-color: #ccbfe2; background: #f4edfb; }
-      .tag-network .opt-emblem::before { background: #7b60ad; }
+      .tag-network .opt-mark { border-color: #ccbfe2; background: #f4edfb; }
       .tag-social .opt-tag { color: #7f4c60; border-color: #dfc1cc; background: #fbedf3; }
-      .tag-social .opt-emblem::before { background: #b85f82; }
+      .tag-social .opt-mark { border-color: #dfc1cc; background: #fbedf3; }
       .tag-content .opt-tag { color: #82572a; border-color: #e2c8aa; background: #fcf2e8; }
-      .tag-content .opt-emblem::before { background: #bf7f43; }
+      .tag-content .opt-mark { border-color: #e2c8aa; background: #fcf2e8; }
       .tag-rest .opt-tag { color: #4e6a65; border-color: #bad3ce; background: #ebf8f5; }
-      .tag-rest .opt-emblem::before { background: #519185; }
+      .tag-rest .opt-mark { border-color: #bad3ce; background: #ebf8f5; }
       .tag-money .opt-tag { color: #2f6b47; border-color: #b3d7c0; background: #e9f7ef; }
-      .tag-money .opt-emblem::before { background: #3f915d; }
+      .tag-money .opt-mark { border-color: #b3d7c0; background: #e9f7ef; }
       .tag-generic .opt-tag { color: #615842; border-color: #d0c7b6; background: #f6f1e6; }
-      .tag-generic .opt-emblem::before { background: #8a7f68; }
+      .tag-generic .opt-mark { border-color: #d0c7b6; background: #f6f1e6; }
       .option-btn:hover {
-        border-color: #bfb29b;
-        box-shadow: 0 6px 14px rgba(73, 61, 45, 0.1);
+        box-shadow:
+          0 6px 14px rgba(73, 61, 45, 0.16),
+          inset 0 0 0 1px rgba(190, 176, 150, 0.75);
         transform: translateY(-1px);
       }
       .option-btn:active {
@@ -512,13 +526,18 @@
         font-size: 13px;
       }
       .module-btn {
+        --btn-corner: url("./assets/pixel/decor/corner-gold.svg");
         position: relative;
         text-align: left;
         display: grid;
         gap: 5px;
+        padding-right: 12px;
+        border: 0;
+        box-shadow:
+          0 2px 8px rgba(57, 49, 36, 0.08),
+          inset 0 0 0 1px rgba(185, 173, 150, 0.7);
         overflow: hidden;
         isolation: isolate;
-        --module-watermark: none;
       }
       .module-btn::before,
       .module-btn::after {
@@ -527,49 +546,39 @@
         pointer-events: none;
       }
       .module-btn::before {
-        left: 7px;
-        right: 7px;
-        top: 7px;
-        bottom: 7px;
-        border: 1px dashed rgba(166, 145, 108, 0.35);
-        border-radius: 8px;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.42) 0px, rgba(255, 255, 255, 0) 22px) left center/92px 100% no-repeat,
+          repeating-linear-gradient(
+            0deg,
+            rgba(202, 191, 167, 0.11) 0px,
+            rgba(202, 191, 167, 0.11) 1px,
+            transparent 1px,
+            transparent 7px
+          );
       }
       .module-btn::after {
-        width: 28px;
-        height: 28px;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         background:
-          var(--module-watermark) right 10px center/86px auto no-repeat,
-          linear-gradient(45deg, transparent 44%, rgba(207, 191, 161, 0.9) 44% 56%, transparent 56%) right bottom/26px 26px
-            no-repeat;
+          var(--btn-corner) left 4px top 4px/12px 12px no-repeat,
+          var(--btn-corner) right 4px top 4px/12px 12px no-repeat,
+          var(--btn-corner) left 4px bottom 4px/12px 12px no-repeat,
+          var(--btn-corner) right 4px bottom 4px/12px 12px no-repeat;
         opacity: 0.9;
       }
       .module-btn.skill-btn {
         border-color: #b9c8dc;
         background:
-          linear-gradient(180deg, rgba(239, 245, 252, 0.92) 0%, rgba(231, 240, 250, 0.94) 100%);
-        --module-watermark: url("./assets/pixel/cards/skill-card.png");
+          linear-gradient(180deg, rgba(239, 245, 252, 0.86) 0%, rgba(231, 240, 250, 0.84) 100%),
+          url("./assets/pixel/cards/skill-card.png") center/cover no-repeat;
+        --btn-corner: url("./assets/pixel/decor/corner-blue.svg");
       }
       .module-btn.supply-btn {
         border-color: #bfd1bd;
         background:
-          linear-gradient(180deg, rgba(240, 248, 236, 0.92) 0%, rgba(236, 245, 227, 0.94) 100%);
-        --module-watermark: url("./assets/pixel/cards/supply-card.png");
-      }
-      .module-btn.skill-btn::after {
-        background:
-          var(--module-watermark) right 10px center/86px auto no-repeat,
-          linear-gradient(45deg, transparent 44%, rgba(153, 177, 214, 0.88) 44% 56%, transparent 56%) right bottom/26px 26px
-            no-repeat;
-      }
-      .module-btn.supply-btn::after {
-        background:
-          var(--module-watermark) right 10px center/86px auto no-repeat,
-          linear-gradient(45deg, transparent 44%, rgba(156, 190, 150, 0.88) 44% 56%, transparent 56%) right bottom/26px 26px
-            no-repeat;
+          linear-gradient(180deg, rgba(240, 248, 236, 0.86) 0%, rgba(236, 245, 227, 0.84) 100%),
+          url("./assets/pixel/cards/supply-card.png") center/cover no-repeat;
+        --btn-corner: url("./assets/pixel/decor/corner-green.svg");
       }
       .icon-line {
         display: inline-flex;
@@ -612,10 +621,23 @@
       }
       .reason-block {
         margin: 10px 0;
-        border: 1px solid #d9ceb8;
         border-radius: 10px;
         background: #f9f4e9;
         padding: 10px 11px;
+        position: relative;
+        box-shadow: inset 0 0 0 1px rgba(193, 181, 160, 0.55);
+      }
+      .reason-block::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          var(--corner-icon) left 4px top 4px/12px 12px no-repeat,
+          var(--corner-icon) right 4px top 4px/12px 12px no-repeat,
+          var(--corner-icon) left 4px bottom 4px/12px 12px no-repeat,
+          var(--corner-icon) right 4px bottom 4px/12px 12px no-repeat;
+        opacity: 0.82;
       }
       .reason-block h3 {
         margin: 0 0 6px;
@@ -685,16 +707,16 @@
           grid-template-columns: 1fr;
         }
         h1 {
-          font-size: 17px;
+          font-size: 18px;
         }
         #subtitle {
           font-size: 10px;
         }
-        .logo-mark { width: 18px; height: 18px; }
+        .logo-main { width: min(68vw, 194px); }
         .option-btn {
           padding: 10px 10px 10px 38px;
         }
-        .opt-emblem {
+        .opt-mark {
           left: 10px;
           width: 16px;
           height: 16px;
@@ -704,6 +726,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260228_24"></script>
+    <script type="module" src="./app/main.js?v=20260228_28"></script>
   </body>
 </html>
