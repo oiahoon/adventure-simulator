@@ -86,9 +86,9 @@ function radarMetricValue(score) {
 }
 
 function buildPentagonRadarSvg(traits = []) {
-  const size = 210;
+  const size = 260;
   const center = size / 2;
-  const radius = 78;
+  const radius = 86;
   const levels = [0.2, 0.4, 0.6, 0.8, 1];
   const pointsForScale = (scale) =>
     traits
@@ -124,10 +124,29 @@ function buildPentagonRadarSvg(traits = []) {
   const labels = traits
     .map((item, idx) => {
       const a = (-Math.PI / 2) + (idx * Math.PI * 2) / traits.length;
-      const x = center + Math.cos(a) * (radius + 20);
-      const y = center + Math.sin(a) * (radius + 20);
+      const cos = Math.cos(a);
+      const sin = Math.sin(a);
+      const labelRadius = radius + 22;
+      let x = center + cos * labelRadius;
+      let y = center + sin * labelRadius;
+      let anchor = "middle";
+      let baseline = "middle";
+      if (cos < -0.35) {
+        anchor = "start";
+        x += 8;
+      } else if (cos > 0.35) {
+        anchor = "end";
+        x -= 8;
+      }
+      if (sin < -0.7) {
+        baseline = "hanging";
+        y += 2;
+      } else if (sin > 0.7) {
+        baseline = "ideographic";
+        y -= 2;
+      }
       const value = radarMetricValue(item.score);
-      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${item.name} ${value}</text>`;
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${item.name} ${value}</text>`;
     })
     .join("");
 
@@ -144,6 +163,14 @@ function buildPentagonRadarSvg(traits = []) {
       <g class="radar-labels">${labels}</g>
     </svg>
   `;
+}
+
+function stripSampleWarning(text = "") {
+  return String(text)
+    .replace(/样本不足[^。！？]*[。！？]?/g, "")
+    .replace(/仅供参考[^。！？]*[。！？]?/g, "")
+    .replace(/不建议[^。！？]*定型[^。！？]*[。！？]?/g, "")
+    .trim();
 }
 
 export function createGameUI(root, actions) {
@@ -224,10 +251,12 @@ export function createGameUI(root, actions) {
     );
     const traitLines = (persona?.traits || [])
       .map((item) => {
-        const llmLine = llmTraitMap[item.id] ? `；${llmTraitMap[item.id]}` : "";
+        const cleaned = stripSampleWarning(llmTraitMap[item.id] || "");
+        const llmLine = cleaned ? `；${cleaned}` : "";
         return `<li>${item.name}：${item.label}（分值 ${item.score >= 0 ? "+" : ""}${item.score}｜置信 ${item.confidence}%）${llmLine}</li>`;
       })
       .join("");
+    const personaSummary = stripSampleWarning(persona?.llm?.summary || persona?.note || "");
     const radarSvg = persona?.traits?.length >= 5 ? buildPentagonRadarSvg(persona.traits.slice(0, 5)) : "";
     const radarBg = view.avatar?.baseUrl
       ? `<img class="persona-radar-bg" src="${view.avatar.baseUrl}" alt="" loading="eager" decoding="async" />`
@@ -268,9 +297,8 @@ export function createGameUI(root, actions) {
             <div class="persona-radar-wrap">${radarBg}${radarSvg}</div>
           </div>
           <p class="opt-impact">画像：${persona?.llm?.title || persona?.title || "观察中"}｜总体置信 ${persona?.confidence || 0}%</p>
-          ${persona?.lowConfidence ? `<p class="opt-impact">${persona?.llm?.lowConfidenceNote || "样本不足：本局证据密度偏低，先看趋势，不建议下定型结论。"}</p>` : ""}
-          <p class="opt-impact">${persona?.llm?.summary || persona?.note || ""}</p>
-          <ul class="history">${traitLines || "<li>样本不足，无法生成稳定画像。</li>"}</ul>
+          <p class="opt-impact">${personaSummary}</p>
+          <ul class="history">${traitLines || "<li>画像信息生成中。</li>"}</ul>
           <h3>画像证据</h3>
           <ul class="history">${simpleList(persona?.evidence || [])}</ul>
           <h3>画像建议</h3>

@@ -878,13 +878,14 @@
         justify-items: center;
       }
       .persona-radar-wrap {
-        width: min(86vw, 292px);
+        width: min(90vw, 320px);
         aspect-ratio: 1 / 1;
-        min-height: 196px;
+        min-height: 220px;
         position: relative;
         margin: 0 auto;
         display: grid;
         place-items: center;
+        overflow: visible;
       }
       .persona-radar-bg {
         position: absolute;
@@ -901,7 +902,7 @@
       }
       .persona-radar-svg {
         width: 100%;
-        max-width: 292px;
+        max-width: 320px;
         height: auto;
         display: block;
         position: relative;
@@ -927,9 +928,13 @@
         stroke-width: 1.2;
       }
       .radar-labels text {
-        font-size: 10px;
-        fill: #5e5647;
+        font-size: 11px;
+        fill: #4f4738;
         font-weight: 600;
+        paint-order: stroke fill;
+        stroke: rgba(250, 245, 233, 0.95);
+        stroke-width: 2.5;
+        stroke-linejoin: round;
       }
       @keyframes optionSlide {
         from {
@@ -1028,8 +1033,8 @@
           height: 16px;
         }
         .persona-radar-wrap {
-          width: min(92vw, 248px);
-          min-height: 160px;
+          width: min(94vw, 280px);
+          min-height: 188px;
         }
       }
     </style>
