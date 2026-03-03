@@ -1,4 +1,4 @@
-import { createGameUI } from "../ui/game-ui.js?v=20260302_44";
+import { createGameUI } from "../ui/game-ui.js?v=20260303_45";
 
 const STORAGE_KEY = "wechat-survival-best";
 const TARGET_DAY = 100;
@@ -163,6 +163,30 @@ const TEMP_SKILL_POOL = [
     text: "薅到实惠但社交体面会掉一点。",
     effects: { money: 2, energy: -1, reputation: -1, mood: 1 },
   },
+  {
+    id: "bullet_commentary",
+    name: "弹幕嘴替模式",
+    text: "发言更犀利，热度上来但争议也会增加。",
+    effects: { heat: 2, mood: 1, reputation: -1, energy: -1 },
+  },
+  {
+    id: "subway_powernap",
+    name: "地铁补觉术",
+    text: "路上补眠，精力回一点但容易误事。",
+    effects: { energy: 2, mood: 1, reputation: -1, heat: -1 },
+  },
+  {
+    id: "rush_delivery",
+    name: "下班跑腿接单",
+    text: "现金回血更快，但体力消耗明显。",
+    effects: { money: 2, energy: -2, mood: -1, heat: 1 },
+  },
+  {
+    id: "quiet_exit",
+    name: "安静退群保命",
+    text: "减少噪音保护心态，但社交势能会掉。",
+    effects: { mood: 2, heat: -1, reputation: -1, money: -1 },
+  },
 ];
 
 const WANG_SAOZHU_SKILL_POOL = [
@@ -253,6 +277,10 @@ const FOOD_ICON_VARIANTS = {
     "./assets/pixel/items/food-hotpot-2.png",
     "./assets/pixel/items/food-hotpot-3.png",
   ],
+  food_noodle: ["./assets/pixel/items/food-hotpot-2.png", "./assets/pixel/items/food-hotpot-3.png"],
+  food_tea_egg: ["./assets/pixel/items/food-bun.png", "./assets/pixel/items/food-default.png"],
+  food_fruit_pack: ["./assets/pixel/items/food-bento-2.png", "./assets/pixel/items/food-default-2.png"],
+  food_bbq: ["./assets/pixel/items/food-hotpot.png", "./assets/pixel/items/food-hotpot-2.png"],
   default: ["./assets/pixel/items/food-default.png", "./assets/pixel/items/food-default-2.png"],
 };
 
@@ -271,6 +299,10 @@ const SKILL_ICON_VARIANTS = {
   ai_side_hustle: ["./assets/pixel/skills/skill-ai.png", "./assets/pixel/skills/skill-ai-2.png"],
   late_night_emo_post: ["./assets/pixel/skills/skill-emo.png", "./assets/pixel/skills/skill-emo-2.png"],
   bargain_king: ["./assets/pixel/skills/skill-coupon.png", "./assets/pixel/skills/skill-coupon-2.png"],
+  bullet_commentary: ["./assets/pixel/skills/skill-hot.png", "./assets/pixel/skills/skill-hot-2.png"],
+  subway_powernap: ["./assets/pixel/skills/skill-calm.png", "./assets/pixel/skills/skill-calm-2.png"],
+  rush_delivery: ["./assets/pixel/skills/skill-gig.png", "./assets/pixel/skills/skill-gig-2.png"],
+  quiet_exit: ["./assets/pixel/skills/skill-calm.png", "./assets/pixel/skills/skill-calm-2.png"],
   wang_ex_buffer: ["./assets/pixel/skills/wang-saozhu/wang-skill-ex-buffer.png"],
   wang_resume_polish: ["./assets/pixel/skills/wang-saozhu/wang-skill-resume.png"],
   wang_firefight: ["./assets/pixel/skills/wang-saozhu/wang-skill-firefight.png"],
@@ -298,6 +330,30 @@ const FOOD_OPTIONS = [
     name: "深夜小火锅",
     text: "回血明显，但钱包会痛。",
     effects: { money: -3, energy: 3, mood: 1, heat: 1 },
+  },
+  {
+    id: "food_noodle",
+    name: "深夜牛肉面",
+    text: "开销中高，情绪和体力都能回一点。",
+    effects: { money: -2, energy: 2, mood: 2 },
+  },
+  {
+    id: "food_tea_egg",
+    name: "茶叶蛋顶一顶",
+    text: "最便宜的应急补给，主打先活着。",
+    effects: { money: -1, energy: 1, mood: 0 },
+  },
+  {
+    id: "food_fruit_pack",
+    name: "水果酸奶杯",
+    text: "轻补给，心情回得更快。",
+    effects: { money: -2, energy: 1, mood: 2 },
+  },
+  {
+    id: "food_bbq",
+    name: "路边烧烤局",
+    text: "当下最爽，但会带来额外围观热度。",
+    effects: { money: -3, energy: 2, mood: 2, heat: 1 },
   },
 ];
 
@@ -1762,6 +1818,10 @@ function drawTempSkills(random, count = 2, sourcePool = TEMP_SKILL_POOL) {
   return picks;
 }
 
+function drawFoodOffers(random, count = 2, sourcePool = FOOD_OPTIONS) {
+  return drawTempSkills(random, count, sourcePool);
+}
+
 function getTempSkillPool(archetypeId) {
   if (archetypeId === "wang_saozhu") return WANG_SAOZHU_SKILL_POOL;
   return TEMP_SKILL_POOL;
@@ -2843,6 +2903,7 @@ function createSession(seed = Date.now(), options = {}) {
 
   const jitter = () => (random() < 0.5 ? -1 : 1);
   const skillOffers = drawTempSkillsWithCooldown(random, 2, [], skillPool);
+  const foodOffers = drawFoodOffers(random, 2, FOOD_OPTIONS);
   return {
     seed,
     random,
@@ -2870,6 +2931,7 @@ function createSession(seed = Date.now(), options = {}) {
     activeForcedEventId: "",
     usedEventIds: new Set([openingEvent.id]),
     skillOffers,
+    foodOffers,
     skillCooldownIds: skillOffers.map((item) => item.id),
     skillUsedDay: false,
     foodUsedDay: false,
@@ -3102,6 +3164,7 @@ function applyChoice(optionId) {
   session.cachedEventDayIndex = -1;
   const skillPool = getTempSkillPool(session.archetypeId);
   session.skillOffers = drawTempSkillsWithCooldown(session.random, 2, session.skillCooldownIds, skillPool);
+  session.foodOffers = drawFoodOffers(session.random, 2, FOOD_OPTIONS);
   pushSkillCooldown(session, session.skillOffers);
   session.skillUsedDay = false;
   session.foodUsedDay = false;
@@ -3142,7 +3205,7 @@ function buyFood(foodId) {
     setNotice("今天已经吃过了");
     return;
   }
-  const food = FOOD_OPTIONS.find((item) => item.id === foodId);
+  const food = (session.foodOffers || []).find((item) => item.id === foodId);
   if (!food) return;
   const cost = Math.abs(food.effects.money || 0);
   if (session.stats.money < cost) {
@@ -3241,7 +3304,7 @@ function buildView() {
     },
     foodShop: {
       usedToday: session.foodUsedDay,
-      options: FOOD_OPTIONS.map((item) => ({
+      options: (session.foodOffers || []).map((item) => ({
         id: item.id,
         name: item.name,
         icon: pickStableVariant(

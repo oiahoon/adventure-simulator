@@ -378,6 +378,33 @@
       .event-card.milestone-event .badge-event {
         animation: milestonePulse 1.4s ease-in-out infinite;
       }
+      .play-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.75fr) minmax(232px, 1fr);
+        gap: 10px;
+        align-items: start;
+      }
+      .side-tools {
+        display: grid;
+        gap: 10px;
+      }
+      .compact-tools {
+        padding: 10px;
+      }
+      .tools-headline {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .tools-headline h3 {
+        margin: 0;
+      }
+      .tools-headline .opt-impact {
+        margin: 0;
+        font-size: 11px;
+      }
       .skill-module,
       .supply-module {
         background-image:
@@ -606,6 +633,9 @@
         grid-template-columns: 1fr 1fr;
         gap: 8px;
       }
+      .utility-grid {
+        grid-template-columns: 1fr;
+      }
       .end-actions {
         grid-template-columns: 1fr 1fr 1fr;
       }
@@ -667,48 +697,7 @@
           linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 241, 227, 0.9)),
           var(--tex-event) center/cover no-repeat;
       }
-      .quick-tools {
-        margin-top: 10px;
-        display: grid;
-        gap: 8px;
-      }
-      .quick-tools-section {
-        border-radius: 10px;
-        padding: 8px;
-        border: 1px solid rgba(188, 175, 145, 0.55);
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(245, 239, 224, 0.82)),
-          var(--tex-event) center/cover no-repeat;
-      }
-      .quick-tools-food {
-        background:
-          linear-gradient(180deg, rgba(248, 252, 243, 0.88), rgba(239, 248, 232, 0.84)),
-          var(--tex-supply) center/cover no-repeat;
-      }
-      .quick-tools-skill {
-        background:
-          linear-gradient(180deg, rgba(245, 249, 255, 0.9), rgba(237, 244, 254, 0.86)),
-          var(--tex-skill) center/cover no-repeat;
-      }
-      .quick-tools-head {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 6px;
-      }
-      .quick-tools-head h3 {
-        margin: 0;
-        font-size: 14px;
-      }
-      .quick-tools-head .opt-impact {
-        margin: 0;
-        font-size: 10px;
-      }
-      .utility-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-      .quick-tools .module-btn {
+      .compact-tools .module-btn {
         min-height: 54px;
         padding: 7px 8px;
         gap: 3px;
@@ -716,14 +705,14 @@
           0 2px 6px rgba(52, 46, 34, 0.1),
           inset 0 0 0 1px rgba(255, 250, 238, 0.4);
       }
-      .quick-tools .module-btn .icon-line {
+      .compact-tools .module-btn .icon-line {
         gap: 6px;
       }
-      .quick-tools .module-btn .pixel-icon {
+      .compact-tools .module-btn .pixel-icon {
         width: 18px;
         height: 18px;
       }
-      .quick-tools .module-btn .opt-impact {
+      .compact-tools .module-btn .opt-impact {
         font-size: 10px;
       }
       .module-btn {
@@ -992,7 +981,7 @@
         .action-grid {
           grid-template-columns: 1fr;
         }
-        .utility-grid {
+        .play-layout {
           grid-template-columns: 1fr;
         }
         h1 {
@@ -1025,6 +1014,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app/main.js?v=20260302_44"></script>
+    <script type="module" src="./app/main.js?v=20260303_45"></script>
   </body>
 </html>

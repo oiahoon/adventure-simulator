@@ -303,35 +303,36 @@ export function createGameUI(root, actions) {
           </div>
           <div class="hud-panel" id="stats-panel"></div>
         </div>
-        <div class="quick-tools">
-          <div class="quick-tools-section quick-tools-food">
-            <div class="quick-tools-head">
+      </article>
+      <section class="play-layout">
+        <article class="card event-card">
+          <p class="badge badge-event"><img class="badge-icon" src="./assets/pixel/decor/icon-event.svg" alt="" />今日事件</p>
+          <p class="opt-impact" id="event-chapter"></p>
+          <p class="milestone-tip" id="event-milestone-tip"></p>
+          <h3 id="event-title"></h3>
+          <p id="event-text"></p>
+          <p class="opt-impact" id="event-cause"></p>
+          <div class="option-list" id="event-options"></div>
+        </article>
+        <aside class="side-tools">
+          <article class="card tools-card supply-module compact-tools">
+            <div class="tools-headline">
               <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-supply.svg" alt="" />补给商店</h3>
               <p class="opt-impact" id="food-tip"></p>
             </div>
             <div class="action-grid utility-grid" id="food-list"></div>
-          </div>
-          <div class="quick-tools-section quick-tools-skill">
-            <div class="quick-tools-head">
+          </article>
+          <article class="card tools-card skill-module compact-tools">
+            <div class="tools-headline">
               <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-skill.svg" alt="" />临时技能</h3>
               <p class="opt-impact" id="skills-tip"></p>
             </div>
             <div class="action-grid utility-grid" id="skills-list"></div>
-          </div>
-        </div>
-      </article>
+          </article>
+        </aside>
+      </section>
 
-      <article class="card event-card">
-        <p class="badge badge-event"><img class="badge-icon" src="./assets/pixel/decor/icon-event.svg" alt="" />今日事件</p>
-        <p class="opt-impact" id="event-chapter"></p>
-        <p class="milestone-tip" id="event-milestone-tip"></p>
-        <h3 id="event-title"></h3>
-        <p id="event-text"></p>
-        <p class="opt-impact" id="event-cause"></p>
-        <div class="option-list" id="event-options"></div>
-      </article>
-
-      <article class="card">
+      <article class="card history-card">
         <h3 class="mod-title"><img class="mod-icon" src="./assets/pixel/decor/icon-history.svg" alt="" />最近决策链</h3>
         <ul class="history" id="history-list"></ul>
       </article>
@@ -404,12 +405,12 @@ export function createGameUI(root, actions) {
 
     refs.foodTip.textContent = view.foodShop.usedToday
       ? "今日已购买"
-      : "每日限购 1 次";
+      : "每日随机 2 选 1";
     refs.foodList.innerHTML = view.foodShop.options.map((item) => foodCard(item, view.foodShop.usedToday || !item.affordable)).join("");
 
     refs.skillsTip.textContent = view.skills.usedToday
       ? "今日已使用"
-      : "每日可用 1 次";
+      : "每日随机 2 选 1";
     refs.skillsList.innerHTML = view.skills.offers.map((item) => tempSkillCard(item, view.skills.usedToday)).join("");
 
     refs.historyList.innerHTML = view.history.length ? view.history.map(historyItem).join("") : "<li>暂无</li>";
