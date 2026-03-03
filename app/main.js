@@ -261,6 +261,14 @@ const PIXEL_AVATAR_STAGE_POOLS = {
   },
 };
 
+const PIXEL_AVATAR_RISK_POOLS = {
+  cash_crunch: ["./assets/pixel/avatars/risk/risk-cash-crunch.png"],
+  energy_burnout: ["./assets/pixel/avatars/risk/risk-energy-burnout.png"],
+  mood_crash: ["./assets/pixel/avatars/risk/risk-mood-crash.png"],
+  reputation_fall: ["./assets/pixel/avatars/risk/risk-reputation-fall.png"],
+  heat_overload: ["./assets/pixel/avatars/risk/risk-heat-overload.png"],
+};
+
 const FOOD_ICON_VARIANTS = {
   food_bun: [
     "./assets/pixel/items/food-bun.png",
@@ -1742,6 +1750,14 @@ const AVATAR_PROFILE_LABEL = {
   crisis: "危机期",
 };
 
+const AVATAR_RISK_LABEL = {
+  cash_crunch: "现金告急",
+  energy_burnout: "体力透支",
+  mood_crash: "心态告警",
+  reputation_fall: "口碑震荡",
+  heat_overload: "热度过载",
+};
+
 function resolveEndingRiskLevel(session) {
   const values = [
     session.stats.money,
@@ -1759,6 +1775,25 @@ function resolveEndingRiskLevel(session) {
   if (weakest <= 1 || criticalCount >= 2 || pressureLoad >= 9) return "critical";
   if (weakest <= 2 || warningCount >= 3 || pressureLoad >= 6) return "warning";
   return "stable";
+}
+
+function resolveEndingRiskType(session) {
+  const stats = session.stats;
+  if (stats.heat >= 8 || session.pressure.scrutiny >= 4) return "heat_overload";
+  if (stats.mood <= 2 || session.flags.burnout_risk) return "mood_crash";
+  if (stats.energy <= 2 || session.pressure.burnout >= 4) return "energy_burnout";
+  if (stats.money <= 2 || session.flags.debt_overhang || session.pressure.debt >= 4) return "cash_crunch";
+  if (stats.reputation <= 2 || session.flags.trust_break) return "reputation_fall";
+
+  const candidates = [
+    { id: "cash_crunch", score: stats.money },
+    { id: "energy_burnout", score: stats.energy },
+    { id: "mood_crash", score: stats.mood },
+    { id: "reputation_fall", score: stats.reputation },
+    { id: "heat_overload", score: 10 - stats.heat },
+  ];
+  candidates.sort((a, b) => a.score - b.score);
+  return candidates[0]?.id || "mood_crash";
 }
 
 function resolveAvatarProfile(session) {
@@ -1792,8 +1827,12 @@ function buildAvatarPaperDoll(session) {
   const archetypePools = PIXEL_AVATAR_STAGE_POOLS[session.archetypeId] || PIXEL_AVATAR_STAGE_POOLS.office_worker;
   const profile = resolveAvatarProfile(session);
   const riskLevel = resolveEndingRiskLevel(session);
+  const riskType = resolveEndingRiskType(session);
   const basePool = archetypePools[profile] || archetypePools.early || PIXEL_AVATAR_STAGE_POOLS.office_worker.early;
-  const baseUrl = pickStableVariant(basePool, `${session.seed}|avatar|${session.archetypeId}|${profile}`);
+  const riskPool = PIXEL_AVATAR_RISK_POOLS[riskType] || [];
+  const useRiskAvatar = riskLevel === "warning" || riskLevel === "critical" || riskLevel === "collapse";
+  const selectedPool = useRiskAvatar && riskPool.length ? riskPool : basePool;
+  const baseUrl = pickStableVariant(selectedPool, `${session.seed}|avatar|${session.archetypeId}|${profile}|${riskType}`);
   const overlays = [];
   const slots = new Set();
   const put = (slot, key) => {
@@ -1813,13 +1852,15 @@ function buildAvatarPaperDoll(session) {
   if (riskLevel === "critical" || riskLevel === "collapse") put("top", "sick");
   if (session.milestones.stability_reached || session.milestones.public_figure) put("top", "growth");
 
-  const stateTag = [profile, overlays.map((item) => `${item.slot}:${item.key}`).join(",")].join("|");
+  const stateTag = [profile, useRiskAvatar ? riskType : "normal", overlays.map((item) => `${item.slot}:${item.key}`).join(",")].join("|");
 
   return {
     seed: `${session.avatar.seed}|${stateTag}`,
     baseUrl,
     profile,
-    profileLabel: AVATAR_PROFILE_LABEL[profile] || "生存期",
+    profileLabel: useRiskAvatar
+      ? `${AVATAR_PROFILE_LABEL[profile] || "生存期"}·${AVATAR_RISK_LABEL[riskType] || "压力态"}`
+      : (AVATAR_PROFILE_LABEL[profile] || "生存期"),
     overlays,
   };
 }
