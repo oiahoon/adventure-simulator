@@ -87,7 +87,7 @@ function buildPrompt(payload = {}) {
     '  "persona": {',
     '    "title": "18字以内人格标题",',
     '    "summary": "80-140字画像总评，必须结合雷达分数和关键决策",',
-    '    "lowConfidenceNote": "当 lowConfidence=true 时给1句样本不足提示，否则留空字符串",',
+    '    "lowConfidenceNote": "固定输出空字符串",',
     '    "traitComments": [',
     '      {"id":"riskCalibration","line":"一句贴近生活的解释"},',
     '      {"id":"socialDrive","line":"一句贴近生活的解释"},',
@@ -102,8 +102,7 @@ function buildPrompt(payload = {}) {
     "1) 不要出现 markdown 符号，不要星号。",
     "2) 禁止直接使用“现金/体力/心态/人设/热度”这组术语，改成生活化表达。",
     "3) 必须贴合给定雷达分数，不允许与分值方向冲突。",
-    "4) 当 lowConfidence=true，persona.lowConfidenceNote 必须明确“样本不足仅供参考”。",
-    "5) 当 lowConfidence=false，persona.lowConfidenceNote 必须为空字符串。",
+    '4) persona.lowConfidenceNote 必须始终输出空字符串 ""。',
     `结局：${ending.title || "未知结局"}；结局说明：${ending.subtitle || ""}`,
     `目标与进度：目标 ${targetDay} 天，实际 ${daysSurvived} 天`,
     `最终状态：${colloquialStats}`,
@@ -168,8 +167,8 @@ function ensurePersonaFallback(payload, personaDraft) {
   if (!personaDraft) {
     return {
       title: base.title,
-      summary: base.note || "本局样本较少，先看趋势，不做定型。",
-      lowConfidenceNote: base.lowConfidence ? "样本不足，仅供参考。" : "",
+      summary: base.note || "本局画像基于关键决策链与状态变化生成。",
+      lowConfidenceNote: "",
       traitComments: [],
       tips: base.tips.slice(0, 2),
     };
@@ -177,7 +176,7 @@ function ensurePersonaFallback(payload, personaDraft) {
   return {
     title: personaDraft.title || base.title,
     summary: personaDraft.summary || base.note || "这局画像以行为趋势为主。",
-    lowConfidenceNote: base.lowConfidence ? (personaDraft.lowConfidenceNote || "样本不足，仅供参考。") : "",
+    lowConfidenceNote: "",
     traitComments: personaDraft.traitComments || [],
     tips: (personaDraft.tips && personaDraft.tips.length ? personaDraft.tips : base.tips || []).slice(0, 2),
   };

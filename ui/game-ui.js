@@ -257,6 +257,10 @@ export function createGameUI(root, actions) {
       })
       .join("");
     const personaSummary = stripSampleWarning(persona?.llm?.summary || persona?.note || "");
+    const personaEvidence = (persona?.evidence || []).map((line) => stripSampleWarning(line)).filter(Boolean);
+    const personaTips = ((persona?.llm?.tips?.length ? persona?.llm?.tips : persona?.tips) || [])
+      .map((line) => stripSampleWarning(line))
+      .filter(Boolean);
     const radarSvg = persona?.traits?.length >= 5 ? buildPentagonRadarSvg(persona.traits.slice(0, 5)) : "";
     const radarBg = view.avatar?.baseUrl
       ? `<img class="persona-radar-bg" src="${view.avatar.baseUrl}" alt="" loading="eager" decoding="async" />`
@@ -300,9 +304,9 @@ export function createGameUI(root, actions) {
           <p class="opt-impact">${personaSummary}</p>
           <ul class="history">${traitLines || "<li>画像信息生成中。</li>"}</ul>
           <h3>画像证据</h3>
-          <ul class="history">${simpleList(persona?.evidence || [])}</ul>
+          <ul class="history">${simpleList(personaEvidence)}</ul>
           <h3>画像建议</h3>
-          <ul class="history">${simpleList((persona?.llm?.tips?.length ? persona?.llm?.tips : persona?.tips) || [])}</ul>
+          <ul class="history">${simpleList(personaTips)}</ul>
         </article>
         <p class="opt-impact">${restartLocked ? "结局刚生成，按钮短暂保护中，避免误触。" : restartConfirm ? "再次点击将立即重开新局。" : "点击“再来一局”后需二次确认，防止误触。"}</p>
         <div class="action-grid end-actions">
