@@ -398,9 +398,6 @@
         justify-content: space-between;
         gap: 8px;
         margin-bottom: 8px;
-        position: relative;
-        padding-right: 126px;
-        min-height: 30px;
       }
       .tools-headline h3 {
         margin: 0;
@@ -419,26 +416,6 @@
         background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%;
         background-position: center 44px, 0 0, center;
       }
-      .supply-module .tools-headline::after,
-      .skill-module .tools-headline::after {
-        content: "";
-        position: absolute;
-        right: 0;
-        top: -2px;
-        width: 118px;
-        height: 28px;
-        background-position: center;
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
-        opacity: 0.9;
-        pointer-events: none;
-      }
-      .supply-module .tools-headline::after {
-        background-image: var(--tex-supply);
-      }
-      .skill-module .tools-headline::after {
-        background-image: var(--tex-skill);
-      }
       .event-card {
         background:
           linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 246, 236, 0.88)),
@@ -447,29 +424,6 @@
           0 4px 14px rgba(47, 39, 27, 0.1),
           inset 0 0 0 1px rgba(167, 147, 113, 0.45),
           inset 0 0 0 3px rgba(249, 241, 224, 0.62);
-      }
-      .hero::after,
-      .event-card::after,
-      .status-card::after,
-      .history-card::after {
-        background:
-          var(--tex-event) center/100% 100% no-repeat,
-          linear-gradient(120deg, rgba(255, 255, 255, 0.2) 0%, transparent 32%),
-          repeating-linear-gradient(
-            0deg,
-            rgba(171, 158, 132, 0.06) 0px,
-            rgba(171, 158, 132, 0.06) 1px,
-            transparent 1px,
-            transparent 6px
-          );
-      }
-      .hero::after,
-      .event-card::after {
-        opacity: 0.2;
-      }
-      .status-card::after,
-      .history-card::after {
-        opacity: 0.14;
       }
       .event-card h3 {
         font-size: 40px;
