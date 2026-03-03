@@ -46,7 +46,7 @@ export default function handler(req, res) {
   const desc = [payload.title, `分数 ${payload.score}`, payload.reason || payload.subtitle].filter(Boolean).join("｜");
   const image = `${origin}/api/share-image?d=${encodeURIComponent(rawD)}`;
   const url = `${origin}/api/share?d=${encodeURIComponent(rawD)}`;
-  const redirect = `${origin}/public/index.html`;
+  const redirect = `${origin}/`;
   const logoMark = `${origin}/assets/pixel/brand/logo-mark.png`;
 
   const html = `<!doctype html>
