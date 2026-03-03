@@ -182,7 +182,7 @@ export function createGameUI(root, actions) {
             <img class="logo-main" src="./assets/pixel/brand/logo-main-v2.png" alt="都市生活挑战" decoding="async" loading="eager" />
             <h1 class="brand-title">都市生活挑战</h1>
           </div>
-          <p id="subtitle">JOJO风都市生存卡牌</p>
+          <p id="subtitle">百日生存挑战</p>
         </div>
         <button class="ghost" id="restart-btn">重开</button>
       </header>
@@ -454,7 +454,7 @@ export function createGameUI(root, actions) {
     render(view) {
       const subtitle = root.querySelector("#subtitle");
       if (subtitle) {
-        subtitle.textContent = view.notice || "JOJO风都市生存卡牌";
+        subtitle.textContent = view.notice || "百日生存挑战";
         subtitle.classList.toggle("flash", Boolean(view.notice));
       }
 

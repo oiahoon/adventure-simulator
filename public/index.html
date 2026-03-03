@@ -52,6 +52,26 @@
         align-items: flex-start;
         gap: 10px;
         padding-top: 2px;
+        position: relative;
+      }
+      .topbar::after {
+        content: "";
+        position: absolute;
+        left: 54px;
+        right: 94px;
+        bottom: -4px;
+        height: 12px;
+        pointer-events: none;
+        opacity: 0.18;
+        background:
+          linear-gradient(90deg, transparent 0%, rgba(44, 56, 49, 0.2) 18%, transparent 42%, transparent 100%),
+          repeating-linear-gradient(
+            -14deg,
+            rgba(77, 90, 84, 0.45) 0px,
+            rgba(77, 90, 84, 0.45) 1px,
+            transparent 1px,
+            transparent 9px
+          );
       }
       .brand-wrap {
         display: grid;
@@ -74,10 +94,12 @@
       .brand-title {
         margin: 0;
         font-size: 40px;
-        letter-spacing: 0.8px;
+        letter-spacing: 1px;
         font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", serif;
         font-weight: 700;
         line-height: 0.96;
+        transform: skewX(-3deg);
+        transform-origin: left center;
         text-shadow:
           0 1px 0 rgba(255, 253, 248, 0.65),
           0 2px 0 rgba(35, 41, 34, 0.12);
@@ -1016,6 +1038,7 @@
         }
         .brand-title {
           font-size: 30px;
+          transform: skewX(-2deg);
         }
         #subtitle {
           font-size: 10px;
