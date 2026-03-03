@@ -22,6 +22,7 @@
         --heat: #bf8a3d;
         --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
         --avatar-size: 124px;
+        --tex-panel: url("./assets/pixel/cards/event-option-card.png");
         --tex-event: url("./assets/pixel/cards/event-option-card-v2.png");
         --tex-skill: url("./assets/pixel/cards/skill-card.png");
         --tex-supply: url("./assets/pixel/cards/supply-card.png");
@@ -123,6 +124,7 @@
         border-radius: 16px;
         background:
           linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 241, 228, 0.9)),
+          var(--tex-panel) center/100% 100% no-repeat,
           var(--tex-event) center/100% 100% no-repeat;
         padding: 14px;
         box-shadow:
@@ -410,14 +412,16 @@
         background-image:
           url("./assets/pixel/decor/divider-runic.svg"),
           linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)),
-          var(--tex-event);
-        background-repeat: no-repeat, no-repeat, no-repeat;
-        background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%;
-        background-position: center 44px, 0 0, center;
+          var(--tex-event),
+          var(--tex-panel);
+        background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+        background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%, 100% 100%;
+        background-position: center 44px, 0 0, center, center;
       }
       .event-card {
         background:
           linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 246, 236, 0.88)),
+          var(--tex-panel) center/100% 100% no-repeat,
           var(--tex-event) center/100% 100% no-repeat;
         box-shadow:
           0 4px 14px rgba(47, 39, 27, 0.1),
@@ -435,17 +439,19 @@
         background-image:
           url("./assets/pixel/decor/divider-runic.svg"),
           linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
-          var(--tex-skill);
-        background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%;
-        background-position: center 44px, 0 0, center;
+          var(--tex-skill),
+          var(--tex-panel);
+        background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%, 100% 100%;
+        background-position: center 44px, 0 0, center, center;
       }
       .supply-module {
         background-image:
           url("./assets/pixel/decor/divider-runic.svg"),
           linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
-          var(--tex-supply);
-        background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%;
-        background-position: center 44px, 0 0, center;
+          var(--tex-supply),
+          var(--tex-panel);
+        background-size: calc(100% - 28px) 8px, 100% 100%, 100% 100%, 100% 100%;
+        background-position: center 44px, 0 0, center, center;
       }
       .option-list {
         display: grid;
@@ -463,6 +469,7 @@
         text-align: left;
         background:
           linear-gradient(180deg, rgba(252, 251, 247, 0.86) 0%, rgba(247, 242, 230, 0.84) 100%),
+          var(--tex-panel) center/100% 100% no-repeat,
           url("./assets/pixel/cards/event-option-card-v2.png") center/100% 100% no-repeat;
         box-shadow:
           0 4px 10px rgba(57, 49, 36, 0.12),
@@ -658,6 +665,7 @@
         color: var(--primary-ink);
         background:
           linear-gradient(180deg, rgba(217, 118, 67, 0.92), rgba(184, 92, 49, 0.95)),
+          var(--tex-panel) center/100% 100% no-repeat,
           var(--tex-event) center/100% 100% no-repeat;
         box-shadow:
           0 8px 20px rgba(170, 100, 48, 0.2),
@@ -669,6 +677,7 @@
         border: 1px solid #c7baa2;
         background:
           linear-gradient(180deg, rgba(248, 243, 232, 0.9), rgba(241, 233, 219, 0.92)),
+          var(--tex-panel) center/100% 100% no-repeat,
           var(--tex-event) center/100% 100% no-repeat;
         color: var(--ink);
         box-shadow: inset 0 0 0 1px rgba(255, 251, 240, 0.35);
@@ -695,6 +704,7 @@
         background:
           radial-gradient(circle at 95% -10%, rgba(181, 124, 56, 0.1), transparent 40%),
           linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 241, 227, 0.9)),
+          var(--tex-panel) center/100% 100% no-repeat,
           var(--tex-event) center/100% 100% no-repeat;
       }
       .compact-tools .module-btn {
@@ -763,6 +773,7 @@
         border-color: #b9c8dc;
         background:
           linear-gradient(180deg, rgba(244, 248, 255, 0.94) 0%, rgba(236, 244, 254, 0.92) 100%),
+          var(--tex-panel) center/100% 100% no-repeat,
           url("./assets/pixel/cards/skill-card.png") center/100% 100% no-repeat;
         --btn-corner-tl: url("./assets/pixel/decor/corners/corner-blue-tl.png");
         --btn-corner-tr: url("./assets/pixel/decor/corners/corner-blue-tr.png");
@@ -773,6 +784,7 @@
         border-color: #bfd1bd;
         background:
           linear-gradient(180deg, rgba(245, 251, 240, 0.94) 0%, rgba(238, 247, 230, 0.92) 100%),
+          var(--tex-panel) center/100% 100% no-repeat,
           url("./assets/pixel/cards/supply-card.png") center/100% 100% no-repeat;
         --btn-corner-tl: url("./assets/pixel/decor/corners/corner-green-tl.png");
         --btn-corner-tr: url("./assets/pixel/decor/corners/corner-green-tr.png");
