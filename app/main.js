@@ -1742,10 +1742,34 @@ const AVATAR_PROFILE_LABEL = {
   crisis: "危机期",
 };
 
+function resolveEndingRiskLevel(session) {
+  const values = [
+    session.stats.money,
+    session.stats.energy,
+    session.stats.mood,
+    session.stats.reputation,
+    session.stats.heat,
+  ];
+  const weakest = Math.min(...values);
+  const criticalCount = values.filter((v) => v <= 2).length;
+  const warningCount = values.filter((v) => v <= 3).length;
+  const pressureLoad = session.pressure.debt + session.pressure.burnout + session.pressure.scrutiny;
+
+  if (weakest <= 0) return "collapse";
+  if (weakest <= 1 || criticalCount >= 2 || pressureLoad >= 9) return "critical";
+  if (weakest <= 2 || warningCount >= 3 || pressureLoad >= 6) return "warning";
+  return "stable";
+}
+
 function resolveAvatarProfile(session) {
   const day = session.dayIndex + 1;
   const stats = session.stats;
   const pressure = session.pressure;
+  const riskLevel = resolveEndingRiskLevel(session);
+
+  if (riskLevel === "collapse" || riskLevel === "critical") return "crisis";
+  if (riskLevel === "warning") return "late";
+
   if (
     session.activeForcedEventId ||
     stats.energy <= 2 ||
@@ -1767,6 +1791,7 @@ function resolveAvatarProfile(session) {
 function buildAvatarPaperDoll(session) {
   const archetypePools = PIXEL_AVATAR_STAGE_POOLS[session.archetypeId] || PIXEL_AVATAR_STAGE_POOLS.office_worker;
   const profile = resolveAvatarProfile(session);
+  const riskLevel = resolveEndingRiskLevel(session);
   const basePool = archetypePools[profile] || archetypePools.early || PIXEL_AVATAR_STAGE_POOLS.office_worker.early;
   const baseUrl = pickStableVariant(basePool, `${session.seed}|avatar|${session.archetypeId}|${profile}`);
   const overlays = [];
@@ -1785,17 +1810,10 @@ function buildAvatarPaperDoll(session) {
   if (session.stats.money <= 2) put("bl", "moneyLow");
   if (session.stats.heat >= 7) put("br", "heatHigh");
   if (session.flags.burnout_risk || session.activeForcedEventId) put("tr", "sick");
+  if (riskLevel === "critical" || riskLevel === "collapse") put("top", "sick");
   if (session.milestones.stability_reached || session.milestones.public_figure) put("top", "growth");
 
-  const stateTag = [
-    session.stats.money,
-    session.stats.energy,
-    session.stats.mood,
-    session.stats.reputation,
-    session.stats.heat,
-    session.dayIndex + 1,
-    overlays.map((item) => `${item.slot}:${item.key}`).join(","),
-  ].join("|");
+  const stateTag = [profile, overlays.map((item) => `${item.slot}:${item.key}`).join(",")].join("|");
 
   return {
     seed: `${session.avatar.seed}|${stateTag}`,
