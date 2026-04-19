@@ -1,31 +1,40 @@
-# 文档总览（2026-02-28）
+# 《朕的一生》资料总览
 
-本目录以“面向中国玩家、移动端优先、都市生存题材的卡牌选择 Web Game”为唯一基线。
+本仓库当前只保留《朕的一生》相关文档与美术资源。旧版都市生存、MUD runtime、测试脚本、像素素材和发布代码已清理。
 
-## 结构
+## 当前内容
 
-- `docs/product/`：玩法定义、内容策略、事件因果链、微信传播设计
-- `docs/architecture/`：系统分层、内容策略、兼容协议说明
-- `docs/engineering/`：测试质量与当前状态审计
-- `docs/release/`：部署与发布流程
+- `docs/art/sbti-lowpoly-style-guide.md`
+  - SBTI-lowpoly 美术风格基线
+  - 角色、背景、图标提示词模板
+  - 负面提示词、尺寸规范、命名规范、验收标准
+- `docs/art/asset-quality-review.md`
+  - 当前 MVP 图片资源审查结论
+  - 记录二次重生的图标、结局图、分享图和透明 HUD 图标
+- `public/assets/chinese-reigns/reference/`
+  - 风格锁定图与 SBTI testing 参考图
+- `public/assets/chinese-reigns/portraits/`
+  - 首批角色头像资源
+- `public/assets/chinese-reigns/backgrounds/`
+  - 首批场景背景资源
+- `public/assets/chinese-reigns/icons/`
+  - 四项核心数值资源图标：民心、国库、兵权、朝政
+  - `*.png` 为不透明插画版，适合教程/说明/结果页
+  - `*-transparent.png` 为透明 HUD 版，适合顶部资源条和卡片内叠加
+- `public/assets/chinese-reigns/endings/`
+  - 首批结局结果页插画
+- `public/assets/chinese-reigns/share/`
+  - 人格测试式分享页背景
 
-## 当前必读
+## 美术基线
 
-- [基线决议（单一真相）](./architecture/baseline-decisions.md)
-- [游戏设计基线（V4）](./product/game-design-baseline.md)
-- [当前玩法机制基线（实现对齐）](./product/current-gameplay-mechanics.md)
-- [100天分段式长线设计（V1）](./product/segmented-longline-100day-design.md)
-- [对比 us-killline 的劣势与改进计划](./product/us-killline-gap-improvement-plan.md)
-- [事件因果链设计](./product/event-causal-chain-design.md)
-- [贴吧内容引入策略](./product/tieba-content-integration.md)
-- [微信传播导向重设计](./product/wechat-mobile-redesign.md)
-- [剧情结构梳理与 us-killline 差异对比](./product/storyline-map-and-us-killline-diff.md)
-- [人格画像系统开发计划（行为证据版）](./product/personality-profiling-plan.md)
-- [系统架构总览](./architecture/system-overview.md)
-- [发布与部署手册](./release/release-playbook.md)
+当前风格固定为：
 
-## 文档维护约束
+- SBTI testing 风格的人格测试头像感
+- 低饱和几何 cutout illustration
+- 可见低多边形折面体积
+- 大头、小身体、略笨拙的幽默姿态
+- 古代宫廷元素只作为轻量符号
+- 图片内不烘焙中文、英文、按钮文案、Logo 或水印
 
-- 先改 `product`，再同步 `architecture` 与 `release`。
-- 代码行为变化（例如分享机制、天数目标、失败条件）必须同步文档。
-- 过期计划文档需及时归档或删除，避免与现网行为冲突。
+完整规范见：`docs/art/sbti-lowpoly-style-guide.md`。
