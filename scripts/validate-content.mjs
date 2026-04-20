@@ -24,6 +24,11 @@ const allowedEffects = new Set([
 const events = readJson("data/chinese-reigns/events.mvp.seed.json");
 const objectives = readJson("data/chinese-reigns/objectives.mvp.seed.json");
 const endings = readJson("data/chinese-reigns/endings.mvp.seed.json");
+const rules = readJson("data/chinese-reigns/rules.mvp.seed.json");
+const publicEvents = readJson("public/data/chinese-reigns/events.mvp.seed.json");
+const publicObjectives = readJson("public/data/chinese-reigns/objectives.mvp.seed.json");
+const publicEndings = readJson("public/data/chinese-reigns/endings.mvp.seed.json");
+const publicRules = readJson("public/data/chinese-reigns/rules.mvp.seed.json");
 const errors = [];
 const warnings = [];
 
@@ -38,6 +43,10 @@ events.cards.forEach((card) => {
 
 validateUnique("objective", objectives.objectives, errors);
 validateUnique("ending", endings.endings, errors);
+validatePublicDataSync("events.mvp.seed.json", events, publicEvents);
+validatePublicDataSync("objectives.mvp.seed.json", objectives, publicObjectives);
+validatePublicDataSync("endings.mvp.seed.json", endings, publicEndings);
+validatePublicDataSync("rules.mvp.seed.json", rules, publicRules);
 
 events.cards.forEach((card) => {
   validateAsset(`actor ${card.actor}`, `public/assets/chinese-reigns/portraits/${card.actor}.png`);
@@ -142,5 +151,11 @@ function validatePreview(card, side, choice) {
 function validateAsset(label, relativePath) {
   if (!existsSync(path.join(root, relativePath))) {
     errors.push(`${label}: missing asset ${relativePath}`);
+  }
+}
+
+function validatePublicDataSync(filename, canonical, deployedCopy) {
+  if (JSON.stringify(canonical) !== JSON.stringify(deployedCopy)) {
+    errors.push(`public/data/chinese-reigns/${filename} is out of sync with data/chinese-reigns/${filename}`);
   }
 }

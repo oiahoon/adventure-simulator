@@ -36,18 +36,21 @@ The current runtime includes:
 - local persistence;
 - content validation script;
 - Playwright smoke script.
+- Extracted pure gameplay engine module in `public/engine.js`.
+- Added long-run simulation script in `scripts/simulate-reigns.mjs`.
 
 ### Known Gaps
 
 - Seed content count is now above the 40-card public-playtest target, but still needs real playtest tuning.
 - Some ending-specific art remains in backlog.
 - Real share platform integration is out of scope for first MVP.
-- Runtime logic is currently concentrated in `public/main.js`; extract pure engine modules before the event system grows much larger.
+- Late-reign pressure now caps tested strategies at 60 years through `old_age_succession`.
+- Missing ending image generation is blocked until a valid OpenAI image API key is configured locally.
 
 ### Next Recommended Work
 
-1. Extract game engine pure functions from UI code.
-2. Tune the 45-card deck after real play sessions.
-3. Add result/share page polish.
-4. Add automated coverage for rare chain endings and peaceful abdication.
+1. Move remaining ending priority logic into data-driven rules.
+2. Generate missing ending images after image API key is fixed.
+3. Tune the 45-card deck and 60-year cap after real play sessions.
+4. Add automated coverage for rare chain endings, peaceful abdication, and old-age succession.
 5. Run full mobile browser QA on real devices.

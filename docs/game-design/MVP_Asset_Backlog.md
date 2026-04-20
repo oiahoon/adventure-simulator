@@ -80,7 +80,11 @@
 | --- | --- | --- | --- |
 | P0 | `endings/military-takeover.png` | 兵权过高、将军逼宫 | 当前临时复用 `coup.png`。 |
 | P0 | `endings/frontier-collapse.png` | 兵权过低且战争中，边关失守 | 当前临时复用 `frontier-outpost.png`。 |
+| P0 | `endings/expectation-revolt.png` | 民心过高，改革期待失控 | 当前临时复用 `rebellion.png`。 |
+| P0 | `endings/corruption-flood.png` | 国库过高，贪腐和奢靡失控 | 当前临时复用 `empty-treasury.png`。 |
+| P0 | `endings/bureaucratic-suffocation.png` | 朝政过高，制度压死皇帝 | 当前临时复用 `coup.png`。 |
 | P1 | `endings/alchemy-death.png` | 方士链服丹暴毙 | 有强分享潜力。 |
+| P1 | `endings/old-age-succession.png` | 60 年晚年/传位硬上限 | 当前临时复用 `peaceful-abdication.png`。 |
 | P1 | `endings/puppet-emperor.png` | 宦官/外戚把持朝政但未直接政变 | 可作为特殊结局。 |
 
 ### 2.4 UI 组件资源

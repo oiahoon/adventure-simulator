@@ -1,3 +1,15 @@
+import {
+  RESOURCE_ORDER,
+  applyChoiceToState,
+  createInitialState,
+  createReignRecord,
+  resolveEnding as resolveEngineEnding,
+  resolveEndingWithRules,
+  selectNextCard as selectEngineNextCard,
+  updateObjectiveProgress,
+  clamp,
+} from "./engine.js";
+
 const RESOURCE_META = {
   people: { label: "民心", icon: "./assets/chinese-reigns/icons/people-transparent.png" },
   treasury: { label: "国库", icon: "./assets/chinese-reigns/icons/treasury-transparent.png" },
@@ -5,12 +17,12 @@ const RESOURCE_META = {
   court: { label: "朝政", icon: "./assets/chinese-reigns/icons/court-transparent.png" },
 };
 
-const RESOURCE_ORDER = ["people", "treasury", "army", "court"];
 const STORAGE_KEY = "chinese-reigns-mvp-archive";
 const DATA_PATHS = {
-  events: "../data/chinese-reigns/events.mvp.seed.json",
-  objectives: "../data/chinese-reigns/objectives.mvp.seed.json",
-  endings: "../data/chinese-reigns/endings.mvp.seed.json",
+  events: "./data/chinese-reigns/events.mvp.seed.json",
+  objectives: "./data/chinese-reigns/objectives.mvp.seed.json",
+  endings: "./data/chinese-reigns/endings.mvp.seed.json",
+  rules: "./data/chinese-reigns/rules.mvp.seed.json",
 };
 
 const ACTOR_PATH = "./assets/chinese-reigns/portraits/";
@@ -19,9 +31,9 @@ const BACKGROUND_PATH = "./assets/chinese-reigns/backgrounds/";
 let eventPack;
 let objectivePack;
 let endingPack;
+let rulesPack;
 let state;
 let currentCard;
-let forcedEndingId;
 let dragStartX = 0;
 let dragOffsetX = 0;
 let isDragging = false;
@@ -62,10 +74,11 @@ init();
 
 async function init() {
   try {
-    [eventPack, objectivePack, endingPack] = await Promise.all([
+    [eventPack, objectivePack, endingPack, rulesPack] = await Promise.all([
       loadJson(DATA_PATHS.events),
       loadJson(DATA_PATHS.objectives),
       loadJson(DATA_PATHS.endings),
+      loadJson(DATA_PATHS.rules),
     ]);
     bindEvents();
     renderArchiveSummary();
@@ -98,63 +111,18 @@ function bindEvents() {
 
 function startReign() {
   const archive = readArchive();
-  forcedEndingId = undefined;
-  state = {
-    emperorName: `第${archive.reigns.length + 1}任皇帝`,
-    year: 1,
-    turn: 0,
-    reignIndex: archive.reigns.length + 1,
-    resources: { people: 50, treasury: 50, army: 50, court: 50 },
-    flags: { war_ongoing: false, famine_risk: false, taizi_established: false },
-    counters: {
-      years_ruled: 0,
-      eunuch_power: 0,
-      tax_anger: 0,
-      army_discontent: 0,
-      alchemy_trust: 0,
-      famine_events_seen: 0,
-      frontier_events_seen: 0,
-    },
-    completedObjectiveIds: [],
-    currentObjectiveIds: pickObjectives(2),
-    eventHistory: [],
-    endingHistory: archive.unlockedEndingIds,
-    cooldowns: {},
-    nextQueue: [],
-  };
+  state = createInitialState({ archive, objectivePack });
   currentCard = selectNextCard();
   renderGame();
   showScreen("game");
-}
-
-function pickObjectives(count) {
-  return [...objectivePack.objectives]
-    .sort(() => Math.random() - 0.5)
-    .slice(0, count)
-    .map((objective) => objective.id);
 }
 
 function choose(side) {
   if (!currentCard || !state || isResolvingChoice) return;
   isResolvingChoice = true;
 
-  const choice = currentCard[side];
-  applyChoice(choice);
-  state.eventHistory.push(currentCard.id);
-  markTagCounters(currentCard);
-  state.turn += 1;
-  state.year += 1;
-  state.counters.years_ruled += 1;
-  if (currentCard.once) {
-    state.cooldowns[currentCard.id] = Number.POSITIVE_INFINITY;
-  } else if (currentCard.cooldown) {
-    state.cooldowns[currentCard.id] = state.turn + currentCard.cooldown;
-  }
-  if (choice.nextCards?.length) {
-    state.nextQueue.push(...choice.nextCards);
-  }
-
-  updateObjectiveProgress();
+  state = applyChoiceToState(state, currentCard, side);
+  state = updateObjectiveProgress(state, objectivePack);
   const ending = resolveEnding();
   if (ending) {
     endReign(ending);
@@ -168,137 +136,20 @@ function choose(side) {
   isResolvingChoice = false;
 }
 
-function applyChoice(choice) {
-  choice.effects.forEach((effect) => {
-    if (effect.type === "resource") {
-      const nextValue = clamp(state.resources[effect.key] + effect.delta, 0, 100);
-      state.resources[effect.key] = nextValue;
-      if (nextValue <= 15) state.flags[`${effect.key}_once_danger_low`] = true;
-      if (nextValue >= 85) state.flags[`${effect.key}_once_danger_high`] = true;
-    }
-    if (effect.type === "counter") {
-      state.counters[effect.key] = Math.max(0, (state.counters[effect.key] ?? 0) + effect.delta);
-    }
-    if (effect.type === "set_flag") {
-      state.flags[effect.key] = effect.value;
-    }
-    if (effect.type === "complete_objective") {
-      completeObjective(effect.objectiveId);
-    }
-    if (effect.type === "force_ending") {
-      forcedEndingId = effect.endingId;
-    }
-  });
-}
-
-function markTagCounters(card) {
-  if (card.tags.includes("famine")) {
-    state.counters.famine_events_seen += 1;
-  }
-  if (card.tags.includes("frontier")) {
-    state.counters.frontier_events_seen += 1;
-  }
-}
-
 function selectNextCard() {
-  while (state.nextQueue.length) {
-    const queued = eventPack.cards.find((card) => card.id === state.nextQueue.shift());
-    if (queued && isCardEligible(queued)) return queued;
-  }
-
-  const eligible = eventPack.cards.filter(isCardEligible);
-  const candidates = eligible.length ? eligible : eventPack.cards;
-  const weighted = [];
-
-  candidates.forEach((card) => {
-    const boost = resourcePressureBoost(card);
-    const repeatPenalty = card.id === currentCard?.id && candidates.length > 1 ? 0.25 : 1;
-    const count = Math.max(1, Math.round((card.weight + boost) * repeatPenalty));
-    for (let index = 0; index < count; index += 1) weighted.push(card);
-  });
-
-  return weighted[Math.floor(Math.random() * weighted.length)];
-}
-
-function isCardEligible(card) {
-  if (state.cooldowns[card.id] === Number.POSITIVE_INFINITY) return false;
-  if ((state.cooldowns[card.id] ?? 0) > state.turn) return false;
-  if (card.once && state.eventHistory.includes(card.id)) return false;
-  return (card.conditions ?? []).every(evaluateCondition);
-}
-
-function evaluateCondition(condition) {
-  if (condition.type === "resource_gte") return state.resources[condition.key] >= condition.value;
-  if (condition.type === "resource_lte") return state.resources[condition.key] <= condition.value;
-  if (condition.type === "flag_is") return state.flags[condition.key] === condition.value;
-  if (condition.type === "counter_gte") return (state.counters[condition.key] ?? 0) >= condition.value;
-  if (condition.type === "counter_lte") return (state.counters[condition.key] ?? 0) <= condition.value;
-  if (condition.type === "not_seen") return !state.eventHistory.includes(condition.cardId);
-  return true;
-}
-
-function resourcePressureBoost(card) {
-  return RESOURCE_ORDER.reduce((score, key) => {
-    const isPressed = state.resources[key] <= 20 || state.resources[key] >= 80;
-    return score + (isPressed && card.tags.includes(key) ? 3 : 0);
-  }, 0);
-}
-
-function updateObjectiveProgress() {
-  state.currentObjectiveIds.forEach((objectiveId) => {
-    const objective = objectivePack.objectives.find((item) => item.id === objectiveId);
-    if (!objective || state.completedObjectiveIds.includes(objectiveId)) return;
-    if (objective.conditions.every(evaluateCondition)) {
-      completeObjective(objectiveId);
-    }
-  });
-}
-
-function completeObjective(objectiveId) {
-  if (!state.completedObjectiveIds.includes(objectiveId)) {
-    state.completedObjectiveIds.push(objectiveId);
-  }
+  const result = selectEngineNextCard({ state, eventPack, currentCard });
+  state = result.state;
+  return result.card;
 }
 
 function resolveEnding() {
-  if (forcedEndingId) return findEnding(forcedEndingId);
-  if ((state.counters.alchemy_trust ?? 0) >= 3) return findEnding("alchemy_death");
-
-  const resourceEndingMap = {
-    people: { low: "rebellion", high: "expectation_revolt" },
-    treasury: { low: "empty_treasury", high: "corruption_flood" },
-    army: { low: "frontier_collapse", high: "military_takeover" },
-    court: { low: "coup", high: "bureaucratic_suffocation" },
-  };
-
-  for (const key of RESOURCE_ORDER) {
-    if (state.resources[key] <= 0) return findEnding(resourceEndingMap[key].low);
-    if (state.resources[key] >= 100) return findEnding(resourceEndingMap[key].high);
-  }
-
-  const isStable = RESOURCE_ORDER.every((key) => state.resources[key] >= 35 && state.resources[key] <= 75);
-  if (state.counters.years_ruled >= 20 && isStable) {
-    return findEnding("peaceful_abdication");
-  }
-
-  return null;
+  return resolveEndingWithRules(state, endingPack, rulesPack);
 }
 
 function endReign(ending) {
   const archive = readArchive();
   const title = makeTitle(ending);
-  const record = {
-    endedAt: new Date().toISOString(),
-    emperorName: state.emperorName,
-    reignIndex: state.reignIndex,
-    years: state.counters.years_ruled,
-    endingId: ending.id,
-    endingName: ending.name,
-    title,
-    finalResources: { ...state.resources },
-    completedObjectiveIds: state.completedObjectiveIds,
-    memorableCardIds: state.eventHistory.slice(-6),
-  };
+  const record = createReignRecord({ state, ending, title });
   archive.reigns.unshift(record);
   archive.reigns = archive.reigns.slice(0, 12);
   archive.bestYears = Math.max(archive.bestYears, record.years);
@@ -322,12 +173,9 @@ function makeTitle(ending) {
     .filter(Boolean);
   if (completedHints.length) return `${completedHints[completedHints.length - 1]}皇帝`;
   if (ending.type === "rare_good") return "准时下班皇帝";
+  if (ending.type === "late_reign") return "熬过三代史官皇帝";
   if (ending.type === "high_resource") return "用力过猛皇帝";
   return "祖宗摇头皇帝";
-}
-
-function findEnding(id) {
-  return endingPack.endings.find((ending) => ending.id === id) ?? endingPack.endings[0];
 }
 
 function renderGame() {
@@ -463,10 +311,6 @@ function showError(message) {
 
 function normalizeAssetPath(path) {
   return path.replace(/^public\//, "./");
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 
 function defaultArchive() {

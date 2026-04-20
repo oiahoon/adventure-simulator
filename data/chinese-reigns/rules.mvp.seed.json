@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "resourceRange": {
+    "min": 0,
+    "max": 100,
+    "dangerLow": 15,
+    "dangerHigh": 85
+  },
+  "peacefulAbdication": {
+    "minYears": 20,
+    "resourceMin": 35,
+    "resourceMax": 75
+  },
+  "lateReignPressure": {
+    "startsAtYear": 35,
+    "endingAtYear": 60,
+    "endingId": "old_age_succession",
+    "pressureCounterKey": "succession_pressure"
+  }
+}
