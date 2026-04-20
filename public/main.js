@@ -148,7 +148,7 @@ function choose(side) {
 }
 
 function selectNextCard() {
-  const result = selectEngineNextCard({ state, eventPack, currentCard });
+  const result = selectEngineNextCard({ state, eventPack, currentCard, rules: rulesPack });
   state = result.state;
   return result.card;
 }
@@ -317,6 +317,8 @@ function showScreen(name) {
   els.game.classList.toggle("hidden", name !== "game");
   els.result.classList.toggle("hidden", name !== "result");
   els.error.classList.toggle("hidden", name !== "error");
+  document.body.classList.toggle("game-active", name === "game");
+  document.documentElement.classList.toggle("game-active", name === "game");
 }
 
 function showError(message) {

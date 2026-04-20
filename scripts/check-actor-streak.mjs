@@ -23,7 +23,7 @@ for (let runIndex = 0; runIndex < runCount; runIndex += 1) {
     objectivePack,
     random: Math.random,
   });
-  let currentCard = selectNextCard({ state, eventPack, currentCard: undefined, random: Math.random }).card;
+  let currentCard = selectNextCard({ state, eventPack, currentCard: undefined, random: Math.random, rules: rulesPack }).card;
   const seen = [];
 
   for (let turnIndex = 0; turnIndex < turnCount; turnIndex += 1) {
@@ -35,7 +35,7 @@ for (let runIndex = 0; runIndex < runCount; runIndex += 1) {
     }
     state = applyChoiceToState(state, currentCard, turnIndex % 2 === 0 ? "left" : "right", rulesPack);
     state = updateObjectiveProgress(state, objectivePack);
-    const next = selectNextCard({ state, eventPack, currentCard, random: Math.random });
+    const next = selectNextCard({ state, eventPack, currentCard, random: Math.random, rules: rulesPack });
     state = next.state;
     currentCard = next.card;
   }

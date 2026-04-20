@@ -55,6 +55,10 @@ The current runtime includes:
 - Normal weighted draw now avoids a third consecutive card from the same actor when alternative candidates exist.
 - Added `npm run check:actor-streak` to validate there are no actor triple-streaks across repeated simulated runs.
 - Missing asset image generation is still blocked because `OPENAI_API_KEY` is not present in either the sandboxed shell or the escalated local shell.
+- Added mobile viewport regression coverage into `scripts/smoke-playwright.mjs` and verified the gameplay screen across `375x667`, `360x740`, `390x844`, and `412x915`.
+- Tightened short-screen gameplay layout so the card, HUD, objectives, and left/right choice buttons all remain visible within one mobile viewport while swipe interaction still advances the year.
+- Verified local `.env` loading for image generation and added `.env` to `.gitignore`.
+- Image batch retry now reaches the API, but the current `OPENAI_API_KEY` still returns `401 invalid_api_key`, so missing-asset generation remains blocked on a valid key rather than local tooling.
 
 ### Next Recommended Work
 
@@ -64,4 +68,4 @@ The current runtime includes:
 4. Add a lightweight engine fixture runner so ending conflicts are verified without browser debug hooks.
 5. Continue pressure-system extraction from the single late-reign threshold into configurable bands.
 6. Implement local share-card generation/export to close M5.
-7. Run full mobile browser QA on real devices.
+7. Run full mobile browser QA on real devices, now that automated viewport regression is in place.

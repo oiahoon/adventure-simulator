@@ -4,6 +4,7 @@
     "dev": "python3 -m http.server 5173",
     "validate:content": "node scripts/validate-content.mjs",
     "check:actor-streak": "node scripts/check-actor-streak.mjs",
+    "check:engine-fixtures": "node scripts/check-engine-fixtures.mjs",
     "smoke": "node scripts/smoke-playwright.mjs",
     "simulate": "node scripts/simulate-reigns.mjs"
   },

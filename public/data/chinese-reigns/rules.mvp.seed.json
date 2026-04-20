@@ -130,10 +130,24 @@
       "match": { "type": "counter_gte", "key": "years_ruled", "value": 60 }
     }
   ],
-  "lateReignPressure": {
-    "startsAtYear": 35,
-    "endingAtYear": 60,
-    "endingId": "old_age_succession",
-    "pressureCounterKey": "succession_pressure"
+  "pressureSystem": {
+    "counterKey": "succession_pressure",
+    "bands": [
+      {
+        "startsAtYear": 35,
+        "pressureIncrement": 1,
+        "resourcePressureBonus": 0
+      },
+      {
+        "startsAtYear": 45,
+        "pressureIncrement": 2,
+        "resourcePressureBonus": 1
+      },
+      {
+        "startsAtYear": 55,
+        "pressureIncrement": 3,
+        "resourcePressureBonus": 2
+      }
+    ]
   }
 }

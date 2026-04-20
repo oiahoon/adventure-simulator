@@ -197,17 +197,22 @@ function validateRules(rulesData) {
     });
   }
 
-  validateNumber("rules.lateReignPressure.startsAtYear", rulesData.lateReignPressure?.startsAtYear, { min: 1 });
-  validateNumber("rules.lateReignPressure.endingAtYear", rulesData.lateReignPressure?.endingAtYear, { min: 1 });
-  if ((rulesData.lateReignPressure?.startsAtYear ?? 1) >= (rulesData.lateReignPressure?.endingAtYear ?? 60)) {
-    errors.push("rules.lateReignPressure.startsAtYear must be lower than rules.lateReignPressure.endingAtYear");
+  if (typeof rulesData.pressureSystem?.counterKey !== "string") {
+    errors.push("rules.pressureSystem.counterKey must be a string");
   }
-  if (typeof rulesData.lateReignPressure?.pressureCounterKey !== "string") {
-    errors.push("rules.lateReignPressure.pressureCounterKey must be a string");
-  }
-  const lateEnding = rulesData.lateReignPressure?.endingId;
-  if (!endingIds.has(lateEnding)) {
-    errors.push(`rules.lateReignPressure.endingId references missing ending ${lateEnding}`);
+  if (!Array.isArray(rulesData.pressureSystem?.bands) || rulesData.pressureSystem.bands.length === 0) {
+    errors.push("rules.pressureSystem.bands must be a non-empty array");
+  } else {
+    let previousStart = -1;
+    rulesData.pressureSystem.bands.forEach((band, index) => {
+      validateNumber(`rules.pressureSystem.bands[${index}].startsAtYear`, band?.startsAtYear, { min: 1 });
+      validateNumber(`rules.pressureSystem.bands[${index}].pressureIncrement`, band?.pressureIncrement, { min: 0 });
+      validateNumber(`rules.pressureSystem.bands[${index}].resourcePressureBonus`, band?.resourcePressureBonus, { min: 0 });
+      if ((band?.startsAtYear ?? 0) <= previousStart) {
+        errors.push("rules.pressureSystem.bands must be strictly ordered by startsAtYear");
+      }
+      previousStart = band?.startsAtYear ?? previousStart;
+    });
   }
 }
 

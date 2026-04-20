@@ -1,0 +1,107 @@
+{
+  "version": "0.1.0",
+  "fixtures": [
+    {
+      "id": "forced-ending-overrides-everything",
+      "description": "force_ending should beat alchemy and resource extremes",
+      "state": {
+        "resources": { "people": 0, "treasury": 100, "army": 50, "court": 50 },
+        "counters": { "alchemy_trust": 3, "years_ruled": 60 },
+        "forcedEndingId": "coup"
+      },
+      "expectedEndingId": "coup"
+    },
+    {
+      "id": "alchemy-overrides-peaceful",
+      "description": "alchemy death should beat peaceful abdication when both are true",
+      "state": {
+        "resources": { "people": 50, "treasury": 50, "army": 50, "court": 50 },
+        "counters": { "alchemy_trust": 3, "years_ruled": 20 }
+      },
+      "expectedEndingId": "alchemy_death"
+    },
+    {
+      "id": "people-low-precedes-treasury-high",
+      "description": "ordered resource boundaries should keep people low ahead of treasury high",
+      "state": {
+        "resources": { "people": 0, "treasury": 100, "army": 50, "court": 50 },
+        "counters": { "years_ruled": 10 }
+      },
+      "expectedEndingId": "rebellion"
+    },
+    {
+      "id": "peaceful-overrides-old-age",
+      "description": "stable reign at year 60 should still resolve to peaceful abdication before old age",
+      "state": {
+        "resources": { "people": 50, "treasury": 50, "army": 50, "court": 50 },
+        "counters": { "years_ruled": 60 }
+      },
+      "expectedEndingId": "peaceful_abdication"
+    },
+    {
+      "id": "old-age-when-not-stable",
+      "description": "old age should resolve at year 60 when peaceful abdication is not satisfied",
+      "state": {
+        "resources": { "people": 30, "treasury": 30, "army": 30, "court": 30 },
+        "counters": { "years_ruled": 60 }
+      },
+      "expectedEndingId": "old_age_succession"
+    }
+  ],
+  "transitionFixtures": [
+    {
+      "id": "pressure-band-starts-at-35",
+      "description": "entering the first band should increment succession pressure by 1",
+      "state": {
+        "counters": { "years_ruled": 34, "succession_pressure": 0 }
+      },
+      "card": {
+        "id": "fixture-card-35",
+        "tags": [],
+        "left": { "effects": [] },
+        "right": { "effects": [] }
+      },
+      "side": "left",
+      "expected": {
+        "years_ruled": 35,
+        "counters": { "succession_pressure": 1 }
+      }
+    },
+    {
+      "id": "pressure-band-steps-up-at-45",
+      "description": "entering the second band should increment succession pressure by 2",
+      "state": {
+        "counters": { "years_ruled": 44, "succession_pressure": 10 }
+      },
+      "card": {
+        "id": "fixture-card-45",
+        "tags": [],
+        "left": { "effects": [] },
+        "right": { "effects": [] }
+      },
+      "side": "left",
+      "expected": {
+        "years_ruled": 45,
+        "counters": { "succession_pressure": 12 }
+      }
+    },
+    {
+      "id": "pressure-band-steps-up-at-55",
+      "description": "entering the third band should increment succession pressure by 3",
+      "state": {
+        "counters": { "years_ruled": 54, "succession_pressure": 30 }
+      },
+      "card": {
+        "id": "fixture-card-55",
+        "tags": [],
+        "left": { "effects": [] },
+        "right": { "effects": [] }
+      },
+      "side": "left",
+      "expected": {
+        "years_ruled": 55,
+        "counters": { "succession_pressure": 33 }
+      }
+    }
+  ]
+}

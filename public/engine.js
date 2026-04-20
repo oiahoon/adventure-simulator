@@ -159,7 +159,7 @@ export function completeObjective(state, objectiveId) {
   }
 }
 
-export function selectNextCard({ state, eventPack, currentCard, random = Math.random }) {
+export function selectNextCard({ state, eventPack, currentCard, random = Math.random, rules = defaultRules() }) {
   const nextState = cloneState(state);
   while (nextState.nextQueue.length) {
     const queued = eventPack.cards.find((card) => card.id === nextState.nextQueue.shift());
@@ -176,7 +176,7 @@ export function selectNextCard({ state, eventPack, currentCard, random = Math.ra
   const weighted = [];
 
   candidates.forEach((card) => {
-    const boost = resourcePressureBoost(nextState, card);
+    const boost = resourcePressureBoost(nextState, card, rules);
     const repeatPenalty = card.id === currentCard?.id && candidates.length > 1 ? 0.25 : 1;
     const count = Math.max(1, Math.round((card.weight + boost) * repeatPenalty));
     for (let index = 0; index < count; index += 1) weighted.push(card);
@@ -218,10 +218,12 @@ export function evaluateCondition(state, condition) {
   return true;
 }
 
-export function resourcePressureBoost(state, card) {
+export function resourcePressureBoost(state, card, rules = defaultRules()) {
+  const activeBand = getActivePressureBand(rules, state.counters.years_ruled);
+  const pressureBonus = activeBand?.resourcePressureBonus ?? 0;
   return RESOURCE_ORDER.reduce((score, key) => {
     const isPressed = state.resources[key] <= 20 || state.resources[key] >= 80;
-    return score + (isPressed && card.tags.includes(key) ? 3 : 0);
+    return score + (isPressed && card.tags.includes(key) ? 3 + pressureBonus : 0);
   }, 0);
 }
 
@@ -241,10 +243,14 @@ export function resolveEndingWithRules(state, endingPack, rules = defaultRules()
 }
 
 export function applyLateReignPressure(state, rules = defaultRules()) {
-  const pressure = rules.lateReignPressure;
-  if (state.counters.years_ruled >= pressure.startsAtYear) {
-    state.counters[pressure.pressureCounterKey] = state.counters.years_ruled - pressure.startsAtYear + 1;
+  const pressureSystem = rules.pressureSystem ?? defaultRules().pressureSystem;
+  const activeBand = getActivePressureBand(rules, state.counters.years_ruled);
+  const counterKey = pressureSystem.counterKey;
+  if (!activeBand) {
+    state.counters[counterKey] = 0;
+    return;
   }
+  state.counters[counterKey] = Math.max(0, (state.counters[counterKey] ?? 0) + activeBand.pressureIncrement);
 }
 
 export function findEnding(endingPack, id) {
@@ -289,13 +295,25 @@ export function defaultRules() {
   return {
     resourceRange: { min: 0, max: 100, dangerLow: 15, dangerHigh: 85 },
     endingRules: DEFAULT_ENDING_RULES,
-    lateReignPressure: {
-      startsAtYear: 35,
-      endingAtYear: 60,
-      endingId: "old_age_succession",
-      pressureCounterKey: "succession_pressure",
+    pressureSystem: {
+      counterKey: "succession_pressure",
+      bands: [
+        { startsAtYear: 35, pressureIncrement: 1, resourcePressureBonus: 0 },
+        { startsAtYear: 45, pressureIncrement: 2, resourcePressureBonus: 1 },
+        { startsAtYear: 55, pressureIncrement: 3, resourcePressureBonus: 2 },
+      ],
     },
   };
+}
+
+export function getActivePressureBand(rules = defaultRules(), yearsRuled = 0) {
+  const bands = [...(rules.pressureSystem?.bands ?? defaultRules().pressureSystem.bands)]
+    .sort((left, right) => left.startsAtYear - right.startsAtYear);
+  let activeBand = null;
+  bands.forEach((band) => {
+    if (yearsRuled >= band.startsAtYear) activeBand = band;
+  });
+  return activeBand;
 }
 
 function getOrderedEndingRules(rules) {

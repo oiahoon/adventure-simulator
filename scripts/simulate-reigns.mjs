@@ -47,7 +47,7 @@ console.log(JSON.stringify(report, null, 2));
 function runSimulation({ strategy, seed, turnCap }) {
   const random = seededRandom(seed);
   let state = createInitialState({ archive: { reigns: [], unlockedEndingIds: [] }, objectivePack, random });
-  let currentCard = selectNextCard({ state, eventPack, currentCard: undefined, random }).card;
+  let currentCard = selectNextCard({ state, eventPack, currentCard: undefined, random, rules: rulesPack }).card;
   const choices = [];
 
   while (state.counters.years_ruled < turnCap) {
@@ -66,7 +66,7 @@ function runSimulation({ strategy, seed, turnCap }) {
         lastChoices: choices.slice(-8),
       };
     }
-    const next = selectNextCard({ state, eventPack, currentCard, random });
+    const next = selectNextCard({ state, eventPack, currentCard, random, rules: rulesPack });
     state = next.state;
     currentCard = next.card;
   }
