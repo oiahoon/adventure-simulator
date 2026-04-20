@@ -1,0 +1,390 @@
+:root {
+  color-scheme: light;
+  --ink: #27302b;
+  --muted: #69736b;
+  --paper: #fbfaf1;
+  --panel: #eef3eb;
+  --panel-strong: #dde8dc;
+  --line: rgba(49, 61, 52, 0.14);
+  --red: #b85c51;
+  --green: #5b8b5a;
+  --gold: #b69555;
+  --blue: #557a86;
+  --shadow: 0 22px 60px rgba(39, 48, 43, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100svh;
+  display: grid;
+  place-items: stretch;
+  background:
+    linear-gradient(180deg, rgba(238, 243, 235, 0.92), rgba(251, 250, 241, 0.98)),
+    url("./assets/chinese-reigns/share/result-card-bg.png") center / cover;
+}
+
+.screen {
+  width: min(100%, 460px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 18px max(20px, env(safe-area-inset-bottom));
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.start-screen,
+.result-screen,
+.error-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.start-art,
+.result-visual {
+  width: min(72vw, 280px);
+  aspect-ratio: 1;
+  margin: 0 auto 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: var(--shadow);
+}
+
+.start-art img,
+.result-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: 34px;
+}
+
+h2 {
+  font-size: 25px;
+}
+
+.intro,
+.archive-summary,
+.ending-summary,
+.error-screen p {
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.primary-button,
+.ghost-button {
+  min-height: 46px;
+  padding: 0 18px;
+  font-weight: 800;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 20px;
+  color: #fff;
+  background: var(--ink);
+}
+
+.ghost-button {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+}
+
+.game-screen {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 14px;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.resource-hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.resource {
+  min-width: 0;
+}
+
+.resource-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+}
+
+.resource-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.resource-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(39, 48, 43, 0.11);
+}
+
+.resource-fill {
+  height: 100%;
+  width: 50%;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.resource.danger .resource-fill {
+  background: var(--red);
+}
+
+.resource.preview-up .resource-fill {
+  background: var(--gold);
+}
+
+.resource.preview-down .resource-fill,
+.resource.preview-risk .resource-fill {
+  background: var(--blue);
+}
+
+.objective-strip {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.objective-strip p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.objective-strip ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.objective-strip li.done {
+  color: var(--green);
+  text-decoration: line-through;
+}
+
+.playfield {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  touch-action: none;
+}
+
+.event-card {
+  position: relative;
+  width: min(100%, 390px);
+  aspect-ratio: 0.72;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow);
+  user-select: none;
+  will-change: transform;
+  transition: transform 180ms ease;
+}
+
+.card-background {
+  position: absolute;
+  inset: 0;
+}
+
+.card-background img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  display: block;
+}
+
+.card-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 22px 22px 28px;
+  background: linear-gradient(180deg, rgba(251, 250, 241, 0.1), rgba(251, 250, 241, 0.92) 62%);
+}
+
+.actor-image {
+  width: min(58%, 220px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: auto;
+  border: 1px solid rgba(49, 61, 52, 0.08);
+}
+
+.card-title {
+  margin: 18px 0 10px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.card-text {
+  min-height: 76px;
+  margin: 0;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.choice-hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 74px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(39, 48, 43, 0.86);
+  color: #fff;
+  font-weight: 900;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.choice-hint.left {
+  left: 2px;
+}
+
+.choice-hint.right {
+  right: 2px;
+}
+
+.choice-hint.visible {
+  opacity: 1;
+}
+
+.choice-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.choice-buttons button {
+  min-height: 48px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.ending-title {
+  margin: 10px 0;
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.result-stats div {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+}
+
+.result-stats dt {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.result-stats dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+@media (min-width: 720px) {
+  .app-shell {
+    place-items: center;
+    padding: 24px;
+  }
+
+  .screen {
+    min-height: min(900px, calc(100svh - 48px));
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(251, 250, 241, 0.88);
+    box-shadow: var(--shadow);
+  }
+}
+
+.screen.hidden {
+  display: none;
+}

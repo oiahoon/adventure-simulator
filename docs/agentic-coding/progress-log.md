@@ -23,31 +23,31 @@
 
 ### Current State
 
-The project has product/design/art/data foundations ready for MVP runtime implementation.
+The project has product/design/art/data foundations and the first playable H5 MVP slice.
 
-The next phase is to build the playable H5 MVP:
+The current runtime includes:
 
 - app shell;
-- Reigns-like swipe card;
-- event engine;
 - resource HUD;
+- Reigns-like swipe/click card;
+- event engine;
+- objective display;
 - ending/result flow;
 - local persistence;
-- QA and review pass.
+- content validation script;
+- Playwright smoke script.
 
 ### Known Gaps
 
-- Runtime code is not yet implemented.
 - Seed content count is still below the desired 40-card public-playtest target.
 - Some ending-specific art remains in backlog.
 - Real share platform integration is out of scope for first MVP.
+- Runtime logic is currently concentrated in `public/main.js`; extract pure engine modules before the event system grows much larger.
 
 ### Next Recommended Work
 
-1. Create the H5 runtime skeleton.
-2. Load seed data from `data/chinese-reigns/`.
-3. Implement resource state and card choice effects.
-4. Implement low/high resource endings.
-5. Add mobile UI and swipe interaction.
-6. Run manual browser QA and code review.
-
+1. Expand event data toward 40 cards.
+2. Add direct tests for all 8 low/high resource endings.
+3. Extract game engine pure functions from UI code.
+4. Add result/share page polish.
+5. Run full mobile browser QA on real devices.

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>朕的一生</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app" class="app-shell">
+      <section id="start-screen" class="screen start-screen">
+        <div class="start-art" aria-hidden="true">
+          <img src="./assets/chinese-reigns/portraits/emperor.png" alt="" />
+        </div>
+        <p class="eyebrow">朕的一生</p>
+        <h1>把王朝滑向它该去的地方</h1>
+        <p class="intro">
+          左右一划，便是一年。民心、国库、兵权、朝政都不能太低，也不能太满。
+        </p>
+        <button id="start-button" class="primary-button" type="button">登基</button>
+        <p id="archive-summary" class="archive-summary"></p>
+      </section>
+
+      <section id="game-screen" class="screen game-screen hidden">
+        <header class="game-header">
+          <div>
+            <p class="eyebrow">第 <span id="reign-index">1</span> 任皇帝</p>
+            <h2>在位 <span id="year-count">1</span> 年</h2>
+          </div>
+          <button id="restart-button" class="ghost-button" type="button">重开</button>
+        </header>
+
+        <section id="resource-hud" class="resource-hud" aria-label="王朝资源"></section>
+
+        <section class="objective-strip" aria-label="本任目标">
+          <p>本任目标</p>
+          <ul id="objective-list"></ul>
+        </section>
+
+        <section id="playfield" class="playfield" aria-live="polite">
+          <div id="choice-left" class="choice-hint left">左</div>
+          <article id="event-card" class="event-card">
+            <div class="card-background">
+              <img id="background-image" alt="" />
+            </div>
+            <div class="card-content">
+              <img id="actor-image" class="actor-image" alt="" />
+              <p id="card-title" class="card-title"></p>
+              <p id="card-text" class="card-text"></p>
+            </div>
+          </article>
+          <div id="choice-right" class="choice-hint right">右</div>
+        </section>
+
+        <div class="choice-buttons" aria-label="决策">
+          <button id="left-button" type="button">左</button>
+          <button id="right-button" type="button">右</button>
+        </div>
+      </section>
+
+      <section id="result-screen" class="screen result-screen hidden">
+        <div class="result-visual">
+          <img id="ending-image" alt="" />
+        </div>
+        <p class="eyebrow">本朝终局</p>
+        <h2 id="ending-name"></h2>
+        <p id="ending-title" class="ending-title"></p>
+        <p id="ending-summary" class="ending-summary"></p>
+        <dl class="result-stats">
+          <div>
+            <dt>在位</dt>
+            <dd><span id="result-years"></span> 年</dd>
+          </div>
+          <div>
+            <dt>已解锁结局</dt>
+            <dd><span id="unlocked-count"></span></dd>
+          </div>
+        </dl>
+        <button id="next-reign-button" class="primary-button" type="button">下一任皇帝</button>
+      </section>
+
+      <section id="error-screen" class="screen error-screen hidden">
+        <h2>奏折没送到</h2>
+        <p id="error-message"></p>
+      </section>
+    </main>
+
+    <script src="./main.js"></script>
+  </body>
+</html>
+
