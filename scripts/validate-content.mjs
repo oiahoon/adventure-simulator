@@ -60,6 +60,10 @@ objectives.objectives.forEach((objective) => {
   validateConditions(`objective ${objective.id}`, objective.conditions ?? []);
 });
 
+if (events.cards.length < 40) {
+  warnings.push(`card count ${events.cards.length} is below the 40-card public-playtest target`);
+}
+
 if (warnings.length) {
   console.log("Warnings:");
   warnings.forEach((warning) => console.log(`- ${warning}`));
@@ -140,4 +144,3 @@ function validateAsset(label, relativePath) {
     errors.push(`${label}: missing asset ${relativePath}`);
   }
 }
-

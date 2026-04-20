@@ -18,11 +18,11 @@ Pass:
 - The playable loop is Reigns-like: one card, two choices, resource pressure, one year per choice, quick result/restart.
 - MVP still avoids forbidden systems: no map, inventory, battle, building menu, exact number panel, or skill tree.
 - UI hides exact numeric resource values from the normal player interface.
-- High-resource death is represented and smoke-tested through `expectation_revolt`.
+- Low/high resource deaths are represented and smoke-tested across all four resources.
 
 Open:
 
-- Seed deck has only 10 cards. This is enough for internal runtime validation, not enough for public playtest.
+- Seed deck now has 45 cards, meeting the first public-playtest count target. It still needs tuning for repetition, actor cadence, and event-chain feel.
 - Current result page is functional; share-card polish is still later-sprint work.
 
 ## BA Review
@@ -50,9 +50,9 @@ npm run smoke
 
 Results:
 
-- Content validation passed: 10 cards, 6 objectives, 10 endings.
+- Content validation passed after expansion: 45 cards, 6 objectives, 10 endings.
 - Browser smoke passed at 390x844 mobile viewport.
-- Smoke flow covered start screen, game screen, 8 choices, one forced high-resource ending, result page, local archive update, and console error capture.
+- Smoke flow covered start screen, game screen, 8 choices, all 8 low/high resource endings, result page, local archive update, and console error capture.
 - Latest screenshots were inspected:
   - `tmp/smoke/01-start.png`
   - `tmp/smoke/02-game.png`
@@ -62,10 +62,10 @@ Results:
 
 No blocking issues found for this internal Sprint 1/2 slice.
 
-Risks to address before content expansion:
+Risks to address before broader playtest:
 
 - `public/main.js` currently contains both UI orchestration and game engine logic. Extract pure functions before adding many more card types.
-- More automated ending tests are needed for all low/high resource endings, not just one forced high-resource ending.
+- Rare chain ending and peaceful abdication still need automated coverage.
 - Real mobile Safari testing is still required for pointer/touch behavior.
 - Event deck needs actor-repeat tuning once the card count grows.
 
@@ -78,6 +78,5 @@ Sprint 2 is partially complete:
 - Endings exist.
 - Result page exists.
 - Local archive exists.
-- One high-resource ending is smoke-tested.
-- Full ending matrix still needs automated coverage.
-
+- All 8 low/high resource endings are smoke-tested.
+- Rare chain ending and peaceful abdication still need automated coverage.

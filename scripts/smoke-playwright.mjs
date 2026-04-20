@@ -39,16 +39,28 @@ for (let index = 0; index < 8; index += 1) {
   if (screen === "result") break;
 }
 
-if (JSON.parse(states[states.length - 1].state).screen === "game") {
-  const endingId = await page.evaluate(() => {
-    window.__chineseReignsDebug.setResource("people", 100);
+const endingCases = [
+  ["people", 0, "rebellion"],
+  ["people", 100, "expectation_revolt"],
+  ["treasury", 0, "empty_treasury"],
+  ["treasury", 100, "corruption_flood"],
+  ["army", 0, "frontier_collapse"],
+  ["army", 100, "military_takeover"],
+  ["court", 0, "coup"],
+  ["court", 100, "bureaucratic_suffocation"],
+];
+
+for (const [resource, value, expectedEndingId] of endingCases) {
+  await ensureGameScreen(page);
+  const endingId = await page.evaluate(([key, nextValue]) => {
+    window.__chineseReignsDebug.setResource(key, nextValue);
     return window.__chineseReignsDebug.resolveEndingNow();
-  });
-  if (endingId !== "expectation_revolt") {
-    throw new Error(`Expected high people ending expectation_revolt, got ${endingId}`);
+  }, [resource, value]);
+  if (endingId !== expectedEndingId) {
+    throw new Error(`Expected ${expectedEndingId} for ${resource}=${value}, got ${endingId}`);
   }
   await page.waitForSelector("#result-screen:not(.hidden)");
-  states.push(await readState(page, "after-forced-ending"));
+  states.push(await readState(page, `ending-${expectedEndingId}`));
 }
 
 await page.screenshot({ path: path.join(outputDir, "03-after-choices.png"), fullPage: true });
@@ -71,4 +83,15 @@ console.log(`Smoke passed. Final screen: ${last.screen}. Screenshots: ${outputDi
 async function readState(page, label) {
   const state = await page.evaluate(() => window.render_game_to_text?.() ?? "{}");
   return { label, state };
+}
+
+async function ensureGameScreen(page) {
+  const screen = JSON.parse(await page.evaluate(() => window.render_game_to_text?.() ?? "{}")).screen;
+  if (screen === "game") return;
+  if (screen === "result") {
+    await page.click("#next-reign-button");
+  } else if (screen === "start") {
+    await page.click("#start-button");
+  }
+  await page.waitForSelector("#game-screen:not(.hidden)");
 }

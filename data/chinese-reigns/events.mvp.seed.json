@@ -298,6 +298,953 @@
       "weight": 3,
       "tags": ["court", "treasury"],
       "cooldown": 5
+    },
+    {
+      "id": "river_dike_break",
+      "title": "河堤将决",
+      "actor": "commoner",
+      "background": "village-street",
+      "text": "河堤裂得像老臣的笑，百姓问银子先到还是水先到。",
+      "left": {
+        "label": "修堤",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 12 },
+          { "type": "resource", "key": "treasury", "delta": -10 }
+        ]
+      },
+      "right": {
+        "label": "祈晴",
+        "preview": { "people": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": -12 },
+          { "type": "resource", "key": "court", "delta": 5 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["people", "treasury"],
+      "cooldown": 4
+    },
+    {
+      "id": "plague_quarantine",
+      "title": "疫病入城",
+      "actor": "senior-minister",
+      "background": "village-street",
+      "text": "城南发疫，太医说药够救人，不够救账本。",
+      "left": {
+        "label": "封坊",
+        "preview": { "people": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": -8 },
+          { "type": "resource", "key": "court", "delta": 8 }
+        ]
+      },
+      "right": {
+        "label": "施药",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": -8 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["people", "relief"],
+      "cooldown": 5
+    },
+    {
+      "id": "harvest_festival",
+      "title": "丰年大典",
+      "actor": "commoner",
+      "background": "palace-courtyard",
+      "text": "今年丰收，百姓想办大典，户部想把笑声也入库。",
+      "left": {
+        "label": "同乐",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 9 },
+          { "type": "resource", "key": "treasury", "delta": -6 }
+        ]
+      },
+      "right": {
+        "label": "入库",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 10 },
+          { "type": "resource", "key": "people", "delta": -7 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["people", "treasury"],
+      "cooldown": 4
+    },
+    {
+      "id": "tax_protest_gate",
+      "title": "税民堵门",
+      "actor": "commoner",
+      "background": "court-hall",
+      "text": "百姓跪在宫门外，说加税加得连膝盖都要交租。",
+      "left": {
+        "label": "减免",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 14 },
+          { "type": "resource", "key": "treasury", "delta": -12 },
+          { "type": "counter", "key": "tax_anger", "delta": -1 }
+        ]
+      },
+      "right": {
+        "label": "驱散",
+        "preview": { "people": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": -15 },
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "counter", "key": "tax_anger", "delta": 1 }
+        ]
+      },
+      "conditions": [
+        { "type": "counter_gte", "key": "tax_anger", "value": 1 }
+      ],
+      "weight": 6,
+      "tags": ["people", "tax"],
+      "cooldown": 4
+    },
+    {
+      "id": "grain_theft",
+      "title": "粮仓鼠患",
+      "actor": "chancellor",
+      "background": "royal-study",
+      "text": "粮仓空了一角，管仓官说老鼠最近穿得很像人。",
+      "left": {
+        "label": "追查",
+        "preview": { "court": "up", "treasury": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "treasury", "delta": 6 }
+        ]
+      },
+      "right": {
+        "label": "补账",
+        "preview": { "treasury": "down", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": -8 },
+          { "type": "resource", "key": "people", "delta": 5 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["treasury", "court"],
+      "cooldown": 5
+    },
+    {
+      "id": "mint_new_coin",
+      "title": "铸新钱",
+      "actor": "chancellor",
+      "background": "royal-study",
+      "text": "户部想铸新钱，铜少一点，皇恩多一点。",
+      "left": {
+        "label": "开铸",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 14 },
+          { "type": "resource", "key": "people", "delta": -9 }
+        ]
+      },
+      "right": {
+        "label": "缓议",
+        "preview": { "treasury": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": -5 },
+          { "type": "resource", "key": "court", "delta": 5 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["treasury"],
+      "cooldown": 5
+    },
+    {
+      "id": "salt_merchant_donation",
+      "title": "盐商献银",
+      "actor": "chancellor",
+      "background": "court-hall",
+      "text": "盐商跪献万两白银，笑得比银子还亮。",
+      "left": {
+        "label": "收下",
+        "preview": { "treasury": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 16 },
+          { "type": "resource", "key": "court", "delta": -8 }
+        ]
+      },
+      "right": {
+        "label": "查账",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": -6 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["treasury", "court"],
+      "cooldown": 5
+    },
+    {
+      "id": "palace_roof_leak",
+      "title": "宫顶漏雨",
+      "actor": "eunuch",
+      "background": "palace-courtyard",
+      "text": "寝宫漏雨，内侍说龙床也该体验一下民间疾苦。",
+      "left": {
+        "label": "大修",
+        "preview": { "treasury": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": -12 },
+          { "type": "resource", "key": "court", "delta": 4 }
+        ]
+      },
+      "right": {
+        "label": "接盆",
+        "preview": { "treasury": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 4 },
+          { "type": "resource", "key": "court", "delta": -7 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["treasury", "court"],
+      "cooldown": 5
+    },
+    {
+      "id": "tribute_caravan",
+      "title": "贡使入京",
+      "actor": "senior-minister",
+      "background": "court-hall",
+      "text": "外邦贡使带来奇珍，礼部说面子不能按斤称。",
+      "left": {
+        "label": "厚赏",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 9 },
+          { "type": "resource", "key": "treasury", "delta": -10 }
+        ]
+      },
+      "right": {
+        "label": "薄赐",
+        "preview": { "treasury": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 6 },
+          { "type": "resource", "key": "court", "delta": -8 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["court", "treasury"],
+      "cooldown": 5
+    },
+    {
+      "id": "recruit_peasants",
+      "title": "募兵令",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "将军请募壮丁，说锄头换成枪，姿势差不多。",
+      "left": {
+        "label": "募兵",
+        "preview": { "army": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 14 },
+          { "type": "resource", "key": "people", "delta": -10 }
+        ]
+      },
+      "right": {
+        "label": "缓征",
+        "preview": { "people": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 6 },
+          { "type": "resource", "key": "army", "delta": -8 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["army", "people"],
+      "cooldown": 4
+    },
+    {
+      "id": "horse_shortage",
+      "title": "战马短缺",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "军中缺马，将军说骑驴也能冲锋，只是气势慢些。",
+      "left": {
+        "label": "买马",
+        "preview": { "army": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 12 },
+          { "type": "resource", "key": "treasury", "delta": -12 }
+        ]
+      },
+      "right": {
+        "label": "省钱",
+        "preview": { "treasury": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 7 },
+          { "type": "resource", "key": "army", "delta": -12 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["army", "treasury"],
+      "cooldown": 4
+    },
+    {
+      "id": "veteran_petition",
+      "title": "老卒请赏",
+      "actor": "general",
+      "background": "court-hall",
+      "text": "老卒抬着旧伤进殿，说伤口比功劳簿更会说话。",
+      "left": {
+        "label": "抚恤",
+        "preview": { "army": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 9 },
+          { "type": "resource", "key": "treasury", "delta": -8 },
+          { "type": "counter", "key": "army_discontent", "delta": -1 }
+        ]
+      },
+      "right": {
+        "label": "记名",
+        "preview": { "treasury": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 4 },
+          { "type": "resource", "key": "army", "delta": -10 },
+          { "type": "counter", "key": "army_discontent", "delta": 1 }
+        ]
+      },
+      "weight": 5,
+      "tags": ["army", "treasury"],
+      "cooldown": 5
+    },
+    {
+      "id": "bandit_amnesty",
+      "title": "山贼请降",
+      "actor": "commoner",
+      "background": "frontier-outpost",
+      "text": "山贼递表归顺，表上墨迹未干，刀上血迹也未干。",
+      "left": {
+        "label": "招安",
+        "preview": { "army": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 10 },
+          { "type": "resource", "key": "court", "delta": -8 }
+        ]
+      },
+      "right": {
+        "label": "剿灭",
+        "preview": { "court": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 7 },
+          { "type": "resource", "key": "army", "delta": -10 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["army", "court"],
+      "cooldown": 5
+    },
+    {
+      "id": "fortress_wall",
+      "title": "修边墙",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "边墙塌了三里，将军说敌人最近散步很方便。",
+      "left": {
+        "label": "修墙",
+        "preview": { "army": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 13 },
+          { "type": "resource", "key": "treasury", "delta": -14 }
+        ]
+      },
+      "right": {
+        "label": "巡逻",
+        "preview": { "army": "down", "treasury": "up" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": -7 },
+          { "type": "resource", "key": "treasury", "delta": 4 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["army", "frontier"],
+      "cooldown": 5
+    },
+    {
+      "id": "military_parade",
+      "title": "大阅兵",
+      "actor": "general",
+      "background": "court-hall",
+      "text": "将军请办大阅，想让天下看看刀也会排队。",
+      "left": {
+        "label": "准阅",
+        "preview": { "army": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 16 },
+          { "type": "resource", "key": "treasury", "delta": -10 }
+        ]
+      },
+      "right": {
+        "label": "免了",
+        "preview": { "army": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": -8 },
+          { "type": "resource", "key": "court", "delta": 5 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["army", "court"],
+      "cooldown": 6
+    },
+    {
+      "id": "exam_quota",
+      "title": "科举名额",
+      "actor": "scholar",
+      "background": "royal-study",
+      "text": "士子挤满京城，连客栈的床都开始背四书。",
+      "left": {
+        "label": "扩额",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": -6 }
+        ]
+      },
+      "right": {
+        "label": "限额",
+        "preview": { "court": "down", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -6 },
+          { "type": "resource", "key": "people", "delta": -6 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["court", "people"],
+      "cooldown": 4
+    },
+    {
+      "id": "ritual_dispute",
+      "title": "礼制争端",
+      "actor": "senior-minister",
+      "background": "court-hall",
+      "text": "礼官为跪几下吵了三天，膝盖比奏折更疲惫。",
+      "left": {
+        "label": "从古",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 10 },
+          { "type": "resource", "key": "people", "delta": -5 }
+        ]
+      },
+      "right": {
+        "label": "从简",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 6 },
+          { "type": "resource", "key": "court", "delta": -10 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["court", "people"],
+      "cooldown": 4
+    },
+    {
+      "id": "censor_line",
+      "title": "言官排队",
+      "actor": "scholar",
+      "background": "court-hall",
+      "text": "言官排队弹劾，队伍长得像一条会骂人的龙。",
+      "left": {
+        "label": "听完",
+        "preview": { "court": "down", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "resource", "key": "people", "delta": 8 }
+        ]
+      },
+      "right": {
+        "label": "散朝",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "people", "delta": -7 }
+        ]
+      },
+      "weight": 5,
+      "tags": ["court", "people"],
+      "cooldown": 4
+    },
+    {
+      "id": "seal_missing",
+      "title": "玉玺失踪",
+      "actor": "eunuch",
+      "background": "royal-study",
+      "text": "玉玺不见了，司礼监说可能只是想休沐。",
+      "left": {
+        "label": "密查",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 12 },
+          { "type": "resource", "key": "treasury", "delta": -5 },
+          { "type": "counter", "key": "eunuch_power", "delta": -1 }
+        ]
+      },
+      "right": {
+        "label": "遮掩",
+        "preview": { "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -14 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["court", "eunuch"],
+      "cooldown": 6
+    },
+    {
+      "id": "law_revision",
+      "title": "新律上呈",
+      "actor": "scholar",
+      "background": "royal-study",
+      "text": "刑部呈新律三箱，最轻的一箱叫百姓须知。",
+      "left": {
+        "label": "颁行",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 14 },
+          { "type": "resource", "key": "people", "delta": -8 }
+        ]
+      },
+      "right": {
+        "label": "删减",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 7 },
+          { "type": "resource", "key": "court", "delta": -10 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["court", "people"],
+      "cooldown": 5
+    },
+    {
+      "id": "eunuch_secret_report",
+      "title": "密折夜递",
+      "actor": "eunuch",
+      "background": "royal-study",
+      "text": "宦官半夜递密折，说白天的人都不方便说真话。",
+      "left": {
+        "label": "采信",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 7 },
+          { "type": "resource", "key": "people", "delta": -5 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "焚毁",
+        "preview": { "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "counter", "key": "eunuch_power", "delta": -1 }
+        ]
+      },
+      "weight": 5,
+      "tags": ["court", "eunuch"],
+      "cooldown": 4
+    },
+    {
+      "id": "eunuch_factory_tax",
+      "title": "内厂税牌",
+      "actor": "eunuch",
+      "background": "village-street",
+      "text": "内厂想去民间收税，说百姓见了他们跑得快，效率高。",
+      "left": {
+        "label": "许行",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 14 },
+          { "type": "resource", "key": "people", "delta": -14 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "禁绝",
+        "preview": { "court": "down", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "resource", "key": "people", "delta": 7 },
+          { "type": "counter", "key": "eunuch_power", "delta": -1 }
+        ]
+      },
+      "conditions": [
+        { "type": "counter_gte", "key": "eunuch_power", "value": 1 }
+      ],
+      "weight": 6,
+      "tags": ["eunuch", "treasury", "people"],
+      "cooldown": 5
+    },
+    {
+      "id": "consort_banquet",
+      "title": "宫宴请旨",
+      "actor": "consort",
+      "background": "palace-courtyard",
+      "text": "贵妃想办赏花宴，说花不贵，贵的是让大家知道花不贵。",
+      "left": {
+        "label": "准宴",
+        "preview": { "treasury": "down", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": -10 },
+          { "type": "resource", "key": "court", "delta": -5 },
+          { "type": "counter", "key": "consort_family_power", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "免宴",
+        "preview": { "treasury": "up", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 5 },
+          { "type": "resource", "key": "court", "delta": 5 },
+          { "type": "counter", "key": "consort_family_power", "delta": -1 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["consort", "treasury"],
+      "cooldown": 5
+    },
+    {
+      "id": "heir_tutor",
+      "title": "太子师傅",
+      "actor": "senior-minister",
+      "background": "royal-study",
+      "text": "太子该读书了，老师们争着说自己最会让孩子怕书。",
+      "left": {
+        "label": "老臣",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "people", "delta": -4 },
+          { "type": "set_flag", "key": "taizi_established", "value": true }
+        ]
+      },
+      "right": {
+        "label": "新学",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 6 },
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "set_flag", "key": "taizi_established", "value": true }
+        ]
+      },
+      "weight": 3,
+      "tags": ["court", "people"],
+      "once": true
+    },
+    {
+      "id": "prison_pardon",
+      "title": "大赦天下",
+      "actor": "senior-minister",
+      "background": "prison-chamber",
+      "text": "大牢快满了，刑部问是修牢，还是修皇恩。",
+      "left": {
+        "label": "大赦",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 12 },
+          { "type": "resource", "key": "court", "delta": -12 }
+        ]
+      },
+      "right": {
+        "label": "扩牢",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": -8 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["court", "people"],
+      "cooldown": 6
+    },
+    {
+      "id": "alchemy_second_pill",
+      "title": "丹成二转",
+      "actor": "senior-minister",
+      "background": "royal-study",
+      "text": "方士又献新丹，说上一枚没成仙，是因为您还太忙。",
+      "left": {
+        "label": "再服",
+        "preview": { "court": "risk" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -6 },
+          { "type": "counter", "key": "alchemy_trust", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "逐出",
+        "preview": { "court": "up", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "resource", "key": "people", "delta": 4 },
+          { "type": "counter", "key": "alchemy_trust", "delta": -1 }
+        ]
+      },
+      "conditions": [
+        { "type": "counter_gte", "key": "alchemy_trust", "value": 1 }
+      ],
+      "weight": 3,
+      "tags": ["rare", "alchemy"],
+      "cooldown": 6
+    },
+    {
+      "id": "alchemy_final_pill",
+      "title": "长生急件",
+      "actor": "eunuch",
+      "background": "royal-study",
+      "text": "方士说仙药只差您亲自试药，群臣忽然都很孝顺。",
+      "left": {
+        "label": "试药",
+        "preview": { "court": "risk" },
+        "effects": [
+          { "type": "force_ending", "endingId": "alchemy_death" }
+        ]
+      },
+      "right": {
+        "label": "砸炉",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "treasury", "delta": -6 },
+          { "type": "counter", "key": "alchemy_trust", "delta": -2 }
+        ]
+      },
+      "conditions": [
+        { "type": "counter_gte", "key": "alchemy_trust", "value": 2 }
+      ],
+      "weight": 6,
+      "tags": ["rare", "alchemy"],
+      "cooldown": 8
+    },
+    {
+      "id": "famine_grain_price",
+      "title": "粮价飞涨",
+      "actor": "commoner",
+      "background": "village-street",
+      "text": "米价一日三涨，百姓说锅里煮的只剩朝廷画饼。",
+      "left": {
+        "label": "平粜",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 13 },
+          { "type": "resource", "key": "treasury", "delta": -11 },
+          { "type": "set_flag", "key": "famine_risk", "value": false }
+        ]
+      },
+      "right": {
+        "label": "禁议",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "resource", "key": "people", "delta": -14 },
+          { "type": "set_flag", "key": "famine_risk", "value": true }
+        ]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "famine_risk", "value": true }
+      ],
+      "weight": 7,
+      "tags": ["people", "famine", "relief"],
+      "cooldown": 4
+    },
+    {
+      "id": "frontier_scout_warning",
+      "title": "斥候急报",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "斥候说北边烟尘很近，近得能看见敌人也在叹气。",
+      "left": {
+        "label": "增防",
+        "preview": { "army": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 12 },
+          { "type": "resource", "key": "treasury", "delta": -9 },
+          { "type": "set_flag", "key": "war_ongoing", "value": true }
+        ]
+      },
+      "right": {
+        "label": "安抚",
+        "preview": { "people": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 5 },
+          { "type": "resource", "key": "army", "delta": -10 }
+        ]
+      },
+      "weight": 5,
+      "tags": ["army", "frontier"],
+      "cooldown": 4
+    },
+    {
+      "id": "frontier_false_alarm",
+      "title": "边警乌龙",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "边军昨夜鸣锣，今早发现敌军是三百只迷路的羊。",
+      "left": {
+        "label": "嘉奖",
+        "preview": { "army": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 6 },
+          { "type": "resource", "key": "court", "delta": -6 }
+        ]
+      },
+      "right": {
+        "label": "责罚",
+        "preview": { "court": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "resource", "key": "army", "delta": -8 },
+          { "type": "counter", "key": "army_discontent", "delta": 1 }
+        ]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "war_ongoing", "value": true }
+      ],
+      "weight": 4,
+      "tags": ["army", "frontier"],
+      "cooldown": 5
+    },
+    {
+      "id": "market_fire",
+      "title": "市集失火",
+      "actor": "commoner",
+      "background": "village-street",
+      "text": "京城市集失火，商户说火势比官差来得准时。",
+      "left": {
+        "label": "救济",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": -9 }
+        ]
+      },
+      "right": {
+        "label": "罚商",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 9 },
+          { "type": "resource", "key": "people", "delta": -10 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["people", "treasury"],
+      "cooldown": 4
+    },
+    {
+      "id": "official_salary",
+      "title": "官俸拖欠",
+      "actor": "senior-minister",
+      "background": "court-hall",
+      "text": "百官三月未领俸，早朝的咳嗽都带着账单声。",
+      "left": {
+        "label": "补发",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": -12 }
+        ]
+      },
+      "right": {
+        "label": "忍耐",
+        "preview": { "treasury": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 5 },
+          { "type": "resource", "key": "court", "delta": -12 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["court", "treasury"],
+      "cooldown": 4
+    },
+    {
+      "id": "scholar_memorial_burn",
+      "title": "焚书请愿",
+      "actor": "scholar",
+      "background": "palace-courtyard",
+      "text": "士子在宫外烧书，说若没人听，至少烟会进宫。",
+      "left": {
+        "label": "召见",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 8 },
+          { "type": "resource", "key": "court", "delta": -9 }
+        ]
+      },
+      "right": {
+        "label": "驱离",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "people", "delta": -9 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["court", "people"],
+      "cooldown": 5
+    },
+    {
+      "id": "treasury_audit",
+      "title": "清点国库",
+      "actor": "chancellor",
+      "background": "royal-study",
+      "text": "国库清点完毕，户部尚书的汗比银两更有光泽。",
+      "left": {
+        "label": "追银",
+        "preview": { "treasury": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 12 },
+          { "type": "resource", "key": "court", "delta": -6 }
+        ]
+      },
+      "right": {
+        "label": "遮丑",
+        "preview": { "court": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "resource", "key": "treasury", "delta": -10 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["treasury", "court"],
+      "cooldown": 5
+    },
+    {
+      "id": "public_granary_open",
+      "title": "义仓请开",
+      "actor": "commoner",
+      "background": "village-street",
+      "text": "乡老请开义仓，说仓门再不开，民心就先开裂。",
+      "left": {
+        "label": "开仓",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 12 },
+          { "type": "resource", "key": "treasury", "delta": -9 },
+          { "type": "set_flag", "key": "famine_risk", "value": false }
+        ]
+      },
+      "right": {
+        "label": "封仓",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 7 },
+          { "type": "resource", "key": "people", "delta": -12 },
+          { "type": "set_flag", "key": "famine_risk", "value": true }
+        ]
+      },
+      "weight": 5,
+      "tags": ["people", "famine", "relief"],
+      "cooldown": 4
     }
   ]
 }

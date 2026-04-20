@@ -39,15 +39,15 @@ The current runtime includes:
 
 ### Known Gaps
 
-- Seed content count is still below the desired 40-card public-playtest target.
+- Seed content count is now above the 40-card public-playtest target, but still needs real playtest tuning.
 - Some ending-specific art remains in backlog.
 - Real share platform integration is out of scope for first MVP.
 - Runtime logic is currently concentrated in `public/main.js`; extract pure engine modules before the event system grows much larger.
 
 ### Next Recommended Work
 
-1. Expand event data toward 40 cards.
-2. Add direct tests for all 8 low/high resource endings.
-3. Extract game engine pure functions from UI code.
-4. Add result/share page polish.
+1. Extract game engine pure functions from UI code.
+2. Tune the 45-card deck after real play sessions.
+3. Add result/share page polish.
+4. Add automated coverage for rare chain endings and peaceful abdication.
 5. Run full mobile browser QA on real devices.
