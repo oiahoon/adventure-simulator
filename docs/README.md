@@ -11,6 +11,23 @@
 - `docs/art/asset-quality-review.md`
   - 当前 MVP 图片资源审查结论
   - 记录二次重生的图标、结局图、分享图和透明 HUD 图标
+- `docs/game-design/MVP_Implementation_Spec.md`
+  - 可直接进入原型开发的 MVP 实施规格
+  - 包含状态模型、事件 schema、概率袋规则、首批事件链、结局判定、页面清单和验收标准
+- `docs/game-design/MVP_Build_Plan.md`
+  - MVP 分阶段构建计划：M0 静态界面、M1 决策循环、M2 概率袋、M3 结局、M4 内容扩充、M5 分享页
+- `docs/game-design/MVP_Asset_Backlog.md`
+  - 拆解 MVP 事件和 UI 时发现的角色、背景、结局图、UI 组件资源缺口
+- `docs/game-design/`
+  - 原始 PRD、游戏策划案和 H5 UI/UX 概念文档
+- `data/chinese-reigns/events.schema.json`
+  - MVP 事件卡 JSON Schema
+- `data/chinese-reigns/events.mvp.seed.json`
+  - 首批 10 张可运行事件卡 seed 数据
+- `data/chinese-reigns/objectives.mvp.seed.json`
+  - Reigns 式本任目标 seed 数据
+- `data/chinese-reigns/endings.mvp.seed.json`
+  - MVP 结局 seed 数据，包含低值和高值资源结局
 - `public/assets/chinese-reigns/reference/`
   - 风格锁定图与 SBTI testing 参考图
 - `public/assets/chinese-reigns/portraits/`

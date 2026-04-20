@@ -1,0 +1,303 @@
+{
+  "version": "0.1.0",
+  "resources": ["people", "treasury", "army", "court"],
+  "actors": [
+    "chancellor",
+    "senior-minister",
+    "general",
+    "eunuch",
+    "consort",
+    "scholar",
+    "commoner"
+  ],
+  "backgrounds": [
+    "court-hall",
+    "royal-study",
+    "palace-courtyard",
+    "frontier-outpost",
+    "village-street",
+    "prison-chamber"
+  ],
+  "cards": [
+    {
+      "id": "tutorial_first_memorial",
+      "title": "第一道奏折",
+      "actor": "senior-minister",
+      "background": "court-hall",
+      "text": "陛下登基第一日，老臣问您要先安民还是先整顿朝纲。",
+      "left": {
+        "label": "安民",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 8 },
+          { "type": "resource", "key": "treasury", "delta": -6 }
+        ]
+      },
+      "right": {
+        "label": "整朝",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "people", "delta": -4 }
+        ]
+      },
+      "conditions": [
+        { "type": "not_seen", "cardId": "tutorial_first_memorial" }
+      ],
+      "weight": 10,
+      "tags": ["tutorial", "court"],
+      "once": true
+    },
+    {
+      "id": "army_pay_arrears",
+      "title": "边军欠饷",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "边军三月未领饷，营中已有人把战鼓当饭碗敲。",
+      "left": {
+        "label": "拨银",
+        "preview": { "treasury": "down", "army": "up" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": -15 },
+          { "type": "resource", "key": "army", "delta": 12 },
+          { "type": "counter", "key": "army_discontent", "delta": -1 }
+        ]
+      },
+      "right": {
+        "label": "画饼",
+        "preview": { "treasury": "up", "army": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 5 },
+          { "type": "resource", "key": "army", "delta": -18 },
+          { "type": "counter", "key": "army_discontent", "delta": 1 }
+        ]
+      },
+      "weight": 5,
+      "tags": ["army", "frontier"],
+      "cooldown": 3
+    },
+    {
+      "id": "eunuch_expand_office",
+      "title": "内廷扩编",
+      "actor": "eunuch",
+      "background": "court-hall",
+      "text": "司礼监说宫中事务繁重，想多招些手脚伶俐的人。",
+      "left": {
+        "label": "准奏",
+        "preview": { "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "裁撤",
+        "preview": { "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "counter", "key": "eunuch_power", "delta": -1 }
+        ]
+      },
+      "conditions": [
+        { "type": "counter_lte", "key": "eunuch_power", "value": 3 }
+      ],
+      "weight": 4,
+      "tags": ["court", "eunuch"],
+      "cooldown": 4
+    },
+    {
+      "id": "censor_accuses_eunuch",
+      "title": "言官弹劾",
+      "actor": "scholar",
+      "background": "royal-study",
+      "text": "年轻言官递来血书，说宦官把朝堂当自家厨房。",
+      "left": {
+        "label": "严查",
+        "preview": { "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -6 },
+          { "type": "counter", "key": "eunuch_power", "delta": -1 }
+        ]
+      },
+      "right": {
+        "label": "压下",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 5 },
+          { "type": "resource", "key": "people", "delta": -8 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 }
+        ]
+      },
+      "conditions": [
+        { "type": "counter_gte", "key": "eunuch_power", "value": 1 }
+      ],
+      "weight": 6,
+      "tags": ["court", "eunuch"],
+      "cooldown": 4
+    },
+    {
+      "id": "famine_relief_granary",
+      "title": "开仓赈灾",
+      "actor": "commoner",
+      "background": "village-street",
+      "text": "南边闹饥荒，灾民说只要一口粥，也愿称您圣明。",
+      "left": {
+        "label": "开仓",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 16 },
+          { "type": "resource", "key": "treasury", "delta": -12 },
+          { "type": "set_flag", "key": "famine_risk", "value": false }
+        ]
+      },
+      "right": {
+        "label": "观望",
+        "preview": { "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": -15 },
+          { "type": "counter", "key": "tax_anger", "delta": 1 },
+          { "type": "set_flag", "key": "famine_risk", "value": true }
+        ]
+      },
+      "weight": 5,
+      "tags": ["people", "famine", "relief"],
+      "cooldown": 4
+    },
+    {
+      "id": "tax_silver_shortage",
+      "title": "税银短缺",
+      "actor": "chancellor",
+      "background": "royal-study",
+      "text": "户部说今年税银少得像皇榜上的真话，问要不要加征。",
+      "left": {
+        "label": "加征",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 15 },
+          { "type": "resource", "key": "people", "delta": -12 },
+          { "type": "counter", "key": "tax_anger", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "节支",
+        "preview": { "treasury": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 8 },
+          { "type": "resource", "key": "court", "delta": -8 }
+        ]
+      },
+      "weight": 4,
+      "tags": ["treasury", "tax"],
+      "cooldown": 3
+    },
+    {
+      "id": "consort_family_title",
+      "title": "外戚请封",
+      "actor": "consort",
+      "background": "palace-courtyard",
+      "text": "贵妃说她兄长一表人才，只差一个官职证明自己。",
+      "left": {
+        "label": "封官",
+        "preview": { "court": "down", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -10 },
+          { "type": "resource", "key": "treasury", "delta": -6 },
+          { "type": "counter", "key": "consort_family_power", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "婉拒",
+        "preview": { "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "counter", "key": "consort_family_power", "delta": -1 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["consort", "court"],
+      "cooldown": 5
+    },
+    {
+      "id": "frontier_peace_talks",
+      "title": "边关议和",
+      "actor": "general",
+      "background": "frontier-outpost",
+      "text": "北疆使者带着羊皮地图求和，将军说地图背面像战书。",
+      "left": {
+        "label": "议和",
+        "preview": { "army": "down", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": -8 },
+          { "type": "resource", "key": "people", "delta": 8 },
+          { "type": "set_flag", "key": "war_ongoing", "value": false }
+        ]
+      },
+      "right": {
+        "label": "备战",
+        "preview": { "army": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "army", "delta": 12 },
+          { "type": "resource", "key": "treasury", "delta": -10 },
+          { "type": "set_flag", "key": "war_ongoing", "value": true }
+        ]
+      },
+      "weight": 4,
+      "tags": ["army", "frontier"],
+      "cooldown": 4
+    },
+    {
+      "id": "alchemist_pill",
+      "title": "方士献丹",
+      "actor": "senior-minister",
+      "background": "royal-study",
+      "text": "方士献来金丹一枚，老臣跪在旁边，脸比丹炉还黑。",
+      "left": {
+        "label": "服用",
+        "preview": { "court": "risk" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -4 },
+          { "type": "counter", "key": "alchemy_trust", "delta": 1 }
+        ]
+      },
+      "right": {
+        "label": "赏退",
+        "preview": { "treasury": "down", "court": "up" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": -4 },
+          { "type": "resource", "key": "court", "delta": 5 }
+        ]
+      },
+      "weight": 1,
+      "tags": ["rare", "alchemy"],
+      "cooldown": 8
+    },
+    {
+      "id": "prison_corruption_case",
+      "title": "贪案下狱",
+      "actor": "chancellor",
+      "background": "prison-chamber",
+      "text": "大理寺抓到一串贪官，名单长得能当腰带。",
+      "left": {
+        "label": "严办",
+        "preview": { "court": "up", "treasury": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 10 },
+          { "type": "resource", "key": "treasury", "delta": 8 },
+          { "type": "resource", "key": "people", "delta": 4 }
+        ]
+      },
+      "right": {
+        "label": "留情",
+        "preview": { "court": "down", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -10 },
+          { "type": "resource", "key": "treasury", "delta": -6 },
+          { "type": "resource", "key": "people", "delta": -4 }
+        ]
+      },
+      "weight": 3,
+      "tags": ["court", "treasury"],
+      "cooldown": 5
+    }
+  ]
+}

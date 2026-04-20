@@ -1,0 +1,11 @@
+Read AGENTS.md first.
+
+Project: 朕的一生, a vertical mobile H5 Reigns-like game.
+
+Primary rules:
+- Keep MVP gameplay to one card, left/right swipe, four-resource balance, frequent endings, and quick restart.
+- Use data-driven cards from data/chinese-reigns/.
+- Do not add complex management systems to MVP.
+- Maintain the SBTI-lowpoly visual direction.
+- Update docs/agentic-coding/progress-log.md when completing meaningful work.
+

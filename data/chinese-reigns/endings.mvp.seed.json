@@ -1,0 +1,95 @@
+{
+  "version": "0.1.0",
+  "endings": [
+    {
+      "id": "rebellion",
+      "name": "民变倾覆",
+      "type": "low_resource",
+      "resource": "people",
+      "condition": "people <= 0 or famine chain crisis",
+      "image": "public/assets/chinese-reigns/endings/rebellion.png",
+      "shareTone": "百姓终于发现，皇帝也不是非要有。"
+    },
+    {
+      "id": "expectation_revolt",
+      "name": "民望反噬",
+      "type": "high_resource",
+      "resource": "people",
+      "condition": "people >= 100",
+      "image": "public/assets/chinese-reigns/endings/rebellion.png",
+      "shareTone": "万民爱戴您，直到他们要求您今天就把天下变好。"
+    },
+    {
+      "id": "empty_treasury",
+      "name": "国库崩溃",
+      "type": "low_resource",
+      "resource": "treasury",
+      "condition": "treasury <= 0",
+      "image": "public/assets/chinese-reigns/endings/empty-treasury.png",
+      "shareTone": "国库空得能听见祖宗叹气。"
+    },
+    {
+      "id": "corruption_flood",
+      "name": "富得流油",
+      "type": "high_resource",
+      "resource": "treasury",
+      "condition": "treasury >= 100",
+      "image": "public/assets/chinese-reigns/endings/empty-treasury.png",
+      "shareTone": "钱太多了，连清官都开始研究怎么委婉地贪。"
+    },
+    {
+      "id": "frontier_collapse",
+      "name": "边关失守",
+      "type": "low_resource",
+      "resource": "army",
+      "condition": "army <= 0 and war_ongoing = true",
+      "image": "public/assets/chinese-reigns/backgrounds/frontier-outpost.png",
+      "shareTone": "边军没有输给敌人，先输给了缺饷。"
+    },
+    {
+      "id": "military_takeover",
+      "name": "兵权反噬",
+      "type": "high_resource",
+      "resource": "army",
+      "condition": "army >= 100 or army_discontent >= 3",
+      "image": "public/assets/chinese-reigns/endings/coup.png",
+      "shareTone": "将军跪得很标准，刀也架得很标准。"
+    },
+    {
+      "id": "coup",
+      "name": "宫廷政变",
+      "type": "low_resource",
+      "resource": "court",
+      "condition": "court <= 0 or eunuch_power >= 3 and court <= 25",
+      "image": "public/assets/chinese-reigns/endings/coup.png",
+      "shareTone": "朝堂还在，只是椅子上的人换得很快。"
+    },
+    {
+      "id": "bureaucratic_suffocation",
+      "name": "朝纲过密",
+      "type": "high_resource",
+      "resource": "court",
+      "condition": "court >= 100",
+      "image": "public/assets/chinese-reigns/endings/coup.png",
+      "shareTone": "制度完美无缺，连皇帝也没有发挥空间。"
+    },
+    {
+      "id": "alchemy_death",
+      "name": "服丹暴毙",
+      "type": "chain",
+      "resource": "court",
+      "condition": "alchemy_trust >= 3 and alchemy crisis card chosen",
+      "image": "public/assets/chinese-reigns/endings/peaceful-abdication.png",
+      "shareTone": "您成功证明了长生丹至少能让死因长生。"
+    },
+    {
+      "id": "peaceful_abdication",
+      "name": "和平退位",
+      "type": "rare_good",
+      "resource": "court",
+      "condition": "years_ruled >= 20 and all resources between 35 and 75",
+      "image": "public/assets/chinese-reigns/endings/peaceful-abdication.png",
+      "shareTone": "您居然活着下班了，史官一时不知如何下笔。"
+    }
+  ]
+}

@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game.local/chinese-reigns/events.schema.json",
+  "title": "Chinese Reigns MVP Event Pack",
+  "type": "object",
+  "required": ["version", "resources", "actors", "backgrounds", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "resources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/resourceKey" },
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true
+    },
+    "actors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/actorId" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "backgrounds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/backgroundId" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "cards": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/eventCard" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "resourceKey": {
+      "type": "string",
+      "enum": ["people", "treasury", "army", "court"]
+    },
+    "actorId": {
+      "type": "string",
+      "enum": [
+        "chancellor",
+        "senior-minister",
+        "general",
+        "eunuch",
+        "consort",
+        "scholar",
+        "commoner"
+      ]
+    },
+    "backgroundId": {
+      "type": "string",
+      "enum": [
+        "court-hall",
+        "royal-study",
+        "palace-courtyard",
+        "frontier-outpost",
+        "village-street",
+        "prison-chamber"
+      ]
+    },
+    "tag": {
+      "type": "string",
+      "enum": [
+        "tutorial",
+        "court",
+        "treasury",
+        "army",
+        "people",
+        "eunuch",
+        "famine",
+        "frontier",
+        "consort",
+        "succession",
+        "alchemy",
+        "rare",
+        "ending-check",
+        "relief",
+        "tax",
+        "reform"
+      ]
+    },
+    "previewValue": {
+      "type": "string",
+      "enum": ["up", "down", "risk"]
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "resource_gte" },
+            "key": { "$ref": "#/$defs/resourceKey" },
+            "value": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "resource_lte" },
+            "key": { "$ref": "#/$defs/resourceKey" },
+            "value": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "flag_is" },
+            "key": { "type": "string", "minLength": 1 },
+            "value": {
+              "oneOf": [
+                { "type": "boolean" },
+                { "type": "string" },
+                { "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "counter_gte" },
+            "key": { "type": "string", "minLength": 1 },
+            "value": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "counter_lte" },
+            "key": { "type": "string", "minLength": 1 },
+            "value": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "cardId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "not_seen" },
+            "cardId": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "effect": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "key", "delta"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "resource" },
+            "key": { "$ref": "#/$defs/resourceKey" },
+            "delta": { "type": "number", "minimum": -30, "maximum": 30 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "set_flag" },
+            "key": { "type": "string", "minLength": 1 },
+            "value": {
+              "oneOf": [
+                { "type": "boolean" },
+                { "type": "string" },
+                { "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "key", "delta"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "counter" },
+            "key": { "type": "string", "minLength": 1 },
+            "delta": { "type": "number", "minimum": -5, "maximum": 5 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "cardId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "unlock_card" },
+            "cardId": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "endingId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "force_ending" },
+            "endingId": {
+              "type": "string",
+              "enum": [
+                "rebellion",
+                "coup",
+                "empty_treasury",
+                "military_takeover",
+                "frontier_collapse",
+                "peaceful_abdication",
+                "alchemy_death",
+                "expectation_revolt",
+                "bureaucratic_suffocation",
+                "corruption_flood"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "objectiveId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "complete_objective" },
+            "objectiveId": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "choice": {
+      "type": "object",
+      "required": ["label", "effects"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8
+        },
+        "preview": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "people": { "$ref": "#/$defs/previewValue" },
+            "treasury": { "$ref": "#/$defs/previewValue" },
+            "army": { "$ref": "#/$defs/previewValue" },
+            "court": { "$ref": "#/$defs/previewValue" }
+          }
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" },
+          "minItems": 1
+        },
+        "nextCards": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "eventCard": {
+      "type": "object",
+      "required": ["id", "actor", "background", "text", "left", "right", "weight", "tags"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 12
+        },
+        "actor": { "$ref": "#/$defs/actorId" },
+        "background": { "$ref": "#/$defs/backgroundId" },
+        "text": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 64
+        },
+        "left": { "$ref": "#/$defs/choice" },
+        "right": { "$ref": "#/$defs/choice" },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/condition" }
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tag" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "once": {
+          "type": "boolean"
+        },
+        "cooldown": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      }
+    }
+  }
+}

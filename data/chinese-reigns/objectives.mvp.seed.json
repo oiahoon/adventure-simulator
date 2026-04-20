@@ -1,0 +1,77 @@
+{
+  "version": "0.1.0",
+  "objectives": [
+    {
+      "id": "survive_10_years",
+      "text": "在位满十年",
+      "conditions": [
+        { "type": "counter_gte", "key": "years_ruled", "value": 10 }
+      ],
+      "reward": {
+        "titleHint": "不是体验卡"
+      }
+    },
+    {
+      "id": "keep_all_resources_safe",
+      "text": "十年内四项资源都不进危险区",
+      "conditions": [
+        { "type": "counter_gte", "key": "years_ruled", "value": 10 },
+        { "type": "resource_gte", "key": "people", "value": 16 },
+        { "type": "resource_lte", "key": "people", "value": 84 },
+        { "type": "resource_gte", "key": "treasury", "value": 16 },
+        { "type": "resource_lte", "key": "treasury", "value": 84 },
+        { "type": "resource_gte", "key": "army", "value": 16 },
+        { "type": "resource_lte", "key": "army", "value": 84 },
+        { "type": "resource_gte", "key": "court", "value": 16 },
+        { "type": "resource_lte", "key": "court", "value": 84 }
+      ],
+      "reward": {
+        "titleHint": "稳如老龟"
+      }
+    },
+    {
+      "id": "calm_famine_once",
+      "text": "平息一次灾荒",
+      "conditions": [
+        { "type": "flag_is", "key": "famine_risk", "value": false },
+        { "type": "counter_gte", "key": "famine_events_seen", "value": 1 }
+      ],
+      "reward": {
+        "titleHint": "一粥天子"
+      }
+    },
+    {
+      "id": "contain_eunuchs",
+      "text": "阻止宦官势力坐大",
+      "conditions": [
+        { "type": "counter_lte", "key": "eunuch_power", "value": 1 },
+        { "type": "counter_gte", "key": "years_ruled", "value": 8 }
+      ],
+      "reward": {
+        "titleHint": "袖中无手"
+      }
+    },
+    {
+      "id": "restore_treasury",
+      "text": "让国库从危险区回到安全区",
+      "conditions": [
+        { "type": "flag_is", "key": "treasury_once_danger_low", "value": true },
+        { "type": "resource_gte", "key": "treasury", "value": 35 }
+      ],
+      "reward": {
+        "titleHint": "会过日子"
+      }
+    },
+    {
+      "id": "settle_frontier",
+      "text": "让边关战事停息",
+      "conditions": [
+        { "type": "flag_is", "key": "war_ongoing", "value": false },
+        { "type": "counter_gte", "key": "frontier_events_seen", "value": 1 }
+      ],
+      "reward": {
+        "titleHint": "边关安睡者"
+      }
+    }
+  ]
+}
