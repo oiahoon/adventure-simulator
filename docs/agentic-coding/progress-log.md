@@ -20,6 +20,10 @@
   - `docs/agentic-coding/project-context.md`
   - `docs/agentic-coding/progress-log.md`
   - `docs/agentic-coding/team-roles.md`
+- Prepared a missing-asset image generation batch and guide:
+  - `tmp/imagegen/missing-assets.jsonl`
+  - `docs/art/missing-assets-imagegen-pack.md`
+- Dry-run validated 19 pending asset jobs across portraits, backgrounds, and endings.
 
 ### Current State
 
@@ -45,12 +49,19 @@ The current runtime includes:
 - Some ending-specific art remains in backlog.
 - Real share platform integration is out of scope for first MVP.
 - Late-reign pressure now caps tested strategies at 60 years through `old_age_succession`.
-- Missing ending image generation is blocked until a valid OpenAI image API key is configured locally.
+- Ending priority order now lives in `rules.mvp.seed.json` as ordered `endingRules`, and the resolver reads data instead of hard-coded `if/else`.
+- Rules validation now checks ending rule structure, priority, boundary references, and required ending IDs.
+- Local and deployed smoke tests cover one real drag interaction, all 8 resource boundary endings, `alchemy_death`, `peaceful_abdication`, and `old_age_succession`.
+- Normal weighted draw now avoids a third consecutive card from the same actor when alternative candidates exist.
+- Added `npm run check:actor-streak` to validate there are no actor triple-streaks across repeated simulated runs.
+- Missing asset image generation is still blocked because `OPENAI_API_KEY` is not present in either the sandboxed shell or the escalated local shell.
 
 ### Next Recommended Work
 
-1. Move remaining ending priority logic into data-driven rules.
-2. Generate missing ending images after image API key is fixed.
+1. Export a valid `OPENAI_API_KEY` into the shell environment and rerun `tmp/imagegen/missing-assets.jsonl`.
+2. Review and move approved generated files into `public/assets/chinese-reigns/...`, then update `docs/art/asset-quality-review.md`.
 3. Tune the 45-card deck and 60-year cap after real play sessions.
-4. Add automated coverage for rare chain endings, peaceful abdication, and old-age succession.
-5. Run full mobile browser QA on real devices.
+4. Add a lightweight engine fixture runner so ending conflicts are verified without browser debug hooks.
+5. Continue pressure-system extraction from the single late-reign threshold into configurable bands.
+6. Implement local share-card generation/export to close M5.
+7. Run full mobile browser QA on real devices.

@@ -99,3 +99,147 @@ Watch for these risks:
 3. Generate missing ending images after a valid image API key is configured.
 4. Update ending seed data to use the new images.
 5. Add automated coverage for `alchemy_death`, `peaceful_abdication`, and `old_age_succession`.
+
+## Expanded Engine Plan
+
+### Phase 1: Finish Data-Driven Endings
+
+Goal:
+
+- Make ending resolution auditable from JSON data instead of split across code constants and special-case checks.
+
+Scope:
+
+- add explicit ending priority order to `data/chinese-reigns/rules.mvp.seed.json`;
+- move rare/chain ending definitions into a structured rule list;
+- keep `public/engine.js` as a generic resolver over ordered rules;
+- document tie-break expectations for:
+  - forced ending;
+  - alchemy death;
+  - low/high resource endings;
+  - peaceful abdication;
+  - old-age succession.
+
+Deliverables:
+
+- updated rules schema;
+- simplified `resolveEndingWithRules`;
+- regression coverage for ending order conflicts.
+
+### Phase 2: Extract a Configurable Pressure System
+
+Goal:
+
+- Turn late-reign pacing into a tunable subsystem instead of a single year threshold.
+
+Scope:
+
+- support multiple pressure bands, for example:
+  - early reign;
+  - stable middle reign;
+  - late-reign tension;
+  - forced succession window;
+- allow per-band effects such as:
+  - event weight boosts;
+  - resource drift;
+  - counter growth;
+  - objective pressure;
+- keep MVP default behavior simple, but make the structure extensible for future content packs.
+
+Deliverables:
+
+- pressure config in rules data;
+- engine helper for yearly pressure updates;
+- simulation report comparing different pressure tunings.
+
+### Phase 3: Event Selection Engine Upgrade
+
+Goal:
+
+- Make event pacing feel closer to Reigns: more readable arcs, less random noise, better thematic clustering.
+
+Scope:
+
+- formalize card buckets:
+  - tutorial/early onboarding;
+  - common maintenance;
+  - pressure response;
+  - chain follow-up;
+  - rare spike;
+- add data-driven weight modifiers based on:
+  - current resource danger;
+  - active flags;
+  - recent card history;
+  - reign age band;
+- prevent repetitive loops with a clearer recency/cooldown policy.
+
+Deliverables:
+
+- weight modifier rules in data;
+- engine utilities for card pool scoring;
+- deterministic simulation snapshots for event distribution.
+
+### Phase 4: Test Harness and QA Matrix
+
+Goal:
+
+- Separate browser smoke from engine correctness checks.
+
+Scope:
+
+- keep Playwright smoke for:
+  - page load;
+  - swipe interaction;
+  - result screen transitions;
+- add engine-level test cases for:
+  - ending priority conflicts;
+  - objective completion;
+  - card queue/cooldown behavior;
+  - archive record creation;
+  - max-year cap behavior through state transitions;
+- add deterministic fixtures instead of relying only on debug hooks.
+
+Deliverables:
+
+- lightweight engine test runner;
+- fixture JSON for scripted reign scenarios;
+- QA checklist aligned with ending matrix and asset matrix.
+
+### Phase 5: Content and Asset Integration
+
+Goal:
+
+- Make the engine extensible enough that adding new events/endings is mostly content work.
+
+Scope:
+
+- align all ending/image IDs with asset files;
+- reduce image reuse on result pages;
+- track which future assets are transparent UI overlays versus full-frame backgrounds;
+- define a content checklist for every new card:
+  - actor portrait;
+  - background;
+  - ending linkage if any;
+  - objective or chain references;
+  - share-text implications.
+
+Deliverables:
+
+- updated asset backlog;
+- ending image rollout plan;
+- content authoring checklist in docs.
+
+## Suggested Execution Order
+
+1. Phase 1 ending resolver cleanup.
+2. Phase 4 engine test harness for resolver confidence.
+3. Phase 2 pressure tuning.
+4. Phase 3 event selection upgrade.
+5. Phase 5 content and image refresh.
+
+## Open Questions
+
+- Should `peaceful_abdication` remain possible after 20 years if resources are stable, or should late reign make it harder over time?
+- Should `frontier_collapse` stay as pure `army <= 0` for MVP, with war-state variants postponed to post-MVP chains?
+- Should the final MVP target median run length be closer to 10, 15, or 20 in-game years?
+- Do we want one generic result background per ending family, or one dedicated image per ending before wider content expansion?

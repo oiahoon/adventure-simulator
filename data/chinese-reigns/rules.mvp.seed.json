@@ -1,22 +1,135 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "resourceRange": {
     "min": 0,
     "max": 100,
     "dangerLow": 15,
     "dangerHigh": 85
   },
-  "resourceEndings": {
-    "people": { "low": "rebellion", "high": "expectation_revolt" },
-    "treasury": { "low": "empty_treasury", "high": "corruption_flood" },
-    "army": { "low": "frontier_collapse", "high": "military_takeover" },
-    "court": { "low": "coup", "high": "bureaucratic_suffocation" }
-  },
-  "peacefulAbdication": {
-    "minYears": 20,
-    "resourceMin": 35,
-    "resourceMax": 75
-  },
+  "endingRules": [
+    {
+      "id": "forced-ending",
+      "priority": 1000,
+      "match": { "type": "forced_ending" }
+    },
+    {
+      "id": "alchemy-death",
+      "priority": 900,
+      "endingId": "alchemy_death",
+      "match": {
+        "type": "all",
+        "conditions": [
+          { "type": "counter_gte", "key": "alchemy_trust", "value": 3 }
+        ]
+      }
+    },
+    {
+      "id": "people-low",
+      "priority": 800,
+      "endingId": "rebellion",
+      "match": {
+        "type": "resource_boundary",
+        "key": "people",
+        "boundary": "low",
+        "valueFrom": "resourceRange.min"
+      }
+    },
+    {
+      "id": "people-high",
+      "priority": 800,
+      "endingId": "expectation_revolt",
+      "match": {
+        "type": "resource_boundary",
+        "key": "people",
+        "boundary": "high",
+        "valueFrom": "resourceRange.max"
+      }
+    },
+    {
+      "id": "treasury-low",
+      "priority": 800,
+      "endingId": "empty_treasury",
+      "match": {
+        "type": "resource_boundary",
+        "key": "treasury",
+        "boundary": "low",
+        "valueFrom": "resourceRange.min"
+      }
+    },
+    {
+      "id": "treasury-high",
+      "priority": 800,
+      "endingId": "corruption_flood",
+      "match": {
+        "type": "resource_boundary",
+        "key": "treasury",
+        "boundary": "high",
+        "valueFrom": "resourceRange.max"
+      }
+    },
+    {
+      "id": "army-low",
+      "priority": 800,
+      "endingId": "frontier_collapse",
+      "match": {
+        "type": "resource_boundary",
+        "key": "army",
+        "boundary": "low",
+        "valueFrom": "resourceRange.min"
+      }
+    },
+    {
+      "id": "army-high",
+      "priority": 800,
+      "endingId": "military_takeover",
+      "match": {
+        "type": "resource_boundary",
+        "key": "army",
+        "boundary": "high",
+        "valueFrom": "resourceRange.max"
+      }
+    },
+    {
+      "id": "court-low",
+      "priority": 800,
+      "endingId": "coup",
+      "match": {
+        "type": "resource_boundary",
+        "key": "court",
+        "boundary": "low",
+        "valueFrom": "resourceRange.min"
+      }
+    },
+    {
+      "id": "court-high",
+      "priority": 800,
+      "endingId": "bureaucratic_suffocation",
+      "match": {
+        "type": "resource_boundary",
+        "key": "court",
+        "boundary": "high",
+        "valueFrom": "resourceRange.max"
+      }
+    },
+    {
+      "id": "peaceful-abdication",
+      "priority": 200,
+      "endingId": "peaceful_abdication",
+      "match": {
+        "type": "all",
+        "conditions": [
+          { "type": "counter_gte", "key": "years_ruled", "value": 20 },
+          { "type": "all_resources_between", "min": 35, "max": 75 }
+        ]
+      }
+    },
+    {
+      "id": "old-age-succession",
+      "priority": 100,
+      "endingId": "old_age_succession",
+      "match": { "type": "counter_gte", "key": "years_ruled", "value": 60 }
+    }
+  ],
   "lateReignPressure": {
     "startsAtYear": 35,
     "endingAtYear": 60,

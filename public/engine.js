@@ -7,6 +7,48 @@ export const RESOURCE_ENDING_MAP = {
   court: { low: "coup", high: "bureaucratic_suffocation" },
 };
 
+export const DEFAULT_ENDING_RULES = [
+  { id: "forced-ending", priority: 1000, match: { type: "forced_ending" } },
+  {
+    id: "alchemy-death",
+    priority: 900,
+    endingId: "alchemy_death",
+    match: { type: "all", conditions: [{ type: "counter_gte", key: "alchemy_trust", value: 3 }] },
+  },
+  ...RESOURCE_ORDER.flatMap((key) => [
+    {
+      id: `${key}-low`,
+      priority: 800,
+      endingId: RESOURCE_ENDING_MAP[key].low,
+      match: { type: "resource_boundary", key, boundary: "low", valueFrom: "resourceRange.min" },
+    },
+    {
+      id: `${key}-high`,
+      priority: 800,
+      endingId: RESOURCE_ENDING_MAP[key].high,
+      match: { type: "resource_boundary", key, boundary: "high", valueFrom: "resourceRange.max" },
+    },
+  ]),
+  {
+    id: "peaceful-abdication",
+    priority: 200,
+    endingId: "peaceful_abdication",
+    match: {
+      type: "all",
+      conditions: [
+        { type: "counter_gte", key: "years_ruled", value: 20 },
+        { type: "all_resources_between", min: 35, max: 75 },
+      ],
+    },
+  },
+  {
+    id: "old-age-succession",
+    priority: 100,
+    endingId: "old_age_succession",
+    match: { type: "counter_gte", key: "years_ruled", value: 60 },
+  },
+];
+
 export function createInitialState({ archive, objectivePack, random = Math.random }) {
   const reignIndex = (archive?.reigns?.length ?? 0) + 1;
   return {
@@ -125,7 +167,12 @@ export function selectNextCard({ state, eventPack, currentCard, random = Math.ra
   }
 
   const eligible = eventPack.cards.filter((card) => isCardEligible(nextState, card));
-  const candidates = eligible.length ? eligible : eventPack.cards;
+  const actorBlockedCandidates = filterBlockedActorCandidates(eligible, nextState, eventPack);
+  const candidates = actorBlockedCandidates.length
+    ? actorBlockedCandidates
+    : eligible.length
+      ? eligible
+      : eventPack.cards;
   const weighted = [];
 
   candidates.forEach((card) => {
@@ -136,6 +183,22 @@ export function selectNextCard({ state, eventPack, currentCard, random = Math.ra
   });
 
   return { card: weighted[Math.floor(random() * weighted.length)], state: nextState };
+}
+
+export function filterBlockedActorCandidates(candidates, state, eventPack) {
+  const blockedActor = getBlockedActor(state, eventPack);
+  if (!blockedActor) return candidates;
+  const filtered = candidates.filter((card) => card.actor !== blockedActor);
+  return filtered.length ? filtered : candidates;
+}
+
+export function getBlockedActor(state, eventPack) {
+  const lastTwoActorIds = state.eventHistory
+    .slice(-2)
+    .map((cardId) => eventPack.cards.find((card) => card.id === cardId)?.actor)
+    .filter(Boolean);
+  if (lastTwoActorIds.length < 2) return null;
+  return lastTwoActorIds[0] === lastTwoActorIds[1] ? lastTwoActorIds[0] : null;
 }
 
 export function isCardEligible(state, card) {
@@ -167,28 +230,13 @@ export function resolveEnding(state, endingPack) {
 }
 
 export function resolveEndingWithRules(state, endingPack, rules = defaultRules()) {
-  const resourceEndings = rules.resourceEndings ?? RESOURCE_ENDING_MAP;
-  if (state.forcedEndingId) return findEnding(endingPack, state.forcedEndingId);
-  if ((state.counters.alchemy_trust ?? 0) >= 3) return findEnding(endingPack, "alchemy_death");
-
-  for (const key of RESOURCE_ORDER) {
-    const endings = resourceEndings[key] ?? RESOURCE_ENDING_MAP[key];
-    if (state.resources[key] <= rules.resourceRange.min) return findEnding(endingPack, endings.low);
-    if (state.resources[key] >= rules.resourceRange.max) return findEnding(endingPack, endings.high);
+  const endingRules = getOrderedEndingRules(rules);
+  for (const rule of endingRules) {
+    const endingId = matchEndingRule(state, rule, rules);
+    if (endingId) {
+      return findEnding(endingPack, endingId);
+    }
   }
-
-  const isStable = RESOURCE_ORDER.every((key) =>
-    state.resources[key] >= rules.peacefulAbdication.resourceMin &&
-    state.resources[key] <= rules.peacefulAbdication.resourceMax
-  );
-  if (state.counters.years_ruled >= rules.peacefulAbdication.minYears && isStable) {
-    return findEnding(endingPack, "peaceful_abdication");
-  }
-
-  if (state.counters.years_ruled >= rules.lateReignPressure.endingAtYear) {
-    return findEnding(endingPack, rules.lateReignPressure.endingId);
-  }
-
   return null;
 }
 
@@ -240,8 +288,7 @@ export function clamp(value, min, max) {
 export function defaultRules() {
   return {
     resourceRange: { min: 0, max: 100, dangerLow: 15, dangerHigh: 85 },
-    resourceEndings: RESOURCE_ENDING_MAP,
-    peacefulAbdication: { minYears: 20, resourceMin: 35, resourceMax: 75 },
+    endingRules: DEFAULT_ENDING_RULES,
     lateReignPressure: {
       startsAtYear: 35,
       endingAtYear: 60,
@@ -249,4 +296,38 @@ export function defaultRules() {
       pressureCounterKey: "succession_pressure",
     },
   };
+}
+
+function getOrderedEndingRules(rules) {
+  return [...(rules.endingRules ?? DEFAULT_ENDING_RULES)].sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0));
+}
+
+function matchEndingRule(state, rule, rules) {
+  if (rule.match?.type === "forced_ending") {
+    return state.forcedEndingId ?? null;
+  }
+  if (!rule.endingId) return null;
+  return evaluateEndingMatch(state, rule.match, rules) ? rule.endingId : null;
+}
+
+function evaluateEndingMatch(state, match, rules) {
+  if (!match) return false;
+  if (match.type === "counter_gte") return (state.counters[match.key] ?? 0) >= match.value;
+  if (match.type === "all") return (match.conditions ?? []).every((condition) => evaluateEndingMatch(state, condition, rules));
+  if (match.type === "all_resources_between") {
+    return RESOURCE_ORDER.every((key) => state.resources[key] >= match.min && state.resources[key] <= match.max);
+  }
+  if (match.type === "resource_boundary") {
+    const boundaryValue = resolveRuleValue(rules, match.valueFrom);
+    if (!Number.isFinite(boundaryValue)) return false;
+    return match.boundary === "low"
+      ? state.resources[match.key] <= boundaryValue
+      : state.resources[match.key] >= boundaryValue;
+  }
+  return false;
+}
+
+function resolveRuleValue(rules, path) {
+  if (!path) return undefined;
+  return path.split(".").reduce((current, key) => current?.[key], rules);
 }

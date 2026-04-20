@@ -20,6 +20,13 @@ const allowedEffects = new Set([
   "complete_objective",
   "force_ending",
 ]);
+const allowedEndingMatchTypes = new Set([
+  "forced_ending",
+  "counter_gte",
+  "resource_boundary",
+  "all",
+  "all_resources_between",
+]);
 
 const events = readJson("data/chinese-reigns/events.mvp.seed.json");
 const objectives = readJson("data/chinese-reigns/objectives.mvp.seed.json");
@@ -170,18 +177,24 @@ function validateRules(rulesData) {
     errors.push("rules.resourceRange.min must be lower than rules.resourceRange.max");
   }
 
-  allowedResources.forEach((key) => {
-    const low = rulesData.resourceEndings?.[key]?.low;
-    const high = rulesData.resourceEndings?.[key]?.high;
-    if (!endingIds.has(low)) errors.push(`rules.resourceEndings.${key}.low references missing ending ${low}`);
-    if (!endingIds.has(high)) errors.push(`rules.resourceEndings.${key}.high references missing ending ${high}`);
-  });
-
-  validateNumber("rules.peacefulAbdication.minYears", rulesData.peacefulAbdication?.minYears, { min: 1 });
-  validateNumber("rules.peacefulAbdication.resourceMin", rulesData.peacefulAbdication?.resourceMin, { min: 0, max: 100 });
-  validateNumber("rules.peacefulAbdication.resourceMax", rulesData.peacefulAbdication?.resourceMax, { min: 0, max: 100 });
-  if ((rulesData.peacefulAbdication?.resourceMin ?? 0) >= (rulesData.peacefulAbdication?.resourceMax ?? 100)) {
-    errors.push("rules.peacefulAbdication.resourceMin must be lower than rules.peacefulAbdication.resourceMax");
+  if (!Array.isArray(rulesData.endingRules) || rulesData.endingRules.length === 0) {
+    errors.push("rules.endingRules must be a non-empty array");
+  } else {
+    const endingRuleIds = new Set();
+    rulesData.endingRules.forEach((rule, index) => {
+      if (!rule?.id) {
+        errors.push(`rules.endingRules[${index}].id is required`);
+      } else if (endingRuleIds.has(rule.id)) {
+        errors.push(`duplicate rules.endingRules id: ${rule.id}`);
+      } else {
+        endingRuleIds.add(rule.id);
+      }
+      validateNumber(`rules.endingRules[${index}].priority`, rule?.priority);
+      if (rule?.match?.type !== "forced_ending" && !endingIds.has(rule?.endingId)) {
+        errors.push(`rules.endingRules[${index}].endingId references missing ending ${rule?.endingId}`);
+      }
+      validateEndingMatch(rule?.match, `rules.endingRules[${index}].match`, rulesData);
+    });
   }
 
   validateNumber("rules.lateReignPressure.startsAtYear", rulesData.lateReignPressure?.startsAtYear, { min: 1 });
@@ -195,6 +208,57 @@ function validateRules(rulesData) {
   const lateEnding = rulesData.lateReignPressure?.endingId;
   if (!endingIds.has(lateEnding)) {
     errors.push(`rules.lateReignPressure.endingId references missing ending ${lateEnding}`);
+  }
+}
+
+function validateEndingMatch(match, label, rulesData) {
+  if (!match || typeof match !== "object") {
+    errors.push(`${label} must be an object`);
+    return;
+  }
+  if (!allowedEndingMatchTypes.has(match.type)) {
+    errors.push(`${label}.type unsupported: ${match.type}`);
+    return;
+  }
+
+  if (match.type === "forced_ending") return;
+
+  if (match.type === "counter_gte") {
+    if (typeof match.key !== "string") errors.push(`${label}.key must be a string`);
+    validateNumber(`${label}.value`, match.value);
+    return;
+  }
+
+  if (match.type === "resource_boundary") {
+    if (!allowedResources.has(match.key)) errors.push(`${label}.key invalid resource ${match.key}`);
+    if (!["low", "high"].includes(match.boundary)) errors.push(`${label}.boundary must be low or high`);
+    const valueFrom = match.valueFrom;
+    if (!["resourceRange.min", "resourceRange.max"].includes(valueFrom)) {
+      errors.push(`${label}.valueFrom must be resourceRange.min or resourceRange.max`);
+    } else {
+      const resolved = valueFrom.split(".").reduce((current, key) => current?.[key], rulesData);
+      if (!Number.isFinite(resolved)) errors.push(`${label}.valueFrom resolves to non-number ${valueFrom}`);
+    }
+    return;
+  }
+
+  if (match.type === "all") {
+    if (!Array.isArray(match.conditions) || match.conditions.length === 0) {
+      errors.push(`${label}.conditions must be a non-empty array`);
+      return;
+    }
+    match.conditions.forEach((condition, index) => {
+      validateEndingMatch(condition, `${label}.conditions[${index}]`, rulesData);
+    });
+    return;
+  }
+
+  if (match.type === "all_resources_between") {
+    validateNumber(`${label}.min`, match.min, { min: 0, max: 100 });
+    validateNumber(`${label}.max`, match.max, { min: 0, max: 100 });
+    if ((match.min ?? 0) >= (match.max ?? 100)) {
+      errors.push(`${label}.min must be lower than ${label}.max`);
+    }
   }
 }
 

@@ -68,10 +68,41 @@ for (const [resource, value, expectedEndingId] of endingCases) {
 }
 
 await ensureGameScreen(page);
+const alchemyEndingId = await page.evaluate(() => {
+  ["people", "treasury", "army", "court"].forEach((key) => {
+    window.__chineseReignsDebug.setResource(key, 50);
+  });
+  window.__chineseReignsDebug.setCounter("years_ruled", 5);
+  window.__chineseReignsDebug.setCounter("alchemy_trust", 3);
+  return window.__chineseReignsDebug.resolveEndingNow();
+});
+if (alchemyEndingId !== "alchemy_death") {
+  throw new Error(`Expected alchemy_death, got ${alchemyEndingId}`);
+}
+await page.waitForSelector("#result-screen:not(.hidden)");
+states.push(await readState(page, "ending-alchemy_death"));
+
+await ensureGameScreen(page);
+const peacefulEndingId = await page.evaluate(() => {
+  ["people", "treasury", "army", "court"].forEach((key) => {
+    window.__chineseReignsDebug.setResource(key, 50);
+  });
+  window.__chineseReignsDebug.setCounter("alchemy_trust", 0);
+  window.__chineseReignsDebug.setCounter("years_ruled", 20);
+  return window.__chineseReignsDebug.resolveEndingNow();
+});
+if (peacefulEndingId !== "peaceful_abdication") {
+  throw new Error(`Expected peaceful_abdication, got ${peacefulEndingId}`);
+}
+await page.waitForSelector("#result-screen:not(.hidden)");
+states.push(await readState(page, "ending-peaceful_abdication"));
+
+await ensureGameScreen(page);
 const oldAgeEndingId = await page.evaluate(() => {
   ["people", "treasury", "army", "court"].forEach((key) => {
     window.__chineseReignsDebug.setResource(key, 30);
   });
+  window.__chineseReignsDebug.setCounter("alchemy_trust", 0);
   window.__chineseReignsDebug.setCounter("years_ruled", 60);
   return window.__chineseReignsDebug.resolveEndingNow();
 });
@@ -80,6 +111,10 @@ if (oldAgeEndingId !== "old_age_succession") {
 }
 await page.waitForSelector("#result-screen:not(.hidden)");
 states.push(await readState(page, "ending-old_age_succession"));
+
+await page.click("#generate-share-button");
+await page.waitForSelector("#share-preview-panel:not(.hidden)");
+states.push(await readState(page, "share-preview-generated"));
 
 await page.screenshot({ path: path.join(outputDir, "03-after-choices.png"), fullPage: true });
 writeFileSync(path.join(outputDir, "state-log.json"), JSON.stringify({ states, consoleMessages }, null, 2));
