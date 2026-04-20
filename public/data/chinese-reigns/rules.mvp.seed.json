@@ -24,6 +24,20 @@
       }
     },
     {
+      "id": "puppet-emperor",
+      "priority": 850,
+      "endingId": "puppet_emperor",
+      "match": {
+        "type": "all",
+        "conditions": [
+          { "type": "flag_is", "key": "puppet_regency", "value": true },
+          { "type": "counter_gte", "key": "eunuch_power", "value": 2 },
+          { "type": "counter_gte", "key": "consort_family_power", "value": 2 },
+          { "type": "counter_gte", "key": "years_ruled", "value": 10 }
+        ]
+      }
+    },
+    {
       "id": "people-low",
       "priority": 800,
       "endingId": "rebellion",
@@ -118,8 +132,10 @@
       "match": {
         "type": "all",
         "conditions": [
-          { "type": "counter_gte", "key": "years_ruled", "value": 20 },
-          { "type": "all_resources_between", "min": 35, "max": 75 }
+          { "type": "counter_gte", "key": "years_ruled", "value": 24 },
+          { "type": "all_resources_between", "min": 42, "max": 68 },
+          { "type": "counter_lte", "key": "eunuch_power", "value": 1 },
+          { "type": "counter_lte", "key": "consort_family_power", "value": 1 }
         ]
       }
     },

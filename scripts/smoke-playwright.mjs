@@ -91,7 +91,7 @@ const peacefulEndingId = await page.evaluate(() => {
     window.__chineseReignsDebug.setResource(key, 50);
   });
   window.__chineseReignsDebug.setCounter("alchemy_trust", 0);
-  window.__chineseReignsDebug.setCounter("years_ruled", 20);
+  window.__chineseReignsDebug.setCounter("years_ruled", 24);
   return window.__chineseReignsDebug.resolveEndingNow();
 });
 if (peacefulEndingId !== "peaceful_abdication") {

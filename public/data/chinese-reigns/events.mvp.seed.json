@@ -7,12 +7,22 @@
     "general",
     "eunuch",
     "consort",
+    "empress-dowager",
+    "prince",
+    "regional-lord",
+    "envoy",
+    "merchant",
+    "bandit",
     "scholar",
     "commoner"
   ],
   "backgrounds": [
+    "alchemy-room",
+    "ancestral-temple",
     "court-hall",
     "royal-study",
+    "imperial-harem",
+    "market-tax-office",
     "palace-courtyard",
     "frontier-outpost",
     "village-street",
@@ -914,6 +924,42 @@
       "cooldown": 5
     },
     {
+      "id": "dowager_curtain_council",
+      "title": "帘后议政",
+      "actor": "empress-dowager",
+      "background": "imperial-harem",
+      "text": "太后说朝局多变，不如由她先替您把风雨挡在帘外。",
+      "left": {
+        "label": "准辅政",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 8 },
+          { "type": "resource", "key": "people", "delta": -6 },
+          { "type": "counter", "key": "consort_family_power", "delta": 1 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 },
+          { "type": "set_flag", "key": "puppet_regency", "value": true }
+        ],
+        "nextCards": ["prince_sealed_edict"]
+      },
+      "right": {
+        "label": "亲断",
+        "preview": { "court": "down", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "resource", "key": "people", "delta": 4 },
+          { "type": "counter", "key": "consort_family_power", "delta": -1 },
+          { "type": "set_flag", "key": "puppet_regency", "value": false }
+        ]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "taizi_established", "value": true },
+        { "type": "counter_gte", "key": "years_ruled", "value": 10 }
+      ],
+      "weight": 4,
+      "tags": ["court", "consort", "eunuch"],
+      "cooldown": 8
+    },
+    {
       "id": "heir_tutor",
       "title": "太子师傅",
       "actor": "senior-minister",
@@ -940,6 +986,39 @@
       "weight": 3,
       "tags": ["court", "people"],
       "once": true
+    },
+    {
+      "id": "prince_sealed_edict",
+      "title": "太子代印",
+      "actor": "prince",
+      "background": "ancestral-temple",
+      "text": "太子捧着印匣来请示，说要不要先替您把诏书都盖上。",
+      "left": {
+        "label": "照印",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 6 },
+          { "type": "resource", "key": "people", "delta": -8 },
+          { "type": "counter", "key": "consort_family_power", "delta": 1 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 },
+          { "type": "set_flag", "key": "puppet_regency", "value": true }
+        ]
+      },
+      "right": {
+        "label": "停印",
+        "preview": { "court": "down", "people": "up" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": -8 },
+          { "type": "resource", "key": "people", "delta": 6 },
+          { "type": "set_flag", "key": "puppet_regency", "value": false }
+        ]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "puppet_regency", "value": true }
+      ],
+      "weight": 6,
+      "tags": ["court", "consort", "eunuch"],
+      "cooldown": 9
     },
     {
       "id": "prison_pardon",

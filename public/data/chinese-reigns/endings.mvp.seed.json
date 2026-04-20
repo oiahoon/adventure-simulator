@@ -16,7 +16,7 @@
       "type": "high_resource",
       "resource": "people",
       "condition": "people >= 100",
-      "image": "public/assets/chinese-reigns/endings/rebellion.png",
+      "image": "public/assets/chinese-reigns/endings/expectation-revolt.png",
       "shareTone": "万民爱戴您，直到他们要求您今天就把天下变好。"
     },
     {
@@ -34,7 +34,7 @@
       "type": "high_resource",
       "resource": "treasury",
       "condition": "treasury >= 100",
-      "image": "public/assets/chinese-reigns/endings/empty-treasury.png",
+      "image": "public/assets/chinese-reigns/endings/corruption-flood.png",
       "shareTone": "钱太多了，连清官都开始研究怎么委婉地贪。"
     },
     {
@@ -43,7 +43,7 @@
       "type": "low_resource",
       "resource": "army",
       "condition": "army <= 0",
-      "image": "public/assets/chinese-reigns/backgrounds/frontier-outpost.png",
+      "image": "public/assets/chinese-reigns/endings/frontier-collapse.png",
       "shareTone": "边军没有输给敌人，先输给了缺饷。"
     },
     {
@@ -52,7 +52,7 @@
       "type": "high_resource",
       "resource": "army",
       "condition": "army >= 100 or army_discontent >= 3",
-      "image": "public/assets/chinese-reigns/endings/coup.png",
+      "image": "public/assets/chinese-reigns/endings/military-takeover.png",
       "shareTone": "将军跪得很标准，刀也架得很标准。"
     },
     {
@@ -70,7 +70,7 @@
       "type": "high_resource",
       "resource": "court",
       "condition": "court >= 100",
-      "image": "public/assets/chinese-reigns/endings/coup.png",
+      "image": "public/assets/chinese-reigns/endings/bureaucratic-suffocation.png",
       "shareTone": "制度完美无缺，连皇帝也没有发挥空间。"
     },
     {
@@ -79,15 +79,24 @@
       "type": "chain",
       "resource": "court",
       "condition": "alchemy_trust >= 3 and alchemy crisis card chosen",
-      "image": "public/assets/chinese-reigns/endings/peaceful-abdication.png",
+      "image": "public/assets/chinese-reigns/endings/alchemy-death.png",
       "shareTone": "您成功证明了长生丹至少能让死因长生。"
+    },
+    {
+      "id": "puppet_emperor",
+      "name": "傀儡天子",
+      "type": "chain",
+      "resource": "court",
+      "condition": "taizi_established, eunuch_power >= 2, consort_family_power >= 2, and puppet regency takes over",
+      "image": "public/assets/chinese-reigns/endings/puppet-emperor.png",
+      "shareTone": "玉玺还在您手边，真正点头的人却站在帘子后面。"
     },
     {
       "id": "peaceful_abdication",
       "name": "和平退位",
       "type": "rare_good",
       "resource": "court",
-      "condition": "years_ruled >= 20 and all resources between 35 and 75",
+      "condition": "years_ruled >= 24, all resources between 42 and 68, eunuch_power <= 1, consort_family_power <= 1",
       "image": "public/assets/chinese-reigns/endings/peaceful-abdication.png",
       "shareTone": "您居然活着下班了，史官一时不知如何下笔。"
     },
@@ -97,7 +106,7 @@
       "type": "late_reign",
       "resource": "court",
       "condition": "years_ruled >= 60",
-      "image": "public/assets/chinese-reigns/endings/peaceful-abdication.png",
+      "image": "public/assets/chinese-reigns/endings/old-age-succession.png",
       "shareTone": "您活得太久，连史官都换了三批。终于，该让下一任皇帝接班了。"
     }
   ]

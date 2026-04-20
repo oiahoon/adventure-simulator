@@ -39,6 +39,9 @@ Update after engine/rules work:
 - Added `old_age_succession` ending at 60 years.
 - `npm run simulate -- 200 1000` now caps all tested strategies at 60 years.
 - New `long-seeking` max: 60 years, ending `old_age_succession`.
+- Added `npm run report:pressure` to compare multiple pressure/old-age variants and emit `tmp/simulations/pressure-tuning-report.{json,md}`.
+- Tightened `peaceful_abdication` to `years_ruled >= 24` and all resources between `40-70` so it is rarer than the original `20 years + 35-75` rule.
+- Added a new `puppet_emperor` chain ending backed by event content, dedicated art, and explicit rule matching.
 
 ## Team Recommendations
 
@@ -151,6 +154,12 @@ Deliverables:
 - pressure config in rules data;
 - engine helper for yearly pressure updates;
 - simulation report comparing different pressure tunings.
+
+Current tuning note:
+
+- The report shows reign-length pressure is functioning, but `peaceful_abdication` still dominates the `balance` strategy.
+- This means the next tuning pass should look not only at old-age pressure bands, but also at whether the peaceful window should narrow further or require an extra state condition.
+- After the latest rule pass (`24 years`, `42-68`, low eunuch / consort-family pressure), the balance strategy now lands `peaceful_abdication` much less often than before, but it still remains the most common “good” outcome and needs human-play validation.
 
 ### Phase 3: Event Selection Engine Upgrade
 

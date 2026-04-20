@@ -59,13 +59,24 @@ The current runtime includes:
 - Tightened short-screen gameplay layout so the card, HUD, objectives, and left/right choice buttons all remain visible within one mobile viewport while swipe interaction still advances the year.
 - Verified local `.env` loading for image generation and added `.env` to `.gitignore`.
 - Image batch retry now reaches the API, but the current `OPENAI_API_KEY` still returns `401 invalid_api_key`, so missing-asset generation remains blocked on a valid key rather than local tooling.
+- Added `npm run report:pressure` to compare multiple pressure-band variants and write JSON/Markdown reports under `tmp/simulations/`.
+- Tightened `peaceful_abdication` from `20 years + 35-75` to `24 years + 40-70`; automated tuning shows it is less trivial than before, but still common for the balance strategy and should be checked in real playtests.
+- Generated and landed a major missing-asset batch without using the broken local API-key flow:
+  - 7 new portraits (`alchemist`, `empress-dowager`, `prince`, `regional-lord`, `envoy`, `merchant`, `bandit`);
+  - 4 new backgrounds (`alchemy-room`, `ancestral-temple`, `imperial-harem`, `market-tax-office`);
+  - 8 new ending illustrations (`expectation-revolt`, `corruption-flood`, `frontier-collapse`, `military-takeover`, `bureaucratic-suffocation`, `alchemy-death`, `old-age-succession`, `puppet-emperor`).
+- Updated ending seed data so result pages now use dedicated ending art instead of reusing placeholder images across most high-resource and chain endings.
+- Added a formal `puppet_emperor` chain ending:
+  - new rule in `rules.mvp.seed.json`;
+  - new event chain using `empress-dowager` and `prince`;
+  - new `puppet_regency` state flag and fixtures covering rule priority.
+- Tightened `peaceful_abdication` again to require `24` years, resources within `42-68`, and low `eunuch_power` / `consort_family_power`.
+- New pressure report result: `balance` strategy peaceful-abdication rate dropped to roughly `63%`, down from the earlier much easier stable-governance path, but still not rare enough to count as fully solved.
 
 ### Next Recommended Work
 
-1. Export a valid `OPENAI_API_KEY` into the shell environment and rerun `tmp/imagegen/missing-assets.jsonl`.
-2. Review and move approved generated files into `public/assets/chinese-reigns/...`, then update `docs/art/asset-quality-review.md`.
-3. Tune the 45-card deck and 60-year cap after real play sessions.
-4. Add a lightweight engine fixture runner so ending conflicts are verified without browser debug hooks.
-5. Continue pressure-system extraction from the single late-reign threshold into configurable bands.
-6. Implement local share-card generation/export to close M5.
-7. Run full mobile browser QA on real devices, now that automated viewport regression is in place.
+1. Tune the 45-card deck and `peaceful_abdication` rarity after real play sessions.
+2. Use the new pressure report to decide whether `35/45/55 + 60 years` stays as the default or shifts earlier for MVP.
+3. Run full mobile browser QA on real devices, now that automated viewport regression is in place.
+4. Decide whether `puppet_emperor` should stay as a niche hidden chain ending or get one more visible lead-in card for broader player discovery.
+5. If the war layer expands, generate `backgrounds/battle-map.png`; otherwise the current MVP art set is largely complete.

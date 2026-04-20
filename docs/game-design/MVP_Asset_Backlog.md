@@ -52,40 +52,50 @@
 
 ## 2. MVP 阶段建议补齐
 
+以下资源已在 2026-04-20 生成并落盘：
+
+- 角色头像：
+  - `portraits/alchemist.png`
+  - `portraits/empress-dowager.png`
+  - `portraits/prince.png`
+  - `portraits/regional-lord.png`
+  - `portraits/envoy.png`
+  - `portraits/merchant.png`
+  - `portraits/bandit.png`
+- 场景背景：
+  - `backgrounds/alchemy-room.png`
+  - `backgrounds/imperial-harem.png`
+  - `backgrounds/market-tax-office.png`
+  - `backgrounds/ancestral-temple.png`
+- 结局图：
+  - `endings/military-takeover.png`
+  - `endings/frontier-collapse.png`
+  - `endings/expectation-revolt.png`
+  - `endings/corruption-flood.png`
+  - `endings/bureaucratic-suffocation.png`
+  - `endings/alchemy-death.png`
+  - `endings/old-age-succession.png`
+  - `endings/puppet-emperor.png`
+
+当前 backlog 主要保留“尚未生成或尚未接入玩法”的项。
+
 ### 2.1 角色头像
 
 | 优先级 | 建议文件 | 用途 | 备注 |
 | --- | --- | --- | --- |
-| P0 | `portraits/alchemist.png` | 方士献丹、求仙、观星事件 | 当前用老臣代替，长期会削弱奇遇链辨识度。 |
-| P0 | `portraits/empress-dowager.png` | 太后、外戚、立储压力 | 后宫/继承链需要更明确的权力来源。 |
-| P1 | `portraits/prince.png` | 太子立储、夺嫡事件 | 善终和世代循环扩展会需要。 |
-| P1 | `portraits/regional-lord.png` | 藩王、地方割据、削藩事件 | 藩镇叛乱链需要。 |
-| P1 | `portraits/envoy.png` | 北疆使者、议和、外交事件 | 可用于边关链。 |
-| P2 | `portraits/merchant.png` | 商税、盐铁、行会事件 | 国库链扩展。 |
-| P2 | `portraits/bandit.png` | 剿匪、江湖、治安事件 | 武侠/民间扩展。 |
+| P2 | 暂无新增硬缺口 |  | 角色侧 MVP 所需主干素材已基本补齐。 |
 
 ### 2.2 场景背景
 
 | 优先级 | 建议文件 | 用途 | 备注 |
 | --- | --- | --- | --- |
-| P0 | `backgrounds/alchemy-room.png` | 方士、丹药、观星、超自然事件 | 当前御书房可顶替，但氛围不够。 |
-| P1 | `backgrounds/imperial-harem.png` | 后宫、贵妃、太后、外戚事件 | 当前宫廷庭院可顶替。 |
-| P1 | `backgrounds/market-tax-office.png` | 商税、盐铁、国库事件 | 当前村镇街道可顶替。 |
-| P1 | `backgrounds/ancestral-temple.png` | 立储、祖制、太庙、善终事件 | 可增强王朝感。 |
 | P2 | `backgrounds/battle-map.png` | 战争决策、小袋战役系统 | MVP 后期可补。 |
 
 ### 2.3 结局图
 
 | 优先级 | 建议文件 | 用途 | 备注 |
 | --- | --- | --- | --- |
-| P0 | `endings/military-takeover.png` | 兵权过高、将军逼宫 | 当前临时复用 `coup.png`。 |
-| P0 | `endings/frontier-collapse.png` | 兵权过低且战争中，边关失守 | 当前临时复用 `frontier-outpost.png`。 |
-| P0 | `endings/expectation-revolt.png` | 民心过高，改革期待失控 | 当前临时复用 `rebellion.png`。 |
-| P0 | `endings/corruption-flood.png` | 国库过高，贪腐和奢靡失控 | 当前临时复用 `empty-treasury.png`。 |
-| P0 | `endings/bureaucratic-suffocation.png` | 朝政过高，制度压死皇帝 | 当前临时复用 `coup.png`。 |
-| P1 | `endings/alchemy-death.png` | 方士链服丹暴毙 | 有强分享潜力。 |
-| P1 | `endings/old-age-succession.png` | 60 年晚年/传位硬上限 | 当前临时复用 `peaceful-abdication.png`。 |
-| P1 | `endings/puppet-emperor.png` | 宦官/外戚把持朝政但未直接政变 | 可作为特殊结局。 |
+| P1 | `endings/puppet-emperor.png` | 宦官/外戚把持朝政但未直接政变 | 图片已生成，但当前玩法规则尚未接入。 |
 
 ### 2.4 UI 组件资源
 

@@ -15,6 +15,20 @@ export const DEFAULT_ENDING_RULES = [
     endingId: "alchemy_death",
     match: { type: "all", conditions: [{ type: "counter_gte", key: "alchemy_trust", value: 3 }] },
   },
+  {
+    id: "puppet-emperor",
+    priority: 850,
+    endingId: "puppet_emperor",
+    match: {
+      type: "all",
+      conditions: [
+        { type: "flag_is", key: "puppet_regency", value: true },
+        { type: "counter_gte", key: "eunuch_power", value: 2 },
+        { type: "counter_gte", key: "consort_family_power", value: 2 },
+        { type: "counter_gte", key: "years_ruled", value: 10 },
+      ],
+    },
+  },
   ...RESOURCE_ORDER.flatMap((key) => [
     {
       id: `${key}-low`,
@@ -36,8 +50,10 @@ export const DEFAULT_ENDING_RULES = [
     match: {
       type: "all",
       conditions: [
-        { type: "counter_gte", key: "years_ruled", value: 20 },
-        { type: "all_resources_between", min: 35, max: 75 },
+        { type: "counter_gte", key: "years_ruled", value: 24 },
+        { type: "all_resources_between", min: 42, max: 68 },
+        { type: "counter_lte", key: "eunuch_power", value: 1 },
+        { type: "counter_lte", key: "consort_family_power", value: 1 },
       ],
     },
   },
@@ -57,10 +73,11 @@ export function createInitialState({ archive, objectivePack, random = Math.rando
     turn: 0,
     reignIndex,
     resources: { people: 50, treasury: 50, army: 50, court: 50 },
-    flags: { war_ongoing: false, famine_risk: false, taizi_established: false },
+    flags: { war_ongoing: false, famine_risk: false, taizi_established: false, puppet_regency: false },
     counters: {
       years_ruled: 0,
       eunuch_power: 0,
+      consort_family_power: 0,
       tax_anger: 0,
       army_discontent: 0,
       alchemy_trust: 0,
@@ -331,6 +348,8 @@ function matchEndingRule(state, rule, rules) {
 function evaluateEndingMatch(state, match, rules) {
   if (!match) return false;
   if (match.type === "counter_gte") return (state.counters[match.key] ?? 0) >= match.value;
+  if (match.type === "counter_lte") return (state.counters[match.key] ?? 0) <= match.value;
+  if (match.type === "flag_is") return state.flags[match.key] === match.value;
   if (match.type === "all") return (match.conditions ?? []).every((condition) => evaluateEndingMatch(state, condition, rules));
   if (match.type === "all_resources_between") {
     return RESOURCE_ORDER.every((key) => state.resources[key] >= match.min && state.resources[key] <= match.max);

@@ -9,17 +9,17 @@ This review checks the current `public/assets/chinese-reigns` image set against 
 
 ## Summary
 
-The MVP asset set is complete:
+The MVP asset set is substantially expanded:
 
-- 8 character portraits
-- 6 gameplay backgrounds
+- 15 character portraits
+- 10 gameplay backgrounds
 - 4 opaque illustration resource icons
 - 4 transparent HUD resource icons
-- 4 ending backgrounds
+- 12 ending backgrounds
 - 1 share/result background
 - 2 reference images
 
-Overall status: usable for the next UI prototype after the second-pass regeneration of the resource icons, ending backgrounds, share/result background, and transparent HUD icon set.
+Overall status: strong enough for MVP implementation and result-page differentiation after the new ending, portrait, and background pass.
 
 Second-pass changes:
 
@@ -40,6 +40,13 @@ Second-pass changes:
 | `portraits/consort.png` | Strong | Strong | Restrained palace role; minimal ornament keeps style aligned. |
 | `portraits/scholar.png` | Strong | Strong | Useful for censor/scholar-official events. |
 | `portraits/commoner.png` | Strong | Strong | Good for民生,灾荒,税役,街巷事件. |
+| `portraits/alchemist.png` | Good | Strong | Clear方士身份 with pill-bottle prop; slightly more severe than mascot-like but very usable for alchemy chain events. |
+| `portraits/empress-dowager.png` | Strong | Strong | Reads immediately as palace elder power center; fits succession and regency pressure events well. |
+| `portraits/prince.png` | Strong | Strong | Nervous heir silhouette is readable and distinct from emperor/scholar roles. |
+| `portraits/regional-lord.png` | Strong | Strong | Local strongman read is clear without turning into war-game realism. |
+| `portraits/envoy.png` | Strong | Strong | Good frontier/diplomacy messenger role with clean scroll prop. |
+| `portraits/merchant.png` | Strong | Strong | Abacus prop reads instantly; good fit for treasury/tax/event-chain expansion. |
+| `portraits/bandit.png` | Good | Strong | Slightly grittier than the palace cast, but still within the low-poly family and useful for治安/民乱 events. |
 
 ## Backgrounds
 
@@ -51,6 +58,10 @@ Second-pass changes:
 | `backgrounds/frontier-outpost.png` | Good | Strong | Good for兵权,边关,军饷事件; slightly more scenic than SBTI avatar cards but still low-saturation. |
 | `backgrounds/village-street.png` | Good | Strong | Suitable for民心,税役,灾荒前置事件. |
 | `backgrounds/prison-chamber.png` | Good | Strong | Suitable for政变,下狱,党争事件; restrained and non-gory. |
+| `backgrounds/alchemy-room.png` | Strong | Strong | Very good dedicated方士空间; props are readable without stealing text space. |
+| `backgrounds/ancestral-temple.png` | Strong | Strong | Clean ceremonial backdrop for立储,祖制,善终,传位 cards. |
+| `backgrounds/imperial-harem.png` | Strong | Strong | Soft inner-palace scene that supports后宫/太后/外戚 cards without becoming ornate romance art. |
+| `backgrounds/market-tax-office.png` | Strong | Strong | Clear treasury/market setting with abacus and chest props; supports tax and commerce events well. |
 
 ## Resource Icons
 
@@ -80,6 +91,14 @@ Transparent HUD icons:
 | `endings/coup.png` | Strong | Strong | Regenerated with empty throne, fallen crown, scrolls, and faceted court figures at the edges; supports政变/逼宫 endings without violence. |
 | `endings/empty-treasury.png` | Strong | Strong | Regenerated with a worried treasurer mascot, empty chest, coins, ledger, and candle; clearly communicates国库崩溃. |
 | `endings/peaceful-abdication.png` | Strong | Strong | Regenerated with an old emperor on a palace balcony facing soft polygon mountains; works for rare善终/退位 while staying gentle and restrained. |
+| `endings/expectation-revolt.png` | Strong | Strong | Crowd pressure and fallen crown clearly communicate民望反噬; good absurd-result tone. |
+| `endings/corruption-flood.png` | Strong | Strong | Overflowing treasury chest reads immediately and differentiates high-treasury failure from empty-treasury collapse. |
+| `endings/frontier-collapse.png` | Strong | Strong | Quiet abandoned outpost is understated and readable for边关失守. |
+| `endings/military-takeover.png` | Strong | Strong | Empty imperial chair + calm general create the right “polite coup” mood. |
+| `endings/bureaucratic-suffocation.png` | Good | Strong | Revised version is much better than the first attempt; stacked paperwork now feels oppressive and absurd. |
+| `endings/alchemy-death.png` | Strong | Strong | Darkly comic and readable without becoming grotesque; high share potential. |
+| `endings/old-age-succession.png` | Strong | Strong | Succession handoff motif works well for the 60-year cap ending and differentiates it from peaceful abdication. |
+| `endings/puppet-emperor.png` | Strong | Conditional | Visually strong, but not yet wired into current MVP ending rules; useful for post-MVP or special chain expansion. |
 
 ## Share
 
@@ -90,6 +109,6 @@ Transparent HUD icons:
 ## Follow-Up Recommendations
 
 - Use `*-transparent.png` for the in-game top HUD/resource bar. Keep the opaque `icons/*.png` for tutorial, explanation, and result-detail layouts.
-- Backgrounds are slightly more scenic and watercolor-like than the portraits, but they are low-saturation, spacious, and useful for decision-card overlays.
-- If the final UI needs stronger visual uniformity, the next useful pass would be to bring `backgrounds/frontier-outpost.png`, `backgrounds/village-street.png`, and `backgrounds/prison-chamber.png` closer to the faceted result-card style.
+- Backgrounds are now broad enough to support alchemy, succession, market, and harem event chains with clearer scene identity.
+- The most obvious remaining optional asset gap for MVP is `backgrounds/battle-map.png`; after that, the next work shifts from missing assets to content wiring and special-case polish.
 - Keep all game text in HTML/CSS. Do not bake Chinese labels into generated images.

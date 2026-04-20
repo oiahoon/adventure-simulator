@@ -16,9 +16,19 @@
       "description": "alchemy death should beat peaceful abdication when both are true",
       "state": {
         "resources": { "people": 50, "treasury": 50, "army": 50, "court": 50 },
-        "counters": { "alchemy_trust": 3, "years_ruled": 20 }
+        "counters": { "alchemy_trust": 3, "years_ruled": 24, "eunuch_power": 0, "consort_family_power": 0 }
       },
       "expectedEndingId": "alchemy_death"
+    },
+    {
+      "id": "puppet-overrides-peaceful",
+      "description": "puppet emperor should beat peaceful abdication when regency lock and power counters are both active",
+      "state": {
+        "resources": { "people": 50, "treasury": 50, "army": 50, "court": 50 },
+        "flags": { "taizi_established": true, "puppet_regency": true },
+        "counters": { "years_ruled": 24, "eunuch_power": 2, "consort_family_power": 2 }
+      },
+      "expectedEndingId": "puppet_emperor"
     },
     {
       "id": "people-low-precedes-treasury-high",
@@ -34,7 +44,7 @@
       "description": "stable reign at year 60 should still resolve to peaceful abdication before old age",
       "state": {
         "resources": { "people": 50, "treasury": 50, "army": 50, "court": 50 },
-        "counters": { "years_ruled": 60 }
+        "counters": { "years_ruled": 60, "eunuch_power": 0, "consort_family_power": 0 }
       },
       "expectedEndingId": "peaceful_abdication"
     },

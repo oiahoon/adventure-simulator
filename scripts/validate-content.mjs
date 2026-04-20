@@ -23,6 +23,8 @@ const allowedEffects = new Set([
 const allowedEndingMatchTypes = new Set([
   "forced_ending",
   "counter_gte",
+  "counter_lte",
+  "flag_is",
   "resource_boundary",
   "all",
   "all_resources_between",
@@ -231,6 +233,18 @@ function validateEndingMatch(match, label, rulesData) {
   if (match.type === "counter_gte") {
     if (typeof match.key !== "string") errors.push(`${label}.key must be a string`);
     validateNumber(`${label}.value`, match.value);
+    return;
+  }
+
+  if (match.type === "counter_lte") {
+    if (typeof match.key !== "string") errors.push(`${label}.key must be a string`);
+    validateNumber(`${label}.value`, match.value);
+    return;
+  }
+
+  if (match.type === "flag_is") {
+    if (typeof match.key !== "string") errors.push(`${label}.key must be a string`);
+    if (typeof match.value !== "boolean") errors.push(`${label}.value must be boolean`);
     return;
   }
 
