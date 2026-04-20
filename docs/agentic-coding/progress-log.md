@@ -73,6 +73,13 @@ The current runtime includes:
 - Added an earlier lead-in card, `dowager_visits_heir`, so the puppet-regency path is discoverable before the final lock-in cards.
 - Tightened `peaceful_abdication` again to require `26` years, `taizi_established`, resources within `44-66`, and low `eunuch_power` / `consort_family_power`.
 - New pressure report result: `balance` strategy peaceful-abdication rate dropped to roughly `20.83%`, with `old_age_succession` now becoming the dominant long safe-run outcome. This is much closer to a rare-good result instead of a default answer.
+- Added `docs/game-design/MVP_Design_Alignment_Report_2026-04-20.md`, a three-angle review of current implementation vs original PRD/GDD/Reigns-clone goals from product, UI/UX, and player perspectives.
+- Added `docs/agentic-coding/post-alignment-improvement-checklist.md`, turning the alignment review into prioritized follow-up work with owners, acceptance criteria, and QA signoff questions.
+- Completed the first post-alignment implementation step, `Dynasty Continuity Pass`:
+  - the start screen now surfaces a lightweight "前朝余音" summary when an earlier reign exists;
+  - a new emperor now inherits a small, ending-based opening resource nudge plus a short succession note;
+  - the in-game header carries a compact continuity line so succession feels distinct from a full reset;
+  - mobile smoke regression still passes after the continuity UI was compressed back into a one-screen layout.
 
 ### Next Recommended Work
 

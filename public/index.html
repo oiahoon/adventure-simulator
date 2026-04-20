@@ -19,6 +19,11 @@
         </p>
         <button id="start-button" class="primary-button" type="button">登基</button>
         <p id="archive-summary" class="archive-summary"></p>
+        <section id="succession-preview" class="succession-preview hidden" aria-label="前朝余音">
+          <p class="succession-kicker">前朝余音</p>
+          <p id="succession-preview-summary" class="succession-summary"></p>
+          <p id="succession-preview-effect" class="succession-effect"></p>
+        </section>
       </section>
 
       <section id="game-screen" class="screen game-screen hidden">
@@ -26,6 +31,7 @@
           <div>
             <p class="eyebrow">第 <span id="reign-index">1</span> 任皇帝</p>
             <h2>在位 <span id="year-count">1</span> 年</h2>
+            <p id="succession-banner-text" class="succession-inline hidden"></p>
           </div>
           <button id="restart-button" class="ghost-button" type="button">重开</button>
         </header>

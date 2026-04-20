@@ -66,14 +66,86 @@ export const DEFAULT_ENDING_RULES = [
   },
 ];
 
+const LEGACY_RULES = {
+  rebellion: {
+    summary: "先帝把江山滑进了民变里，街巷里的怨气还没散。",
+    effectText: "新帝登基时，民间仍带着旧火气。",
+    resourceDelta: { key: "people", delta: -5 },
+  },
+  expectation_revolt: {
+    summary: "先帝被万民期待推着往前跑，连新帝也立刻被盯上。",
+    effectText: "新帝登基时，民望很高，要求也很高。",
+    resourceDelta: { key: "people", delta: 5 },
+  },
+  empty_treasury: {
+    summary: "先帝留下的是空库和长叹，连算盘都显得心虚。",
+    effectText: "新帝登基时，国库先天发虚。",
+    resourceDelta: { key: "treasury", delta: -6 },
+  },
+  corruption_flood: {
+    summary: "先帝把钱留下了，也把伸手的人全养肥了。",
+    effectText: "新帝登基时，库里有钱，朝里也更会花钱。",
+    resourceDelta: { key: "treasury", delta: 4 },
+  },
+  frontier_collapse: {
+    summary: "先帝丢了边关，地图上的风声还在往宫里吹。",
+    effectText: "新帝登基时，兵气先天不足。",
+    resourceDelta: { key: "army", delta: -6 },
+  },
+  military_takeover: {
+    summary: "先帝差点把皇位让给将军，殿外的甲声还没退干净。",
+    effectText: "新帝登基时，兵权格外扎眼。",
+    resourceDelta: { key: "army", delta: 4 },
+  },
+  coup: {
+    summary: "先帝在宫变里退场，朝堂上人人都学会了先看风向。",
+    effectText: "新帝登基时，朝局先天不稳。",
+    resourceDelta: { key: "court", delta: -6 },
+  },
+  bureaucratic_suffocation: {
+    summary: "先帝被层层公文埋住了，连今天的奏折都还在往上摞。",
+    effectText: "新帝登基时，朝政规矩已经多到会自己长出来。",
+    resourceDelta: { key: "court", delta: 4 },
+  },
+  alchemy_death: {
+    summary: "先帝把命交给了丹炉，宫里至今还飘着奇怪药味。",
+    effectText: "新帝登基时，宫中对异术仍有余温。",
+    resourceDelta: { key: "court", delta: -2 },
+  },
+  puppet_emperor: {
+    summary: "先帝虽然坐在龙椅上，点头的人却总在帘后。",
+    effectText: "新帝登基时，宫里已经习惯先看帘后。",
+    resourceDelta: { key: "court", delta: -4 },
+  },
+  peaceful_abdication: {
+    summary: "先帝居然活着交班了，史官写这段时都很客气。",
+    effectText: "新帝登基时，朝中对平稳交接还留着几分信心。",
+    resourceDelta: { key: "court", delta: 3 },
+  },
+  old_age_succession: {
+    summary: "先帝熬到寿终传位，朝臣都默认皇位可以按时轮班。",
+    effectText: "新帝登基时，朝廷对传位秩序略感安心。",
+    resourceDelta: { key: "court", delta: 2 },
+  },
+};
+
 export function createInitialState({ archive, objectivePack, random = Math.random }) {
   const reignIndex = (archive?.reigns?.length ?? 0) + 1;
+  const succession = deriveSuccessionFromArchive(archive);
+  const resources = { people: 50, treasury: 50, army: 50, court: 50 };
+  if (succession.resourceDelta) {
+    resources[succession.resourceDelta.key] = clamp(
+      resources[succession.resourceDelta.key] + succession.resourceDelta.delta,
+      0,
+      100,
+    );
+  }
   return {
     emperorName: `第${reignIndex}任皇帝`,
     year: 1,
     turn: 0,
     reignIndex,
-    resources: { people: 50, treasury: 50, army: 50, court: 50 },
+    resources,
     flags: { war_ongoing: false, famine_risk: false, taizi_established: false, puppet_regency: false },
     counters: {
       years_ruled: 0,
@@ -93,6 +165,38 @@ export function createInitialState({ archive, objectivePack, random = Math.rando
     cooldowns: {},
     nextQueue: [],
     forcedEndingId: undefined,
+    succession,
+  };
+}
+
+export function deriveSuccessionFromArchive(archive) {
+  const lastResult = archive?.lastResult;
+  if (!lastResult?.endingId) {
+    return {
+      hasLegacy: false,
+      summary: "",
+      effectText: "",
+      resourceDelta: null,
+      previousEndingId: null,
+      previousTitle: "",
+      previousYears: null,
+    };
+  }
+
+  const legacy = LEGACY_RULES[lastResult.endingId] ?? {
+    summary: "先帝已经翻页，留下的却不只是年号。",
+    effectText: "新帝登基时，前朝的余波还在宫里回响。",
+    resourceDelta: null,
+  };
+
+  return {
+    hasLegacy: true,
+    summary: `${lastResult.title}在位${lastResult.years}年，以${lastResult.endingName}收场。${legacy.summary}`,
+    effectText: legacy.effectText,
+    resourceDelta: legacy.resourceDelta ?? null,
+    previousEndingId: lastResult.endingId,
+    previousTitle: lastResult.title,
+    previousYears: lastResult.years,
   };
 }
 

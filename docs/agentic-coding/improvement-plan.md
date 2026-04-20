@@ -4,6 +4,11 @@ Date: 2026-04-20
 
 This plan continues the professional team workflow after the first playable H5 MVP slice.
 
+See also:
+
+- `docs/game-design/MVP_Design_Alignment_Report_2026-04-20.md`
+- `docs/agentic-coding/post-alignment-improvement-checklist.md`
+
 ## Current Findings
 
 ### Asset Gap
@@ -253,3 +258,4 @@ Deliverables:
 - Should `frontier_collapse` stay as pure `army <= 0` for MVP, with war-state variants postponed to post-MVP chains?
 - Should the final MVP target median run length be closer to 10, 15, or 20 in-game years?
 - Do we want one generic result background per ending family, or one dedicated image per ending before wider content expansion?
+- How much dynasty carryover is enough to create succession feeling without turning the MVP into a meta-progression game?

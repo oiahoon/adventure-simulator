@@ -3,6 +3,7 @@ import {
   applyChoiceToState,
   createInitialState,
   createReignRecord,
+  deriveSuccessionFromArchive,
   resolveEnding as resolveEngineEnding,
   resolveEndingWithRules,
   selectNextCard as selectEngineNextCard,
@@ -54,6 +55,10 @@ const els = {
   generateShareButton: document.querySelector("#generate-share-button"),
   saveShareButton: document.querySelector("#save-share-button"),
   archiveSummary: document.querySelector("#archive-summary"),
+  successionPreview: document.querySelector("#succession-preview"),
+  successionPreviewSummary: document.querySelector("#succession-preview-summary"),
+  successionPreviewEffect: document.querySelector("#succession-preview-effect"),
+  successionBannerText: document.querySelector("#succession-banner-text"),
   reignIndex: document.querySelector("#reign-index"),
   yearCount: document.querySelector("#year-count"),
   resourceHud: document.querySelector("#resource-hud"),
@@ -196,6 +201,7 @@ function makeTitle(ending) {
 function renderGame() {
   els.reignIndex.textContent = state.reignIndex;
   els.yearCount.textContent = state.year;
+  renderSuccessionBanner();
   renderResources();
   renderObjectives();
   renderCard();
@@ -242,9 +248,32 @@ function renderArchiveSummary() {
   const archive = readArchive();
   if (!archive.reigns.length) {
     els.archiveSummary.textContent = "尚无王朝记录。史官正在磨墨。";
+    els.successionPreview.classList.add("hidden");
     return;
   }
   els.archiveSummary.textContent = `已记下 ${archive.reigns.length} 任皇帝，最长在位 ${archive.bestYears} 年，解锁 ${archive.unlockedEndingIds.length} 个结局。`;
+  const succession = state?.succession?.hasLegacy ? state.succession : deriveSuccessionFromArchive(archive);
+  if (!succession?.hasLegacy) {
+    els.successionPreview.classList.add("hidden");
+    return;
+  }
+  els.successionPreviewSummary.textContent = succession.summary;
+  els.successionPreviewEffect.textContent = succession.effectText;
+  els.successionPreview.classList.remove("hidden");
+}
+
+function renderSuccessionBanner() {
+  if (!state?.succession?.hasLegacy) {
+    els.successionBannerText.classList.add("hidden");
+    els.successionBannerText.textContent = "";
+    return;
+  }
+  const delta = state.succession.resourceDelta;
+  const deltaText = delta
+    ? `${RESOURCE_META[delta.key].label}${delta.delta > 0 ? "+" : ""}${delta.delta}`
+    : "无直接资源余波";
+  els.successionBannerText.textContent = `${state.succession.effectText} ${deltaText}。`;
+  els.successionBannerText.classList.remove("hidden");
 }
 
 function onPointerDown(event) {
@@ -523,6 +552,7 @@ function renderGameToText() {
     } : null,
     objectives: state?.currentObjectiveIds ?? [],
     completedObjectives: state?.completedObjectiveIds ?? [],
+    succession: state?.succession ?? deriveSuccessionFromArchive(archive),
     archive: {
       bestYears: archive.bestYears,
       unlockedEndingIds: archive.unlockedEndingIds,

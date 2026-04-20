@@ -115,6 +115,48 @@ h2 {
   font-size: 15px;
 }
 
+.succession-preview {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.succession-preview {
+  margin-top: 14px;
+  padding: 12px 14px;
+}
+
+.succession-kicker {
+  margin: 0 0 4px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.succession-summary,
+.succession-effect {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.succession-summary {
+  font-size: 13px;
+}
+
+.succession-effect {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.succession-inline {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .primary-button,
 .ghost-button {
   min-height: 46px;
@@ -139,6 +181,8 @@ h2 {
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   gap: 14px;
+  min-height: 0;
+  height: 100svh;
   overflow: hidden;
 }
 
@@ -418,6 +462,24 @@ h2 {
     gap: 10px;
   }
 
+  .succession-preview {
+    margin-top: 10px;
+    padding: 10px 12px;
+  }
+
+  .succession-summary {
+    font-size: 12px;
+  }
+
+  .succession-effect {
+    font-size: 11px;
+  }
+
+  .succession-inline {
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
   .eyebrow {
     margin-bottom: 6px;
     font-size: 12px;
@@ -486,6 +548,11 @@ h2 {
 
   h2 {
     font-size: 18px;
+  }
+
+  .succession-inline {
+    margin-top: 2px;
+    font-size: 10px;
   }
 
   .resource-hud {
