@@ -70,13 +70,13 @@ The current runtime includes:
   - new rule in `rules.mvp.seed.json`;
   - new event chain using `empress-dowager` and `prince`;
   - new `puppet_regency` state flag and fixtures covering rule priority.
-- Tightened `peaceful_abdication` again to require `24` years, resources within `42-68`, and low `eunuch_power` / `consort_family_power`.
-- New pressure report result: `balance` strategy peaceful-abdication rate dropped to roughly `63%`, down from the earlier much easier stable-governance path, but still not rare enough to count as fully solved.
+- Added an earlier lead-in card, `dowager_visits_heir`, so the puppet-regency path is discoverable before the final lock-in cards.
+- Tightened `peaceful_abdication` again to require `26` years, `taizi_established`, resources within `44-66`, and low `eunuch_power` / `consort_family_power`.
+- New pressure report result: `balance` strategy peaceful-abdication rate dropped to roughly `20.83%`, with `old_age_succession` now becoming the dominant long safe-run outcome. This is much closer to a rare-good result instead of a default answer.
 
 ### Next Recommended Work
 
-1. Tune the 45-card deck and `peaceful_abdication` rarity after real play sessions.
-2. Use the new pressure report to decide whether `35/45/55 + 60 years` stays as the default or shifts earlier for MVP.
-3. Run full mobile browser QA on real devices, now that automated viewport regression is in place.
-4. Decide whether `puppet_emperor` should stay as a niche hidden chain ending or get one more visible lead-in card for broader player discovery.
-5. If the war layer expands, generate `backgrounds/battle-map.png`; otherwise the current MVP art set is largely complete.
+1. Run real-device and human playtests to confirm the new `peaceful_abdication` rarity feels fair rather than frustrating.
+2. Decide whether `35/45/55 + 60 years` stays as the default or shifts earlier for MVP.
+3. Observe how often players organically discover `puppet_emperor`; if discovery is still too low, add one more court-chain bridge card.
+4. If the war layer expands, generate `backgrounds/battle-map.png`; otherwise the current MVP art set is largely complete.

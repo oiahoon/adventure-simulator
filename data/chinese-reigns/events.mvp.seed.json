@@ -988,6 +988,39 @@
       "once": true
     },
     {
+      "id": "dowager_visits_heir",
+      "title": "探望东宫",
+      "actor": "empress-dowager",
+      "background": "imperial-harem",
+      "text": "太后去东宫探望太子，说孩子不能只学读书，也该先学谁说了算。",
+      "left": {
+        "label": "请她教",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 5 },
+          { "type": "resource", "key": "people", "delta": -4 },
+          { "type": "counter", "key": "consort_family_power", "delta": 1 }
+        ],
+        "nextCards": ["dowager_curtain_council"]
+      },
+      "right": {
+        "label": "请外臣",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 5 },
+          { "type": "resource", "key": "court", "delta": -5 },
+          { "type": "counter", "key": "consort_family_power", "delta": -1 }
+        ]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "taizi_established", "value": true },
+        { "type": "counter_gte", "key": "years_ruled", "value": 6 }
+      ],
+      "weight": 5,
+      "tags": ["court", "consort"],
+      "cooldown": 7
+    },
+    {
       "id": "prince_sealed_edict",
       "title": "太子代印",
       "actor": "prince",

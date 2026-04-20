@@ -91,7 +91,8 @@ const peacefulEndingId = await page.evaluate(() => {
     window.__chineseReignsDebug.setResource(key, 50);
   });
   window.__chineseReignsDebug.setCounter("alchemy_trust", 0);
-  window.__chineseReignsDebug.setCounter("years_ruled", 24);
+  window.__chineseReignsDebug.setCounter("years_ruled", 26);
+  window.__chineseReignsDebug.setFlag("taizi_established", true);
   return window.__chineseReignsDebug.resolveEndingNow();
 });
 if (peacefulEndingId !== "peaceful_abdication") {

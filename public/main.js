@@ -551,6 +551,11 @@ window.__chineseReignsDebug = {
     }
     renderGame();
   },
+  setFlag(key, value) {
+    if (!state) return;
+    state.flags[key] = value;
+    renderGame();
+  },
   resolveEndingNow() {
     if (!state) return null;
     const ending = resolveEnding();

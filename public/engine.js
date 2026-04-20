@@ -50,8 +50,9 @@ export const DEFAULT_ENDING_RULES = [
     match: {
       type: "all",
       conditions: [
-        { type: "counter_gte", key: "years_ruled", value: 24 },
-        { type: "all_resources_between", min: 42, max: 68 },
+        { type: "counter_gte", key: "years_ruled", value: 26 },
+        { type: "all_resources_between", min: 44, max: 66 },
+        { type: "flag_is", key: "taizi_established", value: true },
         { type: "counter_lte", key: "eunuch_power", value: 1 },
         { type: "counter_lte", key: "consort_family_power", value: 1 },
       ],

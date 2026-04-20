@@ -96,7 +96,7 @@
       "name": "和平退位",
       "type": "rare_good",
       "resource": "court",
-      "condition": "years_ruled >= 24, all resources between 42 and 68, eunuch_power <= 1, consort_family_power <= 1",
+      "condition": "years_ruled >= 26, taizi_established, all resources between 44 and 66, eunuch_power <= 1, consort_family_power <= 1",
       "image": "public/assets/chinese-reigns/endings/peaceful-abdication.png",
       "shareTone": "您居然活着下班了，史官一时不知如何下笔。"
     },
