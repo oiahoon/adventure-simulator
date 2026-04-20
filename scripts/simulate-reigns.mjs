@@ -53,7 +53,7 @@ function runSimulation({ strategy, seed, turnCap }) {
   while (state.counters.years_ruled < turnCap) {
     const side = chooseSide({ strategy, state, card: currentCard, random });
     choices.push({ cardId: currentCard.id, side });
-    state = applyChoiceToState(state, currentCard, side);
+    state = applyChoiceToState(state, currentCard, side, rulesPack);
     state = updateObjectiveProgress(state, objectivePack);
     const ending = resolveEndingWithRules(state, endingPack, rulesPack);
     if (ending) {
@@ -85,7 +85,7 @@ function chooseSide({ strategy, state, card, random }) {
   if (strategy === "random") return random() < 0.5 ? "left" : "right";
 
   const scored = ["left", "right"].map((side) => {
-    const nextState = applyChoiceToState(state, card, side);
+    const nextState = applyChoiceToState(state, card, side, rulesPack);
     const ending = resolveEndingWithRules(nextState, endingPack, rulesPack);
     let score = 0;
 

@@ -42,7 +42,7 @@
       "name": "边关失守",
       "type": "low_resource",
       "resource": "army",
-      "condition": "army <= 0 and war_ongoing = true",
+      "condition": "army <= 0",
       "image": "public/assets/chinese-reigns/backgrounds/frontier-outpost.png",
       "shareTone": "边军没有输给敌人，先输给了缺饷。"
     },

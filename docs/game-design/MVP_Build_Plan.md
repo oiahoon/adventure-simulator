@@ -102,6 +102,7 @@
 - `military_takeover`
 - `frontier_collapse`
 - `peaceful_abdication`
+- `old_age_succession`
 - `expectation_revolt`
 - `bureaucratic_suffocation`
 - `corruption_flood`
@@ -109,6 +110,7 @@
 ### 验收
 
 - 人为把任一资源推到 0 或 100 能进入对应结局。
+- 连续长局不会超过 60 年，达到上限时进入寿终传位。
 - 结果页包含称号、在位年数、死因/退位原因、点评。
 - 结果页记录本任完成目标。
 - 再来一局能重置资源和卡池。

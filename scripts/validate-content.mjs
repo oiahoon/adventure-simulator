@@ -47,6 +47,7 @@ validatePublicDataSync("events.mvp.seed.json", events, publicEvents);
 validatePublicDataSync("objectives.mvp.seed.json", objectives, publicObjectives);
 validatePublicDataSync("endings.mvp.seed.json", endings, publicEndings);
 validatePublicDataSync("rules.mvp.seed.json", rules, publicRules);
+validateRules(rules);
 
 events.cards.forEach((card) => {
   validateAsset(`actor ${card.actor}`, `public/assets/chinese-reigns/portraits/${card.actor}.png`);
@@ -157,5 +158,52 @@ function validateAsset(label, relativePath) {
 function validatePublicDataSync(filename, canonical, deployedCopy) {
   if (JSON.stringify(canonical) !== JSON.stringify(deployedCopy)) {
     errors.push(`public/data/chinese-reigns/${filename} is out of sync with data/chinese-reigns/${filename}`);
+  }
+}
+
+function validateRules(rulesData) {
+  validateNumber("rules.resourceRange.min", rulesData.resourceRange?.min, { min: 0, max: 100 });
+  validateNumber("rules.resourceRange.max", rulesData.resourceRange?.max, { min: 0, max: 100 });
+  validateNumber("rules.resourceRange.dangerLow", rulesData.resourceRange?.dangerLow, { min: 0, max: 100 });
+  validateNumber("rules.resourceRange.dangerHigh", rulesData.resourceRange?.dangerHigh, { min: 0, max: 100 });
+  if ((rulesData.resourceRange?.min ?? 0) >= (rulesData.resourceRange?.max ?? 100)) {
+    errors.push("rules.resourceRange.min must be lower than rules.resourceRange.max");
+  }
+
+  allowedResources.forEach((key) => {
+    const low = rulesData.resourceEndings?.[key]?.low;
+    const high = rulesData.resourceEndings?.[key]?.high;
+    if (!endingIds.has(low)) errors.push(`rules.resourceEndings.${key}.low references missing ending ${low}`);
+    if (!endingIds.has(high)) errors.push(`rules.resourceEndings.${key}.high references missing ending ${high}`);
+  });
+
+  validateNumber("rules.peacefulAbdication.minYears", rulesData.peacefulAbdication?.minYears, { min: 1 });
+  validateNumber("rules.peacefulAbdication.resourceMin", rulesData.peacefulAbdication?.resourceMin, { min: 0, max: 100 });
+  validateNumber("rules.peacefulAbdication.resourceMax", rulesData.peacefulAbdication?.resourceMax, { min: 0, max: 100 });
+  if ((rulesData.peacefulAbdication?.resourceMin ?? 0) >= (rulesData.peacefulAbdication?.resourceMax ?? 100)) {
+    errors.push("rules.peacefulAbdication.resourceMin must be lower than rules.peacefulAbdication.resourceMax");
+  }
+
+  validateNumber("rules.lateReignPressure.startsAtYear", rulesData.lateReignPressure?.startsAtYear, { min: 1 });
+  validateNumber("rules.lateReignPressure.endingAtYear", rulesData.lateReignPressure?.endingAtYear, { min: 1 });
+  if ((rulesData.lateReignPressure?.startsAtYear ?? 1) >= (rulesData.lateReignPressure?.endingAtYear ?? 60)) {
+    errors.push("rules.lateReignPressure.startsAtYear must be lower than rules.lateReignPressure.endingAtYear");
+  }
+  if (typeof rulesData.lateReignPressure?.pressureCounterKey !== "string") {
+    errors.push("rules.lateReignPressure.pressureCounterKey must be a string");
+  }
+  const lateEnding = rulesData.lateReignPressure?.endingId;
+  if (!endingIds.has(lateEnding)) {
+    errors.push(`rules.lateReignPressure.endingId references missing ending ${lateEnding}`);
+  }
+}
+
+function validateNumber(label, value, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY } = {}) {
+  if (!Number.isFinite(value)) {
+    errors.push(`${label} must be a finite number`);
+    return;
+  }
+  if (value < min || value > max) {
+    errors.push(`${label} must be between ${min} and ${max}`);
   }
 }

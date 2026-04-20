@@ -121,7 +121,7 @@ function choose(side) {
   if (!currentCard || !state || isResolvingChoice) return;
   isResolvingChoice = true;
 
-  state = applyChoiceToState(state, currentCard, side);
+  state = applyChoiceToState(state, currentCard, side, rulesPack);
   state = updateObjectiveProgress(state, objectivePack);
   const ending = resolveEnding();
   if (ending) {
@@ -364,6 +364,14 @@ window.__chineseReignsDebug = {
   setResource(key, value) {
     if (!state || !RESOURCE_ORDER.includes(key)) return;
     state.resources[key] = clamp(value, 0, 100);
+    renderGame();
+  },
+  setCounter(key, value) {
+    if (!state) return;
+    state.counters[key] = Math.max(0, value);
+    if (key === "years_ruled") {
+      state.year = value + 1;
+    }
     renderGame();
   },
   resolveEndingNow() {

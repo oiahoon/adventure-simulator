@@ -305,6 +305,13 @@ type Effect =
 - 条件：没有高危计数器超过阈值。
 - 结局：和平退位。
 
+### 10.6 晚年传位上限
+
+- 条件：在位年数达到 60 年。
+- 条件：未先触发资源崩盘、资源过盛、炼丹死亡、强制剧情结局或和平退位。
+- 结局：寿终传位。
+- 设计目的：给长局提供明确终点，避免 MVP 版本因为玩家反复平衡资源而无限续局。
+
 ## 11. MVP 结局
 
 | 结局 ID | 名称 | 触发条件 | 资源图 |
@@ -316,8 +323,9 @@ type Effect =
 | `empty_treasury` | 国库崩溃 | `treasury <= 0` | `endings/empty-treasury.png` |
 | `corruption_flood` | 富得流油 | `treasury >= 100` 且贪腐失控 | `endings/empty-treasury.png` |
 | `military_takeover` | 兵权反噬 | `army >= 100` 或 `army_discontent >= 3` | `endings/coup.png` |
-| `frontier_collapse` | 边关失守 | `army <= 0` 且 `war_ongoing = true` | `backgrounds/frontier-outpost.png` |
+| `frontier_collapse` | 边关失守 | `army <= 0`；后续可叠加 `war_ongoing = true` 的边关链变体 | `backgrounds/frontier-outpost.png` |
 | `peaceful_abdication` | 和平退位 | 善终链条件满足 | `endings/peaceful-abdication.png` |
+| `old_age_succession` | 寿终传位 | 晚年传位上限触发 | `endings/peaceful-abdication.png` |
 
 MVP 第一版可以复用结局图，但结局判定必须区分高值和低值，避免玩家误以为资源越高越好。
 

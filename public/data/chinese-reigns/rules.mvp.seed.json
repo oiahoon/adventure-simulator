@@ -6,6 +6,12 @@
     "dangerLow": 15,
     "dangerHigh": 85
   },
+  "resourceEndings": {
+    "people": { "low": "rebellion", "high": "expectation_revolt" },
+    "treasury": { "low": "empty_treasury", "high": "corruption_flood" },
+    "army": { "low": "frontier_collapse", "high": "military_takeover" },
+    "court": { "low": "coup", "high": "bureaucratic_suffocation" }
+  },
   "peacefulAbdication": {
     "minYears": 20,
     "resourceMin": 35,

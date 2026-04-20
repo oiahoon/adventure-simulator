@@ -30,7 +30,11 @@ await page.screenshot({ path: path.join(outputDir, "02-game.png"), fullPage: tru
 const states = [];
 states.push(await readState(page, "after-start"));
 
-for (let index = 0; index < 8; index += 1) {
+await dragCard(page, "right");
+await page.waitForTimeout(80);
+states.push(await readState(page, "after-drag-right"));
+
+for (let index = 0; index < 7; index += 1) {
   const selector = index % 2 === 0 ? "#left-button" : "#right-button";
   await page.click(selector);
   await page.waitForTimeout(80);
@@ -63,6 +67,20 @@ for (const [resource, value, expectedEndingId] of endingCases) {
   states.push(await readState(page, `ending-${expectedEndingId}`));
 }
 
+await ensureGameScreen(page);
+const oldAgeEndingId = await page.evaluate(() => {
+  ["people", "treasury", "army", "court"].forEach((key) => {
+    window.__chineseReignsDebug.setResource(key, 30);
+  });
+  window.__chineseReignsDebug.setCounter("years_ruled", 60);
+  return window.__chineseReignsDebug.resolveEndingNow();
+});
+if (oldAgeEndingId !== "old_age_succession") {
+  throw new Error(`Expected old_age_succession at 60 years, got ${oldAgeEndingId}`);
+}
+await page.waitForSelector("#result-screen:not(.hidden)");
+states.push(await readState(page, "ending-old_age_succession"));
+
 await page.screenshot({ path: path.join(outputDir, "03-after-choices.png"), fullPage: true });
 writeFileSync(path.join(outputDir, "state-log.json"), JSON.stringify({ states, consoleMessages }, null, 2));
 await browser.close();
@@ -94,4 +112,17 @@ async function ensureGameScreen(page) {
     await page.click("#start-button");
   }
   await page.waitForSelector("#game-screen:not(.hidden)");
+}
+
+async function dragCard(page, side) {
+  const card = page.locator("#event-card");
+  const box = await card.boundingBox();
+  if (!box) throw new Error("Event card is not visible");
+  const startX = box.x + box.width / 2;
+  const startY = box.y + box.height / 2;
+  const endX = startX + (side === "right" ? 140 : -140);
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(endX, startY, { steps: 8 });
+  await page.mouse.up();
 }

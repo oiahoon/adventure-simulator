@@ -43,7 +43,7 @@ export function pickObjectives(objectivePack, count, random = Math.random) {
     .map((objective) => objective.id);
 }
 
-export function applyChoiceToState(state, card, side) {
+export function applyChoiceToState(state, card, side, rules = defaultRules()) {
   const nextState = cloneState(state);
   const choice = card[side];
   applyEffects(nextState, choice.effects);
@@ -52,7 +52,7 @@ export function applyChoiceToState(state, card, side) {
   nextState.turn += 1;
   nextState.year += 1;
   nextState.counters.years_ruled += 1;
-  applyLateReignPressure(nextState);
+  applyLateReignPressure(nextState, rules);
 
   if (card.once) {
     nextState.cooldowns[card.id] = Number.POSITIVE_INFINITY;
@@ -167,12 +167,14 @@ export function resolveEnding(state, endingPack) {
 }
 
 export function resolveEndingWithRules(state, endingPack, rules = defaultRules()) {
+  const resourceEndings = rules.resourceEndings ?? RESOURCE_ENDING_MAP;
   if (state.forcedEndingId) return findEnding(endingPack, state.forcedEndingId);
   if ((state.counters.alchemy_trust ?? 0) >= 3) return findEnding(endingPack, "alchemy_death");
 
   for (const key of RESOURCE_ORDER) {
-    if (state.resources[key] <= rules.resourceRange.min) return findEnding(endingPack, RESOURCE_ENDING_MAP[key].low);
-    if (state.resources[key] >= rules.resourceRange.max) return findEnding(endingPack, RESOURCE_ENDING_MAP[key].high);
+    const endings = resourceEndings[key] ?? RESOURCE_ENDING_MAP[key];
+    if (state.resources[key] <= rules.resourceRange.min) return findEnding(endingPack, endings.low);
+    if (state.resources[key] >= rules.resourceRange.max) return findEnding(endingPack, endings.high);
   }
 
   const isStable = RESOURCE_ORDER.every((key) =>
@@ -238,6 +240,7 @@ export function clamp(value, min, max) {
 export function defaultRules() {
   return {
     resourceRange: { min: 0, max: 100, dangerLow: 15, dangerHigh: 85 },
+    resourceEndings: RESOURCE_ENDING_MAP,
     peacefulAbdication: { minYears: 20, resourceMin: 35, resourceMax: 75 },
     lateReignPressure: {
       startsAtYear: 35,
