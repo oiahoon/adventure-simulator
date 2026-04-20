@@ -34,7 +34,7 @@
       "title": "第一道奏折",
       "actor": "senior-minister",
       "background": "court-hall",
-      "text": "陛下登基第一日，老臣问您要先安民还是先整顿朝纲。",
+      "text": "陛下刚坐稳龙椅，老臣就问：先安民，还是先把朝堂按住？",
       "left": {
         "label": "安民",
         "preview": { "people": "up", "treasury": "down" },
@@ -126,7 +126,8 @@
         "preview": { "court": "down" },
         "effects": [
           { "type": "resource", "key": "court", "delta": -6 },
-          { "type": "counter", "key": "eunuch_power", "delta": -1 }
+          { "type": "counter", "key": "eunuch_power", "delta": -1 },
+          { "type": "set_flag", "key": "silenced_censors", "value": false }
         ]
       },
       "right": {
@@ -135,7 +136,8 @@
         "effects": [
           { "type": "resource", "key": "court", "delta": 5 },
           { "type": "resource", "key": "people", "delta": -8 },
-          { "type": "counter", "key": "eunuch_power", "delta": 1 }
+          { "type": "counter", "key": "eunuch_power", "delta": 1 },
+          { "type": "set_flag", "key": "silenced_censors", "value": true }
         ]
       },
       "conditions": [
@@ -144,6 +146,41 @@
       "weight": 6,
       "tags": ["court", "eunuch"],
       "cooldown": 4
+    },
+    {
+      "id": "street_ballad_on_censors",
+      "title": "街谈巷议",
+      "actor": "commoner",
+      "background": "palace-courtyard",
+      "text": "宫外有人唱新曲，说那封血书被您压下后，夜里递话的人倒越来越多了。",
+      "left": {
+        "label": "让他唱",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 8 },
+          { "type": "resource", "key": "court", "delta": -7 },
+          { "type": "counter", "key": "eunuch_power", "delta": -1 },
+          { "type": "set_flag", "key": "silenced_censors", "value": false }
+        ]
+      },
+      "right": {
+        "label": "闭嘴",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 7 },
+          { "type": "resource", "key": "people", "delta": -9 },
+          { "type": "counter", "key": "eunuch_power", "delta": 1 },
+          { "type": "set_flag", "key": "silenced_censors", "value": true }
+        ],
+        "nextCards": ["seal_missing"]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "silenced_censors", "value": true },
+        { "type": "counter_gte", "key": "eunuch_power", "value": 2 }
+      ],
+      "weight": 7,
+      "tags": ["court", "eunuch", "people"],
+      "cooldown": 5
     },
     {
       "id": "famine_relief_granary",
@@ -172,6 +209,41 @@
       "weight": 5,
       "tags": ["people", "famine", "relief"],
       "cooldown": 4
+    },
+    {
+      "id": "empty_bowls_return",
+      "title": "空碗又来了",
+      "actor": "commoner",
+      "background": "village-street",
+      "text": "上回您说再看看，如今灾民把空碗排到了县衙门口，问朝廷这次看见没有。",
+      "left": {
+        "label": "先赈",
+        "preview": { "people": "up", "treasury": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 14 },
+          { "type": "resource", "key": "treasury", "delta": -10 },
+          { "type": "counter", "key": "tax_anger", "delta": -1 },
+          { "type": "set_flag", "key": "famine_risk", "value": false }
+        ]
+      },
+      "right": {
+        "label": "催征",
+        "preview": { "treasury": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "treasury", "delta": 6 },
+          { "type": "resource", "key": "people", "delta": -13 },
+          { "type": "counter", "key": "tax_anger", "delta": 1 },
+          { "type": "set_flag", "key": "famine_risk", "value": true }
+        ],
+        "nextCards": ["famine_grain_price"]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "famine_risk", "value": true },
+        { "type": "counter_gte", "key": "tax_anger", "value": 1 }
+      ],
+      "weight": 7,
+      "tags": ["people", "famine", "relief", "tax"],
+      "cooldown": 5
     },
     {
       "id": "tax_silver_shortage",
@@ -999,7 +1071,8 @@
         "effects": [
           { "type": "resource", "key": "court", "delta": 5 },
           { "type": "resource", "key": "people", "delta": -4 },
-          { "type": "counter", "key": "consort_family_power", "delta": 1 }
+          { "type": "counter", "key": "consort_family_power", "delta": 1 },
+          { "type": "set_flag", "key": "heir_taught_by_dowager", "value": true }
         ],
         "nextCards": ["dowager_curtain_council"]
       },
@@ -1009,7 +1082,8 @@
         "effects": [
           { "type": "resource", "key": "people", "delta": 5 },
           { "type": "resource", "key": "court", "delta": -5 },
-          { "type": "counter", "key": "consort_family_power", "delta": -1 }
+          { "type": "counter", "key": "consort_family_power", "delta": -1 },
+          { "type": "set_flag", "key": "heir_taught_by_dowager", "value": false }
         ]
       },
       "conditions": [
@@ -1018,6 +1092,42 @@
       ],
       "weight": 5,
       "tags": ["court", "consort"],
+      "cooldown": 7
+    },
+    {
+      "id": "heir_repeats_curtain_words",
+      "title": "东宫学腔",
+      "actor": "prince",
+      "background": "ancestral-temple",
+      "text": "太子学着帘后的口气说话，开口先问谁点头，不问谁有理。",
+      "left": {
+        "label": "纠回来",
+        "preview": { "people": "up", "court": "down" },
+        "effects": [
+          { "type": "resource", "key": "people", "delta": 7 },
+          { "type": "resource", "key": "court", "delta": -7 },
+          { "type": "counter", "key": "consort_family_power", "delta": -1 },
+          { "type": "set_flag", "key": "heir_taught_by_dowager", "value": false }
+        ]
+      },
+      "right": {
+        "label": "由他学",
+        "preview": { "court": "up", "people": "down" },
+        "effects": [
+          { "type": "resource", "key": "court", "delta": 7 },
+          { "type": "resource", "key": "people", "delta": -7 },
+          { "type": "counter", "key": "consort_family_power", "delta": 1 },
+          { "type": "set_flag", "key": "heir_taught_by_dowager", "value": true }
+        ],
+        "nextCards": ["dowager_curtain_council"]
+      },
+      "conditions": [
+        { "type": "flag_is", "key": "taizi_established", "value": true },
+        { "type": "flag_is", "key": "heir_taught_by_dowager", "value": true },
+        { "type": "counter_gte", "key": "years_ruled", "value": 8 }
+      ],
+      "weight": 6,
+      "tags": ["court", "consort", "people"],
       "cooldown": 7
     },
     {

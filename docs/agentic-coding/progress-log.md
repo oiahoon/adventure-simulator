@@ -80,6 +80,29 @@ The current runtime includes:
   - a new emperor now inherits a small, ending-based opening resource nudge plus a short succession note;
   - the in-game header carries a compact continuity line so succession feels distinct from a full reset;
   - mobile smoke regression still passes after the continuity UI was compressed back into a one-screen layout.
+- Started and completed the next post-alignment step, `Opening Flow Compression`:
+  - the start screen headline and CTA now point directly at the first memorial instead of reading like a generic H5 intro;
+  - the opening copy is shorter and more pressure-oriented;
+  - the first-run CTA and returning-run CTA now differ (`接第一折` vs `新帝听政`) so the page feels closer to immediate rulership;
+  - local content validation and mobile smoke regression still pass after the copy/layout tightening.
+- Started and completed `First Three Cards Rhythm Pass`:
+  - each reign now force-queues `tutorial_first_memorial` as the opening decision, so the first card is no longer left to ordinary weighted randomness;
+  - the next two draws receive an early-reign teaching boost that prefers unseen core resource pressures and fresher actor voices while suppressing rare joke cards too early;
+  - the opening memorial text was sharpened so the very first decision feels more like a real tradeoff than a tutorial explanation;
+  - local sampling showed the first three cards now expose roughly three distinct resource concerns on average, and local validation plus mobile smoke still pass.
+- Started and completed `Result Page Personality Pass`:
+  - the result screen now leads with a verdict-style badge and the emperor title as the primary headline, instead of treating the ending name as the only top-level identity;
+  - each ending now derives an extra personality line from the final resource profile, so the page explains not just how the reign ended, but what kind of ruler the player became;
+  - the local share-card composition was updated to mirror the new hierarchy more closely;
+  - local content validation and mobile smoke regression still pass after the result-page hierarchy changes.
+- Started and completed `Event Consequence Visibility Pass`:
+  - added three bridge/callback cards so important choices are more likely to echo back in readable form:
+    - `street_ballad_on_censors` for the eunuch/court chain;
+    - `empty_bowls_return` for the famine/people chain;
+    - `heir_repeats_curtain_words` for the heir/dowager/regency chain;
+  - added two lightweight state flags, `silenced_censors` and `heir_taught_by_dowager`, so later cards can refer back to specific earlier political choices;
+  - queued follow-up cards from the harsher branch of each bridge card to make the "you caused this" feeling more legible in normal play;
+  - local validation passed with the deck now at `51` cards, targeted eligibility checks hit all three new bridge cards, and mobile smoke regression still passed.
 
 ### Next Recommended Work
 

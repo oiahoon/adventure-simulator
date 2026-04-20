@@ -146,7 +146,14 @@ export function createInitialState({ archive, objectivePack, random = Math.rando
     turn: 0,
     reignIndex,
     resources,
-    flags: { war_ongoing: false, famine_risk: false, taizi_established: false, puppet_regency: false },
+    flags: {
+      war_ongoing: false,
+      famine_risk: false,
+      taizi_established: false,
+      puppet_regency: false,
+      silenced_censors: false,
+      heir_taught_by_dowager: false,
+    },
     counters: {
       years_ruled: 0,
       eunuch_power: 0,
@@ -163,7 +170,7 @@ export function createInitialState({ archive, objectivePack, random = Math.rando
     eventHistory: [],
     endingHistory: archive?.unlockedEndingIds ?? [],
     cooldowns: {},
-    nextQueue: [],
+    nextQueue: ["tutorial_first_memorial"],
     forcedEndingId: undefined,
     succession,
   };
@@ -299,12 +306,40 @@ export function selectNextCard({ state, eventPack, currentCard, random = Math.ra
 
   candidates.forEach((card) => {
     const boost = resourcePressureBoost(nextState, card, rules);
+    const earlyBoost = earlyReignTeachingBoost(nextState, card, eventPack);
     const repeatPenalty = card.id === currentCard?.id && candidates.length > 1 ? 0.25 : 1;
-    const count = Math.max(1, Math.round((card.weight + boost) * repeatPenalty));
+    const count = Math.max(1, Math.round((card.weight + boost + earlyBoost) * repeatPenalty));
     for (let index = 0; index < count; index += 1) weighted.push(card);
   });
 
   return { card: weighted[Math.floor(random() * weighted.length)], state: nextState };
+}
+
+export function earlyReignTeachingBoost(state, card, eventPack) {
+  if (state.counters.years_ruled >= 3) return 0;
+  if (card.id === "tutorial_first_memorial") return 0;
+
+  const seenCards = state.eventHistory
+    .map((cardId) => eventPack.cards.find((item) => item.id === cardId))
+    .filter(Boolean);
+  const seenActors = new Set(seenCards.map((seenCard) => seenCard.actor));
+  const seenResources = new Set(
+    seenCards.flatMap((seenCard) => (seenCard.tags ?? []).filter((tag) => RESOURCE_ORDER.includes(tag)))
+  );
+
+  let boost = 0;
+  const missingResources = RESOURCE_ORDER.filter((key) => !seenResources.has(key));
+  if (missingResources.some((key) => card.tags?.includes(key))) {
+    boost += 6;
+  }
+  if (!seenActors.has(card.actor)) {
+    boost += 2;
+  }
+  if (card.tags?.includes("rare")) {
+    boost -= 3;
+  }
+
+  return boost;
 }
 
 export function filterBlockedActorCandidates(candidates, state, eventPack) {

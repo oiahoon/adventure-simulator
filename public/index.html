@@ -13,11 +13,10 @@
           <img src="./assets/chinese-reigns/portraits/emperor.png" alt="" />
         </div>
         <p class="eyebrow">朕的一生</p>
-        <h1>把王朝滑向它该去的地方</h1>
-        <p class="intro">
-          左右一划，便是一年。民心、国库、兵权、朝政都不能太低，也不能太满。
-        </p>
-        <button id="start-button" class="primary-button" type="button">登基</button>
+        <h1>第一道奏折已经到了</h1>
+        <p id="start-prompt" class="start-prompt">老臣已在殿外候着，左右一划，便是一年。</p>
+        <p class="intro">四样东西都不能太低，也不能太满。</p>
+        <button id="start-button" class="primary-button" type="button">接第一折</button>
         <p id="archive-summary" class="archive-summary"></p>
         <section id="succession-preview" class="succession-preview hidden" aria-label="前朝余音">
           <p class="succession-kicker">前朝余音</p>
@@ -69,13 +68,19 @@
           <img id="ending-image" alt="" />
         </div>
         <p class="eyebrow">本朝终局</p>
-        <h2 id="ending-name"></h2>
-        <p id="ending-title" class="ending-title"></p>
+        <p id="result-badge" class="result-badge"></p>
+        <h2 id="ending-title" class="result-headline"></h2>
+        <p id="ending-name" class="ending-name"></p>
         <p id="ending-summary" class="ending-summary"></p>
+        <p id="result-epitaph" class="result-epitaph"></p>
         <dl class="result-stats">
           <div>
             <dt>在位</dt>
             <dd><span id="result-years"></span> 年</dd>
+          </div>
+          <div>
+            <dt>像什么皇帝</dt>
+            <dd><span id="result-resource-tone"></span></dd>
           </div>
           <div>
             <dt>已解锁结局</dt>

@@ -71,11 +71,15 @@ button {
   justify-content: center;
 }
 
+.start-screen {
+  gap: 8px;
+}
+
 .start-art,
 .result-visual {
-  width: min(72vw, 280px);
+  width: min(64vw, 240px);
   aspect-ratio: 1;
-  margin: 0 auto 22px;
+  margin: 0 auto 12px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -113,6 +117,26 @@ h2 {
   color: var(--muted);
   line-height: 1.7;
   font-size: 15px;
+}
+
+.start-prompt {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.archive-summary {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .succession-preview {
@@ -166,7 +190,7 @@ h2 {
 
 .primary-button {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
   color: #fff;
   background: var(--ink);
 }
@@ -390,16 +414,41 @@ h2 {
   font-weight: 900;
 }
 
-.ending-title {
-  margin: 10px 0;
+.result-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(91, 139, 90, 0.14);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.result-headline {
+  margin: 10px 0 0;
+  font-size: 30px;
+}
+
+.ending-name {
+  margin: 8px 0 0;
   color: var(--green);
   font-size: 18px;
   font-weight: 900;
 }
 
+.result-epitaph {
+  margin: 10px 0 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
 .result-stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin: 18px 0 0;
 }
@@ -422,6 +471,7 @@ h2 {
   margin: 0;
   font-size: 20px;
   font-weight: 900;
+  line-height: 1.3;
 }
 
 .share-actions {
@@ -480,6 +530,24 @@ h2 {
     font-size: 11px;
   }
 
+  .start-screen {
+    gap: 6px;
+  }
+
+  .start-art {
+    width: min(54vw, 190px);
+    margin-bottom: 8px;
+  }
+
+  .start-prompt {
+    font-size: 15px;
+  }
+
+  .intro,
+  .archive-summary {
+    font-size: 13px;
+  }
+
   .eyebrow {
     margin-bottom: 6px;
     font-size: 12px;
@@ -526,6 +594,18 @@ h2 {
     font-size: 12px;
   }
 
+  .result-headline {
+    font-size: 26px;
+  }
+
+  .ending-name {
+    font-size: 16px;
+  }
+
+  .result-epitaph {
+    font-size: 14px;
+  }
+
   .card-text {
     min-height: 62px;
     font-size: 19px;
@@ -548,6 +628,40 @@ h2 {
 
   h2 {
     font-size: 18px;
+  }
+
+  .start-art {
+    width: min(48vw, 160px);
+    margin-bottom: 6px;
+  }
+
+  .result-badge {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .result-headline {
+    font-size: 22px;
+  }
+
+  .ending-name {
+    font-size: 15px;
+  }
+
+  .result-epitaph {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .start-prompt {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .intro,
+  .archive-summary {
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .succession-inline {

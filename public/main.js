@@ -55,6 +55,7 @@ const els = {
   generateShareButton: document.querySelector("#generate-share-button"),
   saveShareButton: document.querySelector("#save-share-button"),
   archiveSummary: document.querySelector("#archive-summary"),
+  startPrompt: document.querySelector("#start-prompt"),
   successionPreview: document.querySelector("#succession-preview"),
   successionPreviewSummary: document.querySelector("#succession-preview-summary"),
   successionPreviewEffect: document.querySelector("#succession-preview-effect"),
@@ -73,10 +74,13 @@ const els = {
   leftButton: document.querySelector("#left-button"),
   rightButton: document.querySelector("#right-button"),
   endingImage: document.querySelector("#ending-image"),
+  resultBadge: document.querySelector("#result-badge"),
   endingName: document.querySelector("#ending-name"),
   endingTitle: document.querySelector("#ending-title"),
   endingSummary: document.querySelector("#ending-summary"),
+  resultEpitaph: document.querySelector("#result-epitaph"),
   resultYears: document.querySelector("#result-years"),
+  resultResourceTone: document.querySelector("#result-resource-tone"),
   unlockedCount: document.querySelector("#unlocked-count"),
   shareStatus: document.querySelector("#share-status"),
   sharePreviewPanel: document.querySelector("#share-preview-panel"),
@@ -166,6 +170,7 @@ function endReign(ending) {
   const archive = readArchive();
   const title = makeTitle(ending);
   const record = createReignRecord({ state, ending, title });
+  const resultPersona = buildResultPersona(record, ending);
   currentEnding = ending;
   currentRecord = record;
   archive.reigns.unshift(record);
@@ -176,10 +181,13 @@ function endReign(ending) {
   writeArchive(archive);
 
   els.endingImage.src = normalizeAssetPath(ending.image);
-  els.endingName.textContent = ending.name;
+  els.resultBadge.textContent = resultPersona.badge;
   els.endingTitle.textContent = title;
+  els.endingName.textContent = ending.name;
   els.endingSummary.textContent = ending.shareTone;
+  els.resultEpitaph.textContent = resultPersona.epitaph;
   els.resultYears.textContent = record.years;
+  els.resultResourceTone.textContent = resultPersona.resourceTone;
   els.unlockedCount.textContent = `${archive.unlockedEndingIds.length}/${endingPack.endings.length}`;
   els.shareStatus.textContent = "可生成一张本地结果图，长按也能保存。";
   resetSharePreview();
@@ -196,6 +204,49 @@ function makeTitle(ending) {
   if (ending.type === "late_reign") return "熬过三代史官皇帝";
   if (ending.type === "high_resource") return "用力过猛皇帝";
   return "祖宗摇头皇帝";
+}
+
+function buildResultPersona(record, ending) {
+  const resourceTone = describeResourceTone(record.finalResources, ending);
+  const badgeByType = {
+    low_resource: "被王朝反咬一口",
+    high_resource: "把一条路走得太满",
+    chain: "前朝旧账终于追上来",
+    rare_good: "罕见地活着交班",
+    late_reign: "把皇位熬成了轮班制",
+  };
+  const badge = badgeByType[ending.type] ?? "史官记了一笔重话";
+  const epitaphMap = {
+    people: `这一局，您最像把天下人心当成了火候。${resourceTone}`,
+    treasury: `这一局，您最像把银子当成了龙椅脚。${resourceTone}`,
+    army: `这一局，您最像把刀兵当成了定心丸。${resourceTone}`,
+    court: `这一局，您最像把朝堂当成了整座江山。${resourceTone}`,
+  };
+  return {
+    badge,
+    resourceTone,
+    epitaph: epitaphMap[getDominantResource(record.finalResources)] ?? resourceTone,
+  };
+}
+
+function describeResourceTone(resources, ending) {
+  const dominant = getDominantResource(resources);
+  const toneMap = {
+    people: "更会看民心脸色",
+    treasury: "更会跟银子较劲",
+    army: "更会拿兵气赌明天",
+    court: "更会跟朝局硬碰硬",
+  };
+  if (ending.type === "rare_good") return "把四样东西都勉强按在了中间";
+  if (ending.type === "late_reign") return "把王朝先拖到了下一任能接手的那天";
+  return toneMap[dominant] ?? "把王朝滑成了自己的样子";
+}
+
+function getDominantResource(resources) {
+  return RESOURCE_ORDER.reduce((bestKey, key) => {
+    if (!bestKey) return key;
+    return Math.abs(resources[key] - 50) > Math.abs(resources[bestKey] - 50) ? key : bestKey;
+  }, null);
 }
 
 function renderGame() {
@@ -247,10 +298,14 @@ function renderCard() {
 function renderArchiveSummary() {
   const archive = readArchive();
   if (!archive.reigns.length) {
+    els.startButton.textContent = "接第一折";
+    els.startPrompt.textContent = "老臣已在殿外候着，左右一划，便是一年。";
     els.archiveSummary.textContent = "尚无王朝记录。史官正在磨墨。";
     els.successionPreview.classList.add("hidden");
     return;
   }
+  els.startButton.textContent = "新帝听政";
+  els.startPrompt.textContent = "新帝已经就座，别让案头第一折等太久。";
   els.archiveSummary.textContent = `已记下 ${archive.reigns.length} 任皇帝，最长在位 ${archive.bestYears} 年，解锁 ${archive.unlockedEndingIds.length} 个结局。`;
   const succession = state?.succession?.hasLegacy ? state.succession : deriveSuccessionFromArchive(archive);
   if (!succession?.hasLegacy) {
@@ -410,6 +465,7 @@ async function buildShareCardBlob({ ending, record, unlockedCount, totalEndingCo
 }
 
 function drawShareCard(ctx, { width, height, ending, record, unlockedCount, totalEndingCount, endingImage }) {
+  const resultPersona = buildResultPersona(record, ending);
   ctx.fillStyle = "rgba(251, 250, 241, 0.88)";
   roundRect(ctx, 58, 56, width - 116, height - 112, 32);
   ctx.fill();
@@ -420,25 +476,37 @@ function drawShareCard(ctx, { width, height, ending, record, unlockedCount, tota
   ctx.font = "700 36px 'PingFang SC', 'Microsoft YaHei', sans-serif";
   ctx.fillText("朕的一生", 128, 108);
 
+  ctx.fillStyle = "rgba(91, 139, 90, 0.16)";
+  roundRect(ctx, 128, 858, 332, 56, 18);
+  ctx.fill();
+
+  ctx.fillStyle = "#5b8b5a";
+  ctx.font = "800 28px 'PingFang SC', 'Microsoft YaHei', sans-serif";
+  ctx.fillText(resultPersona.badge, 152, 894);
+
   ctx.fillStyle = "#27302b";
   ctx.font = "900 72px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  wrapText(ctx, ending.name, 128, 900, width - 256, 88, 2);
+  wrapText(ctx, record.title, 128, 972, width - 256, 88, 2);
 
   ctx.fillStyle = "#5b8b5a";
   ctx.font = "800 40px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  wrapText(ctx, record.title, 128, 1010, width - 256, 52, 2);
+  wrapText(ctx, ending.name, 128, 1090, width - 256, 52, 2);
 
   ctx.fillStyle = "#69736b";
   ctx.font = "500 34px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  wrapText(ctx, ending.shareTone, 128, 1110, width - 256, 48, 3);
+  wrapText(ctx, ending.shareTone, 128, 1172, width - 256, 48, 3);
 
-  const statsTop = 1290;
+  ctx.fillStyle = "#27302b";
+  ctx.font = "700 28px 'PingFang SC', 'Microsoft YaHei', sans-serif";
+  wrapText(ctx, resultPersona.resourceTone, 128, 1312, width - 256, 40, 2);
+
+  const statsTop = 1374;
   drawStatBlock(ctx, { x: 128, y: statsTop, label: "在位", value: `${record.years} 年` });
   drawStatBlock(ctx, { x: 512, y: statsTop, label: "已解锁", value: `${unlockedCount}/${totalEndingCount}` });
 
   ctx.fillStyle = "#69736b";
   ctx.font = "500 26px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  ctx.fillText("长按保存这张结果图，继续看看下一任皇帝会把王朝滑去哪里。", 128, 1440);
+  ctx.fillText("长按保存这张结果图，继续看看下一任皇帝会把王朝滑去哪里。", 128, 1500);
 }
 
 function drawStatBlock(ctx, { x, y, label, value }) {
